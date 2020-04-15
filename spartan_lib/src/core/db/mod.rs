@@ -5,12 +5,12 @@ pub mod vec;
 
 #[derive(Error, Debug)]
 pub enum DatabaseError {
-    #[error("unable to push message to db")]
-    PushError,
-    #[error("unable to pop message from db")]
-    PopError,
     #[error("message not found")]
     MessageNotFound,
+    #[error("not enough storage memory")]
+    NotEnoughMemory,
+    #[error("db connection unavailable")]
+    ConnectionError
 }
 
 pub type Result<T> = std::result::Result<T, DatabaseError>;

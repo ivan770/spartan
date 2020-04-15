@@ -29,6 +29,3 @@ features = ["derive"]
 
 [dev-dependencies.rand]
 version = "0.7"
-
-[dev-dependencies.threadpool]
-version = "1.7"
