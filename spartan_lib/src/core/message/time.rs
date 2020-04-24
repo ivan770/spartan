@@ -54,6 +54,10 @@ impl Time {
         }
     }
 
+    pub(crate) fn get_raw_delay(&self) -> Option<i64> {
+        self.delay
+    }
+
     pub(crate) fn obtain(&mut self) {
         self.timeout.obtain(self.get_timestamp());
     }

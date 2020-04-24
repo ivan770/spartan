@@ -4,16 +4,8 @@ version = "0.1.0"
 authors = ["ivan770 <leshenko.ivan770@gmail.com>"]
 edition = "2018"
 
-[features]
-default = ["node"]
-node = ["bincode"]
-
 [dependencies.thiserror]
 version = "1.0"
-
-[dependencies.bincode]
-optional = true
-version = "1.2"
 
 [dependencies.uuid]
 version = "0.8"

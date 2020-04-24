@@ -28,26 +28,31 @@ impl Default for MessageBuilder<'_> {
 }
 
 impl<'a> MessageBuilder<'a> {
+    #[must_use]
     pub fn body(mut self, body: &'a [u8]) -> Self {
         self.body = Some(body);
         self
     }
 
+    #[must_use]
     pub fn offset(mut self, offset: i32) -> Self {
         self.offset = offset;
         self
     }
 
+    #[must_use]
     pub fn max_tries(mut self, max_tries: u32) -> Self {
         self.max_tries = max_tries;
         self
     }
 
+    #[must_use]
     pub fn timeout(mut self, timeout: u32) -> Self {
         self.timeout = timeout;
         self
     }
 
+    #[must_use]
     pub fn delay<F>(mut self, delay: F) -> Self
     where
         F: FnOnce(i32) -> i64,

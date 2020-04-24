@@ -10,7 +10,7 @@ where
 {
     fn push(&mut self, message: M) -> Result<()>;
     fn peak(&self) -> Result<&M>;
-    fn delete(&mut self, id: &Uuid) -> Result<()>;
+    fn delete(&mut self, id: Uuid) -> Result<()>;
     fn gc(&mut self) -> Result<()>;
     fn size(&self) -> Result<usize>;
     fn clear(&mut self) -> Result<()>;
@@ -33,7 +33,7 @@ where
         self.retain(|msg| !msg.gc())
     }
 
-    fn delete(&mut self, id: &Uuid) -> Result<()> {
+    fn delete(&mut self, id: Uuid) -> Result<()> {
         Ok(self
             .delete_pos(self.position(|msg| msg.id() == id)?)
             .unwrap())

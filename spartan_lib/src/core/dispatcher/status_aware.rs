@@ -10,7 +10,7 @@ where
     M: Dispatchable + Status,
 {
     fn pop(&mut self) -> Result<&M>;
-    fn requeue(&mut self, id: &Uuid) -> Result<()>;
+    fn requeue(&mut self, id: Uuid) -> Result<()>;
 }
 
 impl<T, M> StatusAwareDispatcher<M> for T
@@ -25,7 +25,7 @@ where
         Ok(message)
     }
 
-    fn requeue(&mut self, id: &Uuid) -> Result<()> {
+    fn requeue(&mut self, id: Uuid) -> Result<()> {
         let position =
             self.position(|msg| id == msg.id() && msg.requeueable() && msg.obtainable())?;
         self.get_mut(position).unwrap().requeue();

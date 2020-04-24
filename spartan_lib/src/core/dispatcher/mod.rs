@@ -106,14 +106,14 @@ mod tests {
         let mut db = create_database();
         db.push(message.clone()).unwrap();
         assert_eq!(db.size().unwrap(), 1);
-        db.delete(&message.id).unwrap();
+        db.delete(message.id).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn delete_nonexistent_message() {
         let mut db = create_database();
-        db.delete(&Uuid::new_v4()).unwrap();
+        db.delete(Uuid::new_v4()).unwrap();
     }
 
     #[test]
@@ -123,7 +123,7 @@ mod tests {
         db.push(message.clone()).unwrap();
         let pop = db.pop().unwrap();
         assert!(pop.requeueable());
-        db.requeue(&message.id).unwrap();
+        db.requeue(message.id).unwrap();
         assert!(db.peak().unwrap().obtainable());
     }
 

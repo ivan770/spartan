@@ -1,24 +1,9 @@
-use crate::core::db::{Database, DatabaseError, Result, SerializableDatabase};
-use serde::{de::DeserializeOwned, Serialize};
+use crate::core::db::{Database, DatabaseError, Result};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VecDatabase<M> {
     db: Vec<M>,
-}
-
-impl<M> SerializableDatabase<M> for VecDatabase<M>
-where
-    M: Serialize + DeserializeOwned,
-{
-    type DB = Vec<M>;
-
-    fn get_db(&self) -> &Self::DB {
-        &self.db
-    }
-
-    fn set_db(&mut self, db: Self::DB) {
-        self.db = db;
-    }
 }
 
 impl<M> Default for VecDatabase<M> {
@@ -27,16 +12,15 @@ impl<M> Default for VecDatabase<M> {
     }
 }
 
-impl<M> Database<M> for VecDatabase<M>
-where
-    M: Serialize + DeserializeOwned,
-{
+impl<M> Database<M> for VecDatabase<M> {
+    type PositionKey = usize;
+
     fn push_raw(&mut self, message: M) -> Result<()> {
         self.db.push(message);
         Ok(())
     }
 
-    fn position<F>(&self, predicate: F) -> Result<usize>
+    fn position<F>(&self, predicate: F) -> Result<Self::PositionKey>
     where
         F: Fn(&M) -> bool,
     {
@@ -46,17 +30,17 @@ where
             .ok_or(DatabaseError::MessageNotFound)
     }
 
-    fn get(&self, position: usize) -> Result<&M> {
+    fn get(&self, position: Self::PositionKey) -> Result<&M> {
         self.db.get(position).ok_or(DatabaseError::MessageNotFound)
     }
 
-    fn get_mut(&mut self, position: usize) -> Result<&mut M> {
+    fn get_mut(&mut self, position: Self::PositionKey) -> Result<&mut M> {
         self.db
             .get_mut(position)
             .ok_or(DatabaseError::MessageNotFound)
     }
 
-    fn delete_pos(&mut self, position: usize) -> Result<()> {
+    fn delete_pos(&mut self, position: Self::PositionKey) -> Result<()> {
         if let Some(_) = self.db.get(position) {
             self.db.remove(position);
             Ok(())

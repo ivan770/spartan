@@ -1,8 +1,7 @@
+use super::Identifiable;
 use serde::{de::DeserializeOwned, Serialize};
-use uuid::Uuid;
 
-pub trait Dispatchable: Serialize + DeserializeOwned {
-    fn id(&self) -> &Uuid;
+pub trait Dispatchable: Identifiable + Serialize + DeserializeOwned {
     fn obtainable(&self) -> bool;
     fn gc(&self) -> bool;
 }

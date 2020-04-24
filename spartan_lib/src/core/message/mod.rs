@@ -2,7 +2,8 @@ pub mod builder;
 mod state;
 mod time;
 
-use crate::core::payload::{Dispatchable, Status};
+use super::payload::Identifiable;
+use crate::core::payload::{Dispatchable, Sortable, Status};
 use serde::{Deserialize, Serialize};
 use state::State;
 use time::Time;
@@ -31,11 +32,13 @@ impl Message {
     }
 }
 
-impl Dispatchable for Message {
-    fn id(&self) -> &Uuid {
-        &self.id
+impl Identifiable for Message {
+    fn id(&self) -> Uuid {
+        self.id
     }
+}
 
+impl Dispatchable for Message {
     fn obtainable(&self) -> bool {
         self.time.check_delay() && !self.time.expired()
     }
@@ -61,5 +64,42 @@ impl Status for Message {
 
     fn reservable(&self) -> bool {
         self.state.reservable()
+    }
+}
+
+impl Sortable for Message {
+    type Sort = Option<i64>;
+
+    fn sort(&self) -> Self::Sort {
+        self.time.get_raw_delay()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::builder::MessageBuilder;
+    use crate::core::payload::Sortable;
+    use chrono::Utc;
+
+    macro_rules! delayed_message {
+        ($time:expr) => {
+            MessageBuilder::default()
+                .delay($time)
+                .body(b"Hello world")
+                .compose()
+                .unwrap()
+        };
+    }
+
+    #[test]
+    fn test_sort() {
+        let message1 = delayed_message!(|_| Utc::today().and_hms(01, 00, 00).timestamp());
+        let message2 = delayed_message!(|_| Utc::today().and_hms(02, 00, 00).timestamp());
+        let message3 = delayed_message!(|_| Utc::today().and_hms(00, 00, 00).timestamp());
+        let mut vec = vec![message1.clone(), message2.clone(), message3.clone()];
+        vec.sort_by_key(|msg| msg.sort());
+        assert_eq!(vec.pop().unwrap().id, message2.id);
+        assert_eq!(vec.pop().unwrap().id, message1.id);
+        assert_eq!(vec.pop().unwrap().id, message3.id);
     }
 }
