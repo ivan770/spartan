@@ -1,4 +1,4 @@
-use crate::core::db::{Database, DatabaseError, Result};
+use crate::core::db::Database;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -15,55 +15,51 @@ impl<M> Default for VecDatabase<M> {
 impl<M> Database<M> for VecDatabase<M> {
     type PositionKey = usize;
 
-    fn push_raw(&mut self, message: M) -> Result<()> {
+    fn push_raw(&mut self, message: M) {
         self.db.push(message);
-        Ok(())
     }
 
-    fn position<F>(&self, predicate: F) -> Result<Self::PositionKey>
+    fn position<F>(&self, predicate: F) -> Option<Self::PositionKey>
     where
         F: Fn(&M) -> bool,
     {
-        self.db
-            .iter()
-            .position(predicate)
-            .ok_or(DatabaseError::MessageNotFound)
+        Some(self.db.iter().position(predicate)?)
     }
 
-    fn get(&self, position: Self::PositionKey) -> Result<&M> {
-        self.db.get(position).ok_or(DatabaseError::MessageNotFound)
+    fn get(&self, position: Self::PositionKey) -> Option<&M> {
+        Some(self.db.get(position)?)
     }
 
-    fn get_mut(&mut self, position: Self::PositionKey) -> Result<&mut M> {
-        self.db
-            .get_mut(position)
-            .ok_or(DatabaseError::MessageNotFound)
+    fn get_mut(&mut self, position: Self::PositionKey) -> Option<&mut M> {
+        Some(self.db.get_mut(position)?)
     }
 
-    fn delete_pos(&mut self, position: Self::PositionKey) -> Result<()> {
-        if let Some(_) = self.db.get(position) {
+    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<()> {
+        if self.db.get(position).is_some() {
             self.db.remove(position);
-            Ok(())
+            Some(())
         } else {
-            Err(DatabaseError::MessageNotFound)
+            None
         }
     }
 
-    fn retain<F>(&mut self, predicate: F) -> Result<()>
+    fn retain<F>(&mut self, predicate: F)
     where
         F: Fn(&M) -> bool,
     {
         self.db.retain(predicate);
-        Ok(())
     }
 
-    fn len(&self) -> Result<usize> {
-        Ok(self.db.len())
+    fn len(&self) -> usize {
+        self.db.len()
     }
 
-    fn clear(&mut self) -> Result<()> {
+    fn is_empty(&self) -> bool {
+        self.db.is_empty()
+    }
+
+    fn clear(&mut self) {
         self.db.clear();
-        Ok(())
     }
 }
 
@@ -87,15 +83,15 @@ mod tests {
     fn test_push_raw() {
         let mut db = create_database();
         let message = create_message();
-        db.push_raw(message).unwrap();
-        assert_eq!(db.len().unwrap(), 1);
+        db.push_raw(message);
+        assert_eq!(db.len(), 1);
     }
 
     #[test]
     fn test_position() {
         let mut db = create_database();
         let message = create_message();
-        db.push_raw(message.clone()).unwrap();
+        db.push_raw(message.clone());
         assert_eq!(db.position(|msg| msg.id == message.id).unwrap(), 0);
     }
 
@@ -103,7 +99,7 @@ mod tests {
     fn test_get() {
         let mut db = create_database();
         let message = create_message();
-        db.push_raw(message.clone()).unwrap();
+        db.push_raw(message.clone());
         assert_eq!(db.get(0).unwrap().id, message.id);
     }
 
@@ -111,7 +107,7 @@ mod tests {
     fn test_get_mut() {
         let mut db = create_database();
         let message = create_message();
-        db.push_raw(message.clone()).unwrap();
+        db.push_raw(message.clone());
         assert_eq!(db.get_mut(0).unwrap().id, message.id);
     }
 
@@ -119,9 +115,9 @@ mod tests {
     fn test_delete() {
         let mut db = create_database();
         let message = create_message();
-        db.push_raw(message.clone()).unwrap();
+        db.push_raw(message.clone());
         db.delete_pos(0).unwrap();
-        assert!(db.delete_pos(0).is_err());
+        assert!(db.delete_pos(0).is_none());
     }
 
     #[test]
@@ -129,20 +125,28 @@ mod tests {
         let mut db = create_database();
         let message = create_message();
         let message2 = create_message();
-        db.push_raw(message.clone()).unwrap();
-        db.push_raw(message2).unwrap();
-        assert_eq!(db.len().unwrap(), 2);
-        db.retain(|msg| msg.id == message.id).unwrap();
-        assert_eq!(db.len().unwrap(), 1);
+        db.push_raw(message.clone());
+        db.push_raw(message2);
+        assert_eq!(db.len(), 2);
+        db.retain(|msg| msg.id == message.id);
+        assert_eq!(db.len(), 1);
     }
 
     #[test]
     fn test_clear() {
         let mut db = create_database();
-        db.push_raw(create_message()).unwrap();
-        db.push_raw(create_message()).unwrap();
-        assert_eq!(db.len().unwrap(), 2);
-        db.clear().unwrap();
-        assert_eq!(db.len().unwrap(), 0);
+        db.push_raw(create_message());
+        db.push_raw(create_message());
+        assert_eq!(db.len(), 2);
+        db.clear();
+        assert_eq!(db.len(), 0);
+    }
+
+    #[test]
+    fn test_is_empty() {
+        let mut db = create_database();
+        assert!(db.is_empty());
+        db.push_raw(create_message());
+        assert!(!db.is_empty());
     }
 }

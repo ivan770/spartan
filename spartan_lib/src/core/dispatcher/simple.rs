@@ -1,19 +1,16 @@
-use crate::core::{
-    db::{Database, Result},
-    payload::Dispatchable,
-};
+use crate::core::{db::Database, payload::Dispatchable};
 use uuid::Uuid;
 
 pub trait SimpleDispatcher<M>
 where
     M: Dispatchable,
 {
-    fn push(&mut self, message: M) -> Result<()>;
-    fn peak(&self) -> Result<&M>;
-    fn delete(&mut self, id: Uuid) -> Result<()>;
-    fn gc(&mut self) -> Result<()>;
-    fn size(&self) -> Result<usize>;
-    fn clear(&mut self) -> Result<()>;
+    fn push(&mut self, message: M);
+    fn peak(&self) -> Option<&M>;
+    fn delete(&mut self, id: Uuid) -> Option<()>;
+    fn gc(&mut self);
+    fn size(&self) -> usize;
+    fn clear(&mut self);
 }
 
 impl<T, M> SimpleDispatcher<M> for T
@@ -21,29 +18,27 @@ where
     T: Database<M>,
     M: Dispatchable,
 {
-    fn push(&mut self, message: M) -> Result<()> {
-        self.push_raw(message)
+    fn push(&mut self, message: M) {
+        self.push_raw(message);
     }
 
-    fn peak(&self) -> Result<&M> {
-        Ok(self.get(self.position(|msg| msg.obtainable())?).unwrap())
+    fn peak(&self) -> Option<&M> {
+        self.get(self.position(|msg| msg.obtainable())?)
     }
 
-    fn gc(&mut self) -> Result<()> {
-        self.retain(|msg| !msg.gc())
+    fn gc(&mut self) {
+        self.retain(|msg| !msg.gc());
     }
 
-    fn delete(&mut self, id: Uuid) -> Result<()> {
-        Ok(self
-            .delete_pos(self.position(|msg| msg.id() == id)?)
-            .unwrap())
+    fn delete(&mut self, id: Uuid) -> Option<()> {
+        self.delete_pos(self.position(|msg| msg.id() == id)?)
     }
 
-    fn size(&self) -> Result<usize> {
+    fn size(&self) -> usize {
         self.len()
     }
 
-    fn clear(&mut self) -> Result<()> {
+    fn clear(&mut self) {
         self.clear()
     }
 }
