@@ -1,3 +1,4 @@
+use super::StatusAwareDatabase;
 use crate::core::db::Database;
 use serde::{Deserialize, Serialize};
 
@@ -60,6 +61,27 @@ impl<M> Database<M> for VecDatabase<M> {
 
     fn clear(&mut self) {
         self.db.clear();
+    }
+}
+
+impl<M> StatusAwareDatabase<M> for VecDatabase<M> {
+    type RequeueKey = usize;
+
+    fn reserve(&mut self, position: Self::PositionKey) -> Option<&mut M> {
+        Some(self.db.get_mut(position)?)
+    }
+
+    fn requeue<F>(&mut self, position: Self::RequeueKey, predicate: F) -> Option<&mut M>
+    where
+        F: Fn(&M) -> bool,
+    {
+        let message = self.reserve(position)?;
+
+        if predicate(message) {
+            Some(message)
+        } else {
+            None
+        }
     }
 }
 
@@ -149,4 +171,11 @@ mod tests {
         db.push_raw(create_message());
         assert!(!db.is_empty());
     }
+}
+
+#[cfg(test)]
+mod dispatcher_tests {
+    use super::VecDatabase;
+
+    crate::test_dispatcher!(VecDatabase);
 }

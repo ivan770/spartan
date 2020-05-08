@@ -1,3 +1,4 @@
+use super::StatusAwareDatabase;
 use crate::core::{
     db::Database,
     payload::{Identifiable, Sortable},
@@ -105,6 +106,34 @@ where
     fn clear(&mut self) {
         self.objects.clear();
         self.queue_tree.clear();
+    }
+}
+
+impl<M> StatusAwareDatabase<M> for TreeDatabase<M>
+where
+    M: Identifiable + Sortable,
+{
+    type RequeueKey = Uuid;
+
+    fn reserve(&mut self, position: Self::PositionKey) -> Option<&mut M> {
+        let message = self.objects.get_mut(&position)?;
+        self.queue_tree.remove(&(message.1.sort(), message.0));
+        Some(&mut message.1)
+    }
+
+    fn requeue<F>(&mut self, position: Self::RequeueKey, predicate: F) -> Option<&mut M>
+    where
+        F: Fn(&M) -> bool,
+    {
+        let message = self.objects.get_mut(&position)?;
+
+        if predicate(&message.1) {
+            self.queue_tree
+                .insert((message.1.sort(), message.0), position);
+            Some(&mut message.1)
+        } else {
+            None
+        }
     }
 }
 
@@ -234,4 +263,12 @@ mod tests {
         db.push_raw(create_message!());
         assert!(!db.is_empty());
     }
+}
+
+#[cfg(test)]
+mod dispatcher_tests {
+    use super::TreeDatabase;
+
+    crate::test_dispatcher!(TreeDatabase);
+    crate::test_status_dispatcher!(TreeDatabase);
 }

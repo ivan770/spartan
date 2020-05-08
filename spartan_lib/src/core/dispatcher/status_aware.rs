@@ -1,4 +1,4 @@
-use crate::core::{db::Database, dispatcher::simple::SimpleDispatcher, payload::Status};
+use crate::core::{db::StatusAwareDatabase, dispatcher::simple::SimpleDispatcher, payload::Status};
 use uuid::Uuid;
 
 pub trait StatusAwareDispatcher<M>: SimpleDispatcher<M>
@@ -11,20 +11,19 @@ where
 
 impl<T, M> StatusAwareDispatcher<M> for T
 where
-    T: SimpleDispatcher<M> + Database<M>,
+    T: SimpleDispatcher<M> + StatusAwareDatabase<M, RequeueKey = Uuid>,
     M: Status,
 {
     fn pop(&mut self) -> Option<&M> {
         let position = self.position(|msg| msg.reservable() && msg.obtainable())?;
-        let message = self.get_mut(position).unwrap();
+        let message = self.reserve(position).unwrap();
         message.reserve();
         Some(message)
     }
 
-    fn requeue(&mut self, id: Uuid) -> Option<()> {
-        let position =
-            self.position(|msg| id == msg.id() && msg.requeueable() && msg.obtainable())?;
-        self.get_mut(position).unwrap().requeue();
+    fn requeue(&mut self, key: Uuid) -> Option<()> {
+        let message = self.requeue(key, |msg| msg.requeueable() && msg.obtainable())?;
+        message.requeue();
         Some(())
     }
 }
