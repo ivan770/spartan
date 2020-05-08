@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "spartan",
+    "spartan_lib",
+]

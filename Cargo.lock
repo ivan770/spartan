@@ -37,9 +37,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.68"
+version = "0.2.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dea0c0405123bba743ee3f91f49b1c7cfb684eef0da0a50110f758ccf24cdff0"
+checksum = "99e85c08494b21a9054e7fe1374a732aeadaff3980b6990b94bfd3a70f690005"
 
 [[package]]
 name = "num-integer"
@@ -68,18 +68,18 @@ checksum = "74490b50b9fbe561ac330df47c08f3f33073d2d00c150f719147d7c54522fa1b"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.9"
+version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c09721c6781493a2a492a96b5a5bf19b65917fe6728884e7c44dd0c60ca3435"
+checksum = "8872cf6f48eee44265156c111456a700ab3483686b3f96df4cf5481c89157319"
 dependencies = [
  "unicode-xid",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bdc6c187c65bca4260c9011c9e3132efe4909da44726bad24cf7572ae338d7f"
+checksum = "4c1f4b0efa5fc5e8ceb705136bfee52cfdb6a4e3509f770b478cd6ed434232a7"
 dependencies = [
  "proc-macro2",
 ]
@@ -126,30 +126,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "redox_syscall"
-version = "0.1.56"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
-
-[[package]]
 name = "serde"
-version = "1.0.105"
+version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e707fbbf255b8fc8c3b99abb91e7257a622caeb20a9818cbadbeeede4e0932ff"
+checksum = "36df6ac6412072f67cf767ebbde4133a5b2e88e76dc6187fa7104cd16f783399"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.105"
+version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac5d00fc561ba2724df6758a17de23df5914f20e41cb00f94d5b7ae42fffaff8"
+checksum = "9e549e3abf4fb8621bd1609f11dfc9f5e50320802273b12f3811a67e6716ea6c"
 dependencies = [
  "proc-macro2",
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "spartan"
+version = "0.1.0"
 
 [[package]]
 name = "spartan_lib"
@@ -164,9 +162,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.16"
+version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "123bd9499cfb380418d509322d7a6d52e5315f064fe4b3ad18a53d6b92c07859"
+checksum = "e8e5aa70697bb26ee62214ae3288465ecec0000f05182f039b477001f08f5ae7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -175,18 +173,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.13"
+version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3711fd1c4e75b3eff12ba5c40dba762b6b65c5476e8174c1a664772060c49bf"
+checksum = "d12a1dae4add0f0d568eebc7bf142f145ba1aa2544cafb195c76f0f409091b60"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.13"
+version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae2b85ba4c9aa32dd3343bd80eb8d22e9b54b7688c17ea3907f236885353b233"
+checksum = "3f34e0c1caaa462fd840ec6b768946ea1e7842620d94fe29d5b847138f521269"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -195,12 +193,11 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.1.42"
+version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db8dcfca086c1143c9270ac42a2bbd8a7ee477b78ac8e45b19abfb0cbede4b6f"
+checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
 dependencies = [
  "libc",
- "redox_syscall",
  "winapi",
 ]
 
