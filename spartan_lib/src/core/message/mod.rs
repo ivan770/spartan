@@ -33,6 +33,8 @@ impl Message {
 }
 
 impl Identifiable for Message {
+    type Id = Uuid;
+
     fn id(&self) -> Uuid {
         self.id
     }

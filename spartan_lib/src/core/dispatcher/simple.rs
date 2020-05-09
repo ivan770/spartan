@@ -1,5 +1,4 @@
-use crate::core::{db::Database, payload::Dispatchable};
-use uuid::Uuid;
+use crate::core::{db::Database, payload::{Identifiable, Dispatchable}};
 
 pub trait SimpleDispatcher<M>
 where
@@ -7,7 +6,7 @@ where
 {
     fn push(&mut self, message: M);
     fn peak(&self) -> Option<&M>;
-    fn delete(&mut self, id: Uuid) -> Option<()>;
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
     fn gc(&mut self);
     fn size(&self) -> usize;
     fn clear(&mut self);
@@ -30,7 +29,7 @@ where
         self.retain(|msg| !msg.gc());
     }
 
-    fn delete(&mut self, id: Uuid) -> Option<()> {
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()> {
         self.delete_pos(self.position(|msg| msg.id() == id)?)
     }
 
