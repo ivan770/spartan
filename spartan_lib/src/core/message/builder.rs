@@ -7,6 +7,21 @@ pub enum BuilderError {
     BodyNotProvided,
 }
 
+/// Message builder
+///
+/// ```
+/// use spartan_lib::chrono::{Utc, FixedOffset};
+/// use spartan_lib::core::message::builder::MessageBuilder;
+///
+/// let message = MessageBuilder::default()
+///     .body(b"Hello, world")
+///     .offset(9 * 3600)
+///     .max_tries(5)
+///     .timeout(60)
+///     .delay(|tz| (Utc::today().and_hms(2, 0, 0) + FixedOffset::east(tz)).timestamp())
+///     .compose()
+///     .unwrap();
+/// ```
 pub struct MessageBuilder<'a> {
     body: Option<&'a [u8]>,
     offset: i32,
@@ -28,30 +43,35 @@ impl Default for MessageBuilder<'_> {
 }
 
 impl<'a> MessageBuilder<'a> {
+    /// Message body.
     #[must_use]
     pub fn body(mut self, body: &'a [u8]) -> Self {
         self.body = Some(body);
         self
     }
 
+    /// Timezone offset in seconds.
     #[must_use]
     pub fn offset(mut self, offset: i32) -> Self {
         self.offset = offset;
         self
     }
 
+    /// Max tries for message to be reserved.
     #[must_use]
     pub fn max_tries(mut self, max_tries: u32) -> Self {
         self.max_tries = max_tries;
         self
     }
 
+    /// Message timeout. Used by GC to collect messages, that execute for too long.
     #[must_use]
     pub fn timeout(mut self, timeout: u32) -> Self {
         self.timeout = timeout;
         self
     }
 
+    /// Set message delay.
     #[must_use]
     pub fn delay<F>(mut self, delay: F) -> Self
     where
@@ -61,6 +81,7 @@ impl<'a> MessageBuilder<'a> {
         self
     }
 
+    /// Compose message. Returns Err, if body was not provided.
     pub fn compose(self) -> Result<Message, BuilderError> {
         if let Some(body) = self.body {
             Ok(Message::new(
