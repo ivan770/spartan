@@ -39,7 +39,6 @@ where
     /// ```
     fn peak(&self) -> Option<&M>;
 
-    
     /// Start GC cycle on queue
     ///
     /// ```

@@ -8,7 +8,41 @@ pub trait StatusAwareDispatcher<M>: SimpleDispatcher<M>
 where
     M: Status,
 {
+    /// Pop message from queue
+    /// Behaves like "peak", but with "obtainable" message check, message and database reservation
+    ///
+    /// ```
+    /// use spartan_lib::core::dispatcher::{SimpleDispatcher, StatusAwareDispatcher};
+    /// use spartan_lib::core::db::tree::TreeDatabase;
+    /// use spartan_lib::core::message::builder::MessageBuilder;
+    /// use spartan_lib::core::payload::Identifiable;
+    ///
+    /// let mut db = TreeDatabase::default();
+    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    ///
+    /// db.push(message.clone());
+    ///
+    /// assert_eq!(db.pop().unwrap().id(), message.id());
+    /// ```
     fn pop(&mut self) -> Option<&M>;
+
+    /// Requeue message in queue
+    /// Returns None, if message was not found, or message cannot be requeued
+    ///
+    /// ```
+    /// use spartan_lib::core::dispatcher::{SimpleDispatcher, StatusAwareDispatcher};
+    /// use spartan_lib::core::db::tree::TreeDatabase;
+    /// use spartan_lib::core::message::builder::MessageBuilder;
+    /// use spartan_lib::core::payload::Identifiable;
+    ///
+    /// let mut db = TreeDatabase::default();
+    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    ///
+    /// db.push(message);
+    ///
+    /// let id = db.pop().unwrap().id();
+    /// db.requeue(id).unwrap();
+    /// ```
     fn requeue(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
 }
 

@@ -37,7 +37,7 @@ pub trait Database<M>: Default {
     fn position<F>(&self, predicate: F) -> Option<Self::PositionKey>
     where
         F: Fn(&M) -> bool;
-    
+
     /// Get shared message reference by database position key
     ///
     /// ```
