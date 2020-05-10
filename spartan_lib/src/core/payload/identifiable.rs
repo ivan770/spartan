@@ -1,5 +1,5 @@
-use uuid::Uuid;
-
 pub trait Identifiable {
-    fn id(&self) -> Uuid;
+    type Id: Copy + Eq;
+
+    fn id(&self) -> Self::Id;
 }

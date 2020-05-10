@@ -5,25 +5,31 @@ use crate::core::{
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
-use uuid::Uuid;
+use std::hash::Hash;
 
-type MessageStore<M> = HashMap<Uuid, (u64, M)>;
-type Tree<M> = BTreeMap<(<M as Sortable>::Sort, u64), Uuid>;
+type MessageStore<M> = HashMap<<M as Identifiable>::Id, (u64, M)>;
+type Tree<M> = BTreeMap<(<M as Sortable>::Sort, u64), <M as Identifiable>::Id>;
 
 #[derive(Serialize, Deserialize)]
+#[serde(bound = "M: Serialize + DeserializeOwned")]
 pub struct TreeDatabase<M>
 where
     M: Identifiable + Sortable,
+    <M as Identifiable>::Id: Hash,
 {
     last_insert_id: u64,
+    #[serde(bound = "<M as Identifiable>::Id: Serialize + DeserializeOwned")]
     objects: MessageStore<M>,
-    #[serde(bound = "<M as Sortable>::Sort: Serialize + DeserializeOwned")]
+    #[serde(
+        bound = "<M as Sortable>::Sort: Serialize + DeserializeOwned, <M as Identifiable>::Id: Serialize + DeserializeOwned"
+    )]
     queue_tree: Tree<M>,
 }
 
 impl<M> Default for TreeDatabase<M>
 where
     M: Identifiable + Sortable,
+    <M as Identifiable>::Id: Hash,
 {
     fn default() -> Self {
         TreeDatabase {
@@ -37,8 +43,9 @@ where
 impl<M> Database<M> for TreeDatabase<M>
 where
     M: Identifiable + Sortable,
+    <M as Identifiable>::Id: Hash,
 {
-    type PositionKey = Uuid;
+    type PositionKey = <M as Identifiable>::Id;
 
     fn push_raw(&mut self, message: M) {
         let id = self.last_insert_id;
@@ -52,8 +59,8 @@ where
     where
         F: Fn(&M) -> bool,
     {
-        Some(self.queue_tree.values().find_map(|uuid| {
-            let message = self.objects.get(uuid).unwrap();
+        Some(self.queue_tree.values().find_map(|key| {
+            let message = self.objects.get(key).unwrap();
             if predicate(&message.1) {
                 Some(message.1.id())
             } else {
@@ -112,8 +119,9 @@ where
 impl<M> StatusAwareDatabase<M> for TreeDatabase<M>
 where
     M: Identifiable + Sortable,
+    <M as Identifiable>::Id: Hash,
 {
-    type RequeueKey = Uuid;
+    type RequeueKey = <M as Identifiable>::Id;
 
     fn reserve(&mut self, position: Self::PositionKey) -> Option<&mut M> {
         let message = self.objects.get_mut(&position)?;
@@ -268,6 +276,7 @@ mod tests {
 #[cfg(test)]
 mod dispatcher_tests {
     use super::TreeDatabase;
+    use crate::core::dispatcher::simple::PositionBasedDelete;
 
     crate::test_dispatcher!(TreeDatabase);
     crate::test_status_dispatcher!(TreeDatabase);
