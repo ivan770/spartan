@@ -4,6 +4,7 @@ use crate::core::{
     payload::{Identifiable, Status},
 };
 
+/// Interface for working with databases that support statuses
 pub trait StatusAwareDispatcher<M>: SimpleDispatcher<M>
 where
     M: Status,
