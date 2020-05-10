@@ -1,4 +1,8 @@
-use crate::core::{db::StatusAwareDatabase, dispatcher::simple::SimpleDispatcher, payload::{Identifiable, Status}};
+use crate::core::{
+    db::StatusAwareDatabase,
+    dispatcher::simple::SimpleDispatcher,
+    payload::{Identifiable, Status},
+};
 
 pub trait StatusAwareDispatcher<M>: SimpleDispatcher<M>
 where
