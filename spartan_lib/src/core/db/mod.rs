@@ -162,10 +162,12 @@ pub trait Database<M>: Default {
     fn clear(&mut self);
 }
 
+/// Interface for working with databases, that support status interaction
 pub trait StatusAwareDatabase<M>: Database<M> {
     type RequeueKey: Copy;
 
     /// Reserve message in database
+    ///
     /// Removes message from tree in TreeDatabase, does nothing in VecDatabase
     ///
     /// ```
@@ -188,6 +190,7 @@ pub trait StatusAwareDatabase<M>: Database<M> {
     fn reserve(&mut self, position: Self::PositionKey) -> Option<&mut M>;
 
     /// Requeue message back to database
+    ///
     /// Returns message back to tree in TreeDatabase, does nothing in VecDatabase
     ///
     /// ```

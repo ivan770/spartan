@@ -15,6 +15,7 @@ pub trait Status: Dispatchable {
     fn requeue(&mut self);
 
     /// Change message status to "in transit"
+    ///
     /// Also, default message implementation increments counter of tries
     ///
     /// ```

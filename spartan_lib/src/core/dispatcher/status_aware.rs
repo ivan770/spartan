@@ -10,6 +10,7 @@ where
     M: Status,
 {
     /// Pop message from queue
+    ///
     /// Behaves like "peak", but with "obtainable" message check, message and database reservation
     ///
     /// ```
@@ -28,6 +29,7 @@ where
     fn pop(&mut self) -> Option<&M>;
 
     /// Requeue message in queue
+    ///
     /// Returns None, if message was not found, or message cannot be requeued
     ///
     /// ```
