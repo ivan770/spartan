@@ -117,17 +117,58 @@ where
     fn clear(&mut self);
 }
 
+/// Interface for deleting messages from queue, where database position key is not the same, as message ID
 pub trait Delete<M>: SimpleDispatcher<M>
 where
     M: Dispatchable,
 {
+    /// Delete message from queue
+    ///
+    /// ```
+    /// use spartan_lib::core::dispatcher::{SimpleDispatcher, simple::Delete};
+    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::message::builder::MessageBuilder;
+    /// use spartan_lib::core::payload::Identifiable;
+    ///
+    /// let mut db = VecDatabase::default();
+    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    ///
+    /// db.push(message.clone());
+    ///
+    /// assert_eq!(db.size(), 1);
+    ///
+    /// db.delete(message.id());
+    ///
+    /// assert_eq!(db.size(), 0);
+    /// ```
     fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
 }
 
+/// Interface for deleting messages from queue, where database position key is the same, as message ID
+/// It is preferable to use PositionBasedDelete instead of Delete
 pub trait PositionBasedDelete<M>: SimpleDispatcher<M>
 where
     M: Dispatchable,
 {
+    /// Delete message from queue
+    ///
+    /// ```
+    /// use spartan_lib::core::dispatcher::{SimpleDispatcher, simple::PositionBasedDelete};
+    /// use spartan_lib::core::db::tree::TreeDatabase;
+    /// use spartan_lib::core::message::builder::MessageBuilder;
+    /// use spartan_lib::core::payload::Identifiable;
+    ///
+    /// let mut db = TreeDatabase::default();
+    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    ///
+    /// db.push(message.clone());
+    ///
+    /// assert_eq!(db.size(), 1);
+    ///
+    /// db.delete(message.id());
+    ///
+    /// assert_eq!(db.size(), 0);
+    /// ```
     fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
 }
 
