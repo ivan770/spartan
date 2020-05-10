@@ -176,6 +176,7 @@ mod tests {
 #[cfg(test)]
 mod dispatcher_tests {
     use super::VecDatabase;
+    use crate::core::dispatcher::simple::Delete;
 
     crate::test_dispatcher!(VecDatabase);
 }

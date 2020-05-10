@@ -15,19 +15,21 @@ type Tree<M> = BTreeMap<(<M as Sortable>::Sort, u64), <M as Identifiable>::Id>;
 pub struct TreeDatabase<M>
 where
     M: Identifiable + Sortable,
-    <M as Identifiable>::Id: Hash
+    <M as Identifiable>::Id: Hash,
 {
     last_insert_id: u64,
     #[serde(bound = "<M as Identifiable>::Id: Serialize + DeserializeOwned")]
     objects: MessageStore<M>,
-    #[serde(bound = "<M as Sortable>::Sort: Serialize + DeserializeOwned, <M as Identifiable>::Id: Serialize + DeserializeOwned")]
+    #[serde(
+        bound = "<M as Sortable>::Sort: Serialize + DeserializeOwned, <M as Identifiable>::Id: Serialize + DeserializeOwned"
+    )]
     queue_tree: Tree<M>,
 }
 
 impl<M> Default for TreeDatabase<M>
 where
     M: Identifiable + Sortable,
-    <M as Identifiable>::Id: Hash
+    <M as Identifiable>::Id: Hash,
 {
     fn default() -> Self {
         TreeDatabase {
@@ -41,7 +43,7 @@ where
 impl<M> Database<M> for TreeDatabase<M>
 where
     M: Identifiable + Sortable,
-    <M as Identifiable>::Id: Hash
+    <M as Identifiable>::Id: Hash,
 {
     type PositionKey = <M as Identifiable>::Id;
 
@@ -117,7 +119,7 @@ where
 impl<M> StatusAwareDatabase<M> for TreeDatabase<M>
 where
     M: Identifiable + Sortable,
-    <M as Identifiable>::Id: Hash
+    <M as Identifiable>::Id: Hash,
 {
     type RequeueKey = <M as Identifiable>::Id;
 
@@ -274,6 +276,7 @@ mod tests {
 #[cfg(test)]
 mod dispatcher_tests {
     use super::TreeDatabase;
+    use crate::core::dispatcher::simple::PositionBasedDelete;
 
     crate::test_dispatcher!(TreeDatabase);
     crate::test_status_dispatcher!(TreeDatabase);

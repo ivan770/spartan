@@ -1,4 +1,7 @@
-use crate::core::{db::Database, payload::{Identifiable, Dispatchable}};
+use crate::core::{
+    db::Database,
+    payload::{Dispatchable, Identifiable},
+};
 
 pub trait SimpleDispatcher<M>
 where
@@ -6,10 +9,23 @@ where
 {
     fn push(&mut self, message: M);
     fn peak(&self) -> Option<&M>;
-    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
     fn gc(&mut self);
     fn size(&self) -> usize;
     fn clear(&mut self);
+}
+
+pub trait Delete<M>: SimpleDispatcher<M>
+where
+    M: Dispatchable,
+{
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
+}
+
+pub trait PositionBasedDelete<M>: SimpleDispatcher<M>
+where
+    M: Dispatchable,
+{
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
 }
 
 impl<T, M> SimpleDispatcher<M> for T
@@ -29,15 +45,31 @@ where
         self.retain(|msg| !msg.gc());
     }
 
-    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()> {
-        self.delete_pos(self.position(|msg| msg.id() == id)?)
-    }
-
     fn size(&self) -> usize {
         self.len()
     }
 
     fn clear(&mut self) {
         self.clear()
+    }
+}
+
+impl<T, M> Delete<M> for T
+where
+    T: Database<M>,
+    M: Dispatchable,
+{
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()> {
+        self.delete_pos(self.position(|msg| msg.id() == id)?)
+    }
+}
+
+impl<T, M> PositionBasedDelete<M> for T
+where
+    T: Database<M, PositionKey = <M as Identifiable>::Id>,
+    M: Dispatchable,
+{
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()> {
+        self.delete_pos(id)
     }
 }
