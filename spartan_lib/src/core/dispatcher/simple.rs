@@ -56,8 +56,8 @@ where
 
 impl<T, M> Delete<M> for T
 where
-    M: Dispatchable,
     T: Database<M>,
+    M: Dispatchable,
 {
     fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()> {
         self.delete_pos(self.position(|msg| msg.id() == id)?)
@@ -66,8 +66,8 @@ where
 
 impl<T, M> PositionBasedDelete<M> for T
 where
-    M: Dispatchable,
     T: Database<M, PositionKey = <M as Identifiable>::Id>,
+    M: Dispatchable,
 {
     fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()> {
         self.delete_pos(id)
