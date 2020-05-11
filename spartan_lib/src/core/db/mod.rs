@@ -1,4 +1,7 @@
+/// TreeDatabase
 pub mod tree;
+
+/// VecDatabase
 pub mod vec;
 
 /// Interface for working with databases

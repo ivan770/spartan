@@ -1,3 +1,4 @@
+/// Message builder
 pub mod builder;
 mod state;
 mod time;
