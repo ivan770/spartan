@@ -20,9 +20,7 @@ where
     last_insert_id: u64,
     #[serde(bound = "<M as Identifiable>::Id: Serialize + DeserializeOwned")]
     objects: MessageStore<M>,
-    #[serde(
-        bound = "<M as Sortable>::Sort: Serialize + DeserializeOwned, <M as Identifiable>::Id: Serialize + DeserializeOwned"
-    )]
+    #[serde(bound = "<M as Sortable>::Sort: Serialize + DeserializeOwned")]
     queue_tree: Tree<M>,
 }
 
@@ -112,6 +110,7 @@ where
 
     fn clear(&mut self) {
         self.objects.clear();
+        self.objects.shrink_to_fit();
         self.queue_tree.clear();
     }
 }

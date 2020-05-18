@@ -61,6 +61,7 @@ impl<M> Database<M> for VecDatabase<M> {
 
     fn clear(&mut self) {
         self.db.clear();
+        self.db.shrink_to_fit();
     }
 }
 
