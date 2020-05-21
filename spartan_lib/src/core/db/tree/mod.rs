@@ -78,8 +78,7 @@ where
     fn delete_pos(&mut self, position: Self::PositionKey) -> Option<()> {
         let message = self.objects.remove(&position)?;
         self.queue_tree
-            .remove(&(message.1.sort(), message.0))
-            .unwrap();
+            .remove(&(message.1.sort(), message.0));
         Some(())
     }
 
