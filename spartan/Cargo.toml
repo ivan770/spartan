@@ -1,9 +1,40 @@
 [package]
 name = "spartan"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["ivan770 <leshenko.ivan770@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies.spartan_lib]
+path = "../spartan_lib"
 
-[dependencies]
+[dependencies.tide]
+version = "0.8"
+
+[dependencies.async-std]
+version = "1.5.0"
+features = ["attributes"]
+
+[dependencies.structopt]
+version = "0.3"
+
+[dependencies.log]
+version = "0.4"
+
+[dependencies.pretty_env_logger]
+version = "0.4"
+
+[dependencies.serde]
+version = "1.0"
+
+[dependencies.toml]
+version = "0.5"
+
+[dependencies.thiserror]
+version = "1.0"
+
+[dependencies.uuid]
+version = "0.8"
+features = ["v4"]
+
+[dependencies.derive-new]
+version = "0.5"
