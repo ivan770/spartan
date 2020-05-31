@@ -7,7 +7,7 @@ use crate::{
     respond, Request,
 };
 use spartan_lib::core::dispatcher::simple::PositionBasedDelete;
-use tide::{StatusCode, Result};
+use tide::{Result, StatusCode};
 
 pub async fn delete(mut request: Request) -> Result {
     let json: DeleteRequest = respond!(request.body_json().await.map_err(|_| Error::bad_request()));

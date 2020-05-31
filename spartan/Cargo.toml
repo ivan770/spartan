@@ -8,10 +8,10 @@ edition = "2018"
 path = "../spartan_lib"
 
 [dependencies.tide]
-version = "0.8"
+git = "https://github.com/ivan770/tide"
 
 [dependencies.async-std]
-version = "1.5.0"
+version = "1.6.0"
 features = ["attributes"]
 
 [dependencies.structopt]

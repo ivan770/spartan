@@ -7,7 +7,7 @@ use crate::{
     respond, Request,
 };
 use spartan_lib::core::dispatcher::StatusAwareDispatcher;
-use tide::{StatusCode, Result};
+use tide::{Result, StatusCode};
 
 pub async fn requeue(mut request: Request) -> Result {
     let json: RequeueRequest =

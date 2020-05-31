@@ -1,29 +1,33 @@
 pub mod extractor;
+pub mod persistence;
 
 pub use extractor::QueueExtractor;
+pub use persistence::Persistence;
 
 use crate::server::Config;
 use async_std::sync::{Mutex, MutexGuard};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::{collections::HashMap, fmt::Display};
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum NodeError {
-    #[error("Filesystem error")]
-    FsError,
-    #[error("Serializer error")]
-    BincodeError,
-    #[error("Unable to open directory")]
-    DirectoryOpenError,
-}
 
 pub type DB = TreeDatabase<Message>;
 type MutexDB = Mutex<DB>;
 
+pub struct PersistenceConfig {
+    pub timer: u64,
+}
+
+impl From<&Config> for PersistenceConfig {
+    fn from(config: &Config) -> Self {
+        PersistenceConfig {
+            timer: config.timer,
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct Node {
     db: HashMap<String, MutexDB>,
+    persistence_config: Option<PersistenceConfig>,
 }
 
 impl Node {
@@ -52,6 +56,7 @@ impl Node {
     }
 
     pub fn load_from_config(&mut self, config: Config) {
+        self.persistence_config = Some(PersistenceConfig::from(&config));
         config.queues.into_iter().for_each(|queue| self.add(queue));
     }
 }
