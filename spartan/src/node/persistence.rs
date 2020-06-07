@@ -1,7 +1,7 @@
 use super::Node;
+use crate::server::Config;
 use async_std::task::sleep;
 use std::time::Duration;
-use crate::server::Config;
 
 pub async fn spawn(persistence: &Persistence) {
     // This is a test
@@ -18,15 +18,12 @@ pub async fn spawn(persistence: &Persistence) {
 
 pub struct Persistence {
     config: Config,
-    node: Option<Node>
+    node: Option<Node>,
 }
 
 impl Persistence {
     pub fn new(config: Config) -> Persistence {
-        Persistence {
-            config,
-            node: None
-        }
+        Persistence { config, node: None }
     }
 
     pub fn node(&self) -> &Node {

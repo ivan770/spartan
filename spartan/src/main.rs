@@ -10,7 +10,7 @@ mod query;
 mod routing;
 mod server;
 
-use node::{Persistence, persistence::spawn};
+use node::{persistence::spawn, Persistence};
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
@@ -29,7 +29,7 @@ async fn main() -> Result<(), std::io::Error> {
 
     let mut persistence = Persistence::new(server.config().await?);
     persistence.load();
-    
+
     info!("Persistence module initialized.");
 
     let mut tide = with_state(persistence);
@@ -39,9 +39,7 @@ async fn main() -> Result<(), std::io::Error> {
 
     debug!("Routes loaded.");
 
-    tide.spawn(|ctx: JobContext<Persistence>| async move {
-        spawn(ctx.state()).await
-    });
+    tide.spawn(|ctx: JobContext<Persistence>| async move { spawn(ctx.state()).await });
 
     tide.listen(server.host()).await?;
     Ok(())

@@ -12,7 +12,6 @@ use std::{collections::HashMap, fmt::Display};
 pub type DB = TreeDatabase<Message>;
 type MutexDB = Mutex<DB>;
 
-
 #[derive(Default)]
 pub struct Node {
     db: HashMap<String, MutexDB>,
