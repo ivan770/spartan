@@ -10,13 +10,13 @@ mod query;
 mod routing;
 mod server;
 
-use node::{persistence::spawn, Node, Persistence};
+use node::{Node, Persistence, persistence::spawn};
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
 use tide::{with_state, JobContext, Request as TideRequest};
 
-pub type Request = TideRequest<Node>;
+pub type Request = TideRequest<Persistence>;
 
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -24,20 +24,24 @@ async fn main() -> Result<(), std::io::Error> {
 
     let server = Server::from_args();
     debug!("Server initialized.");
-    let mut node = Node::default();
+    // let mut node = Node::default();
     info!("Node initialized. Starting config loading.");
-    node.load_from_config(server.config().await?);
+    let config = server.config().await?;
+    
+    let mut persistence = Persistence::new(config);
+    persistence.load();
+
     debug!("Config loaded.");
 
-    let mut tide = with_state(node);
+    let mut tide = with_state(persistence);
     debug!("Tide initialized. Loading routes.");
 
     attach_routes(&mut tide);
 
     debug!("Routes loaded.");
 
-    tide.spawn(|ctx: JobContext<Node>| async move {
-        spawn(Persistence::new(ctx.state())).await;
+    tide.spawn(|ctx: JobContext<Persistence>| async move {
+        spawn(ctx.state()).await
     });
 
     tide.listen(server.host()).await?;

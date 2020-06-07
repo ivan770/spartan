@@ -15,6 +15,7 @@ impl<'a> QueueExtractor<'a> {
     pub async fn extract(self) -> Result<MutexGuard<'a, DB>, Error<'static>> {
         self.0
             .state()
+            .node()
             .get(self.0.param::<String>("queue").unwrap())
             .await
             .ok_or_else(|| Error::new(StatusCode::NotFound, QUEUE_NOT_FOUND))

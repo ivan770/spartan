@@ -1,4 +1,4 @@
-use crate::node::Node;
+use crate::node::Persistence;
 use tide::Server;
 
 macro_rules! route {
@@ -7,7 +7,7 @@ macro_rules! route {
     };
 }
 
-pub fn attach_routes(tide: &mut Server<Node>) {
+pub fn attach_routes(tide: &mut Server<Persistence>) {
     tide.at("/:queue").get(route!(pop));
     tide.at("/:queue").post(route!(push));
     tide.at("/:queue").delete(route!(delete));

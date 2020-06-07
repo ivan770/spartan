@@ -1,26 +1,41 @@
-use super::{Node, PersistenceConfig};
+use super::Node;
 use async_std::task::sleep;
 use std::time::Duration;
+use crate::server::Config;
 
-pub async fn spawn(persistence: Persistence<'_>) {
+pub async fn spawn(persistence: &Persistence) {
+    // This is a test
+    use spartan_lib::core::dispatcher::simple::SimpleDispatcher;
+
     loop {
-        sleep(Duration::from_secs(persistence.persistence_config.timer)).await;
+        sleep(Duration::from_secs(3)).await;
+
+        for (name, db) in persistence.node().db.iter() {
+            println!("{}: {}", name, db.lock().await.size());
+        }
     }
 }
 
-pub struct Persistence<'a> {
-    node: &'a Node,
-    persistence_config: &'a PersistenceConfig,
+pub struct Persistence {
+    config: Config,
+    node: Option<Node>
 }
 
-impl<'a> Persistence<'a> {
-    pub fn new(node: &'a Node) -> Persistence {
+impl Persistence {
+    pub fn new(config: Config) -> Persistence {
         Persistence {
-            node,
-            persistence_config: node
-                .persistence_config
-                .as_ref()
-                .expect("Persistence config is required in Node"),
+            config,
+            node: None
         }
+    }
+
+    pub fn node(&self) -> &Node {
+        self.node.as_ref().expect("Node not loaded")
+    }
+
+    pub fn load(&mut self) {
+        let mut node = Node::default();
+        node.load_from_config(&self.config);
+        self.node = Some(node);
     }
 }

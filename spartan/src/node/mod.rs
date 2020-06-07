@@ -12,22 +12,10 @@ use std::{collections::HashMap, fmt::Display};
 pub type DB = TreeDatabase<Message>;
 type MutexDB = Mutex<DB>;
 
-pub struct PersistenceConfig {
-    pub timer: u64,
-}
-
-impl From<&Config> for PersistenceConfig {
-    fn from(config: &Config) -> Self {
-        PersistenceConfig {
-            timer: config.timer,
-        }
-    }
-}
 
 #[derive(Default)]
 pub struct Node {
     db: HashMap<String, MutexDB>,
-    persistence_config: Option<PersistenceConfig>,
 }
 
 impl Node {
@@ -55,8 +43,7 @@ impl Node {
             .insert(name.to_string(), Mutex::new(TreeDatabase::default()));
     }
 
-    pub fn load_from_config(&mut self, config: Config) {
-        self.persistence_config = Some(PersistenceConfig::from(&config));
-        config.queues.into_iter().for_each(|queue| self.add(queue));
+    pub fn load_from_config(&mut self, config: &Config) {
+        config.queues.iter().for_each(|queue| self.add(queue));
     }
 }
