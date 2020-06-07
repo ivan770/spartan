@@ -10,7 +10,11 @@ mod query;
 mod routing;
 mod server;
 
-use node::{persistence::spawn, Persistence};
+use anyhow::Error;
+use node::{
+    persistence::{load_from_fs, spawn, PersistenceError},
+    Persistence,
+};
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
@@ -19,7 +23,7 @@ use tide::{with_state, JobContext, Request as TideRequest};
 pub type Request = TideRequest<Persistence>;
 
 #[async_std::main]
-async fn main() -> Result<(), std::io::Error> {
+async fn main() -> Result<(), Error> {
     pretty_env_logger::init();
 
     let server = Server::from_args();
@@ -30,6 +34,8 @@ async fn main() -> Result<(), std::io::Error> {
     let mut persistence = Persistence::new(server.config().await?);
     persistence.load();
 
+    load_from_fs(&mut persistence).await?;
+
     info!("Persistence module initialized.");
 
     let mut tide = with_state(persistence);
@@ -39,7 +45,17 @@ async fn main() -> Result<(), std::io::Error> {
 
     debug!("Routes loaded.");
 
-    tide.spawn(|ctx: JobContext<Persistence>| async move { spawn(ctx.state()).await });
+    tide.spawn(|ctx: JobContext<Persistence>| async move {
+        match spawn(ctx.state()).await {
+            Err(PersistenceError::SerializationError(e)) => {
+                error!("Unable to serialize database: {}", e)
+            }
+            Err(PersistenceError::FileWriteError(e)) => {
+                error!("Unable to write serialized database to file: {}", e)
+            }
+            _ => unreachable!(),
+        }
+    });
 
     tide.listen(server.host()).await?;
     Ok(())
