@@ -10,7 +10,7 @@ mod query;
 mod routing;
 mod server;
 
-use node::{Node, Persistence, persistence::spawn};
+use node::{Persistence, persistence::spawn};
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
@@ -24,14 +24,13 @@ async fn main() -> Result<(), std::io::Error> {
 
     let server = Server::from_args();
     debug!("Server initialized.");
-    // let mut node = Node::default();
-    info!("Node initialized. Starting config loading.");
-    let config = server.config().await?;
-    
-    let mut persistence = Persistence::new(config);
-    persistence.load();
 
-    debug!("Config loaded.");
+    info!("Loading persistence module.");
+
+    let mut persistence = Persistence::new(server.config().await?);
+    persistence.load();
+    
+    info!("Persistence module initialized.");
 
     let mut tide = with_state(persistence);
     debug!("Tide initialized. Loading routes.");
