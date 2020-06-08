@@ -5,7 +5,7 @@ use structopt::StructOpt;
 use toml::from_slice;
 
 fn default_path() -> PathBuf {
-    PathBuf::from("./spartan")
+    PathBuf::from("./db")
 }
 
 const fn default_persistence_timer() -> u64 {
