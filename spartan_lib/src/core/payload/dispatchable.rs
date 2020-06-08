@@ -2,6 +2,9 @@ use super::Identifiable;
 
 /// Interface for working with dispatchable messages
 pub trait Dispatchable: Identifiable {
+    /// Body type of dispatchable message
+    type Body: ?Sized;
+
     /// Check if current message is obtainable
     ///
     /// ```
@@ -20,6 +23,18 @@ pub trait Dispatchable: Identifiable {
     /// assert!(!delayed_message.obtainable());
     /// ```
     fn obtainable(&self) -> bool;
+
+    /// Get message body
+    ///
+    /// ```
+    /// use spartan_lib::core::message::builder::MessageBuilder;
+    /// use spartan_lib::core::payload::Dispatchable;
+    ///
+    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    ///
+    /// assert_eq!(message.body(), b"Hello, world");
+    /// ```
+    fn body(&self) -> &Self::Body;
 
     /// Check if current message is garbage
     ///

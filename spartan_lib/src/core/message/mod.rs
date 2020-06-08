@@ -42,8 +42,14 @@ impl Identifiable for Message {
 }
 
 impl Dispatchable for Message {
+    type Body = [u8];
+
     fn obtainable(&self) -> bool {
         self.time.check_delay() && !self.time.expired()
+    }
+    
+    fn body(&self) -> &Self::Body {
+        &self.body
     }
 
     fn gc(&self) -> bool {
