@@ -1,8 +1,11 @@
 pub mod extractor;
+pub mod gc;
+pub mod manager;
 pub mod persistence;
 
 pub use extractor::QueueExtractor;
-pub use persistence::Persistence;
+pub use manager::Manager;
+pub use persistence::{load_from_fs, spawn_persistence};
 
 use crate::server::Config;
 use async_std::sync::{Mutex, MutexGuard};

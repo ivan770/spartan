@@ -16,7 +16,7 @@ pub trait Database<M>: Default {
     /// use spartan_lib::core::message::builder::MessageBuilder;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push_raw(message);
     /// ```
@@ -31,7 +31,7 @@ pub trait Database<M>: Default {
     /// use spartan_lib::core::payload::Dispatchable;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push_raw(message);
     ///
@@ -50,7 +50,7 @@ pub trait Database<M>: Default {
     /// use spartan_lib::core::payload::Dispatchable;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push_raw(message);
     ///
@@ -69,7 +69,7 @@ pub trait Database<M>: Default {
     /// use spartan_lib::core::payload::{Dispatchable, Status};
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push_raw(message);
     ///
@@ -88,7 +88,7 @@ pub trait Database<M>: Default {
     /// use spartan_lib::core::payload::Dispatchable;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push_raw(message);
     ///
@@ -180,7 +180,7 @@ pub trait StatusAwareDatabase<M>: Database<M> {
     /// use spartan_lib::core::payload::{Dispatchable, Status};
     ///
     /// let mut db = TreeDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push_raw(message);
     ///
@@ -203,7 +203,7 @@ pub trait StatusAwareDatabase<M>: Database<M> {
     /// use spartan_lib::core::payload::{Dispatchable, Status, Identifiable};
     ///
     /// let mut db = TreeDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push_raw(message);
     ///

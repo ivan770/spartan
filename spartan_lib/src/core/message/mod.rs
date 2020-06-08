@@ -13,18 +13,18 @@ use uuid::Uuid;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     pub id: Uuid,
+    body: String,
     state: State,
     time: Time,
-    body: Box<[u8]>,
 }
 
 impl Message {
-    fn new(body: &[u8], delay: Option<i64>, offset: i32, max_tries: u32, timeout: u32) -> Self {
+    fn new(body: String, delay: Option<i64>, offset: i32, max_tries: u32, timeout: u32) -> Self {
         Message {
             id: Message::generate_id(),
+            body,
             state: State::new(max_tries),
             time: Time::new(offset, delay, timeout),
-            body: body.into(),
         }
     }
 
@@ -42,7 +42,7 @@ impl Identifiable for Message {
 }
 
 impl Dispatchable for Message {
-    type Body = [u8];
+    type Body = str;
 
     fn obtainable(&self) -> bool {
         self.time.check_delay() && !self.time.expired()
@@ -94,7 +94,7 @@ mod tests {
         ($time:expr) => {
             MessageBuilder::default()
                 .delay($time)
-                .body(b"Hello world")
+                .body("Hello world")
                 .compose()
                 .unwrap()
         };

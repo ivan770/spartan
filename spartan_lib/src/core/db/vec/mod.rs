@@ -93,7 +93,7 @@ mod tests {
 
     fn create_message() -> Message {
         MessageBuilder::default()
-            .body(b"Hello world")
+            .body("Hello world")
             .compose()
             .unwrap()
     }

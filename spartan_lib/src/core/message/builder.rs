@@ -1,5 +1,6 @@
 use crate::core::message::Message;
 use thiserror::Error;
+use std::fmt::Display;
 
 #[derive(Debug, Error)]
 pub enum BuilderError {
@@ -14,7 +15,7 @@ pub enum BuilderError {
 /// use spartan_lib::core::message::builder::MessageBuilder;
 ///
 /// let message = MessageBuilder::default()
-///     .body(b"Hello, world")
+///     .body("Hello, world")
 ///     .offset(9 * 3600)
 ///     .max_tries(5)
 ///     .timeout(60)
@@ -22,15 +23,15 @@ pub enum BuilderError {
 ///     .compose()
 ///     .unwrap();
 /// ```
-pub struct MessageBuilder<'a> {
-    body: Option<&'a [u8]>,
+pub struct MessageBuilder {
+    body: Option<String>,
     offset: i32,
     max_tries: u32,
     timeout: u32,
     delay: Option<i64>,
 }
 
-impl Default for MessageBuilder<'_> {
+impl Default for MessageBuilder {
     fn default() -> Self {
         MessageBuilder {
             body: None,
@@ -42,11 +43,14 @@ impl Default for MessageBuilder<'_> {
     }
 }
 
-impl<'a> MessageBuilder<'a> {
+impl MessageBuilder {
     /// Message body.
     #[must_use]
-    pub fn body(mut self, body: &'a [u8]) -> Self {
-        self.body = Some(body);
+    pub fn body<T>(mut self, body: T) -> Self
+    where
+        T: Display
+    {
+        self.body = Some(body.to_string());
         self
     }
 
@@ -101,12 +105,11 @@ impl<'a> MessageBuilder<'a> {
 mod tests {
     use super::MessageBuilder;
     use chrono::Utc;
-    use rand::random;
 
     #[test]
     fn creates_message() {
         MessageBuilder::default()
-            .body(&random::<[u8; 16]>())
+            .body("Hello, world")
             .max_tries(3)
             .offset(100)
             .delay(|_| Utc::now().timestamp())

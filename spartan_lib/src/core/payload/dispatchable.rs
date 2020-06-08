@@ -12,9 +12,9 @@ pub trait Dispatchable: Identifiable {
     /// use spartan_lib::core::payload::Dispatchable;
     /// use spartan_lib::chrono::{Utc, Duration};
     ///
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     /// let delayed_message = MessageBuilder::default()
-    ///     .body(b"Hello, world")
+    ///     .body("Hello, world")
     ///     .delay(|tz| (Utc::now() + Duration::minutes(10)).timestamp())
     ///     .compose()
     ///     .unwrap();
@@ -30,9 +30,9 @@ pub trait Dispatchable: Identifiable {
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Dispatchable;
     ///
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
-    /// assert_eq!(message.body(), b"Hello, world");
+    /// assert_eq!(message.body(), "Hello, world");
     /// ```
     fn body(&self) -> &Self::Body;
 
@@ -45,7 +45,7 @@ pub trait Dispatchable: Identifiable {
     /// use std::time::Duration;
     ///
     /// let mut message = MessageBuilder::default()
-    ///     .body(b"Hello, world")
+    ///     .body("Hello, world")
     ///     .timeout(0)
     ///     .compose()
     ///     .unwrap();

@@ -8,7 +8,7 @@ pub trait Status: Dispatchable {
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Status;
     ///
-    /// let mut message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let mut message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// message.requeue();
     /// ```
@@ -22,7 +22,7 @@ pub trait Status: Dispatchable {
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Status;
     ///
-    /// let mut message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let mut message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// message.reserve();
     /// ```
@@ -34,7 +34,7 @@ pub trait Status: Dispatchable {
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Status;
     ///
-    /// let mut message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let mut message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// assert!(!message.requeueable());
     /// ```
@@ -46,7 +46,7 @@ pub trait Status: Dispatchable {
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Status;
     ///
-    /// let mut message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let mut message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// assert!(message.reservable());
     /// ```

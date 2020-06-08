@@ -11,16 +11,13 @@ mod routing;
 mod server;
 
 use anyhow::Error;
-use node::{
-    persistence::{load_from_fs, spawn, PersistenceError},
-    Persistence,
-};
+use node::{gc::spawn_gc, load_from_fs, persistence::PersistenceError, spawn_persistence, Manager};
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
 use tide::{with_state, JobContext, Request as TideRequest};
 
-pub type Request = TideRequest<Persistence>;
+pub type Request = TideRequest<Manager>;
 
 #[async_std::main]
 async fn main() -> Result<(), Error> {
@@ -31,22 +28,28 @@ async fn main() -> Result<(), Error> {
 
     info!("Loading persistence module.");
 
-    let mut persistence = Persistence::new(server.config().await?);
-    persistence.load();
+    let mut manager = Manager::new(server.config().await?);
+    manager.load();
 
-    load_from_fs(&mut persistence).await?;
+    load_from_fs(&mut manager).await?;
 
     info!("Persistence module initialized.");
 
-    let mut tide = with_state(persistence);
+    let mut tide = with_state(manager);
     debug!("Tide initialized. Loading routes.");
 
     attach_routes(&mut tide);
 
     debug!("Routes loaded.");
 
-    tide.spawn(|ctx: JobContext<Persistence>| async move {
-        match spawn(ctx.state()).await {
+    debug!("Spawning GC job.");
+
+    tide.spawn(|ctx: JobContext<Manager>| async move { spawn_gc(ctx.state()).await });
+
+    debug!("Spawning persistence job.");
+
+    tide.spawn(|ctx: JobContext<Manager>| async move {
+        match spawn_persistence(ctx.state()).await {
             Err(PersistenceError::SerializationError(e)) => {
                 error!("Unable to serialize database: {}", e)
             }

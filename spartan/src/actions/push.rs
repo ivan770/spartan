@@ -23,7 +23,7 @@ pub async fn push(mut request: Request) -> Result {
 }
 
 pub fn apply_builder(request: &PushRequest) -> Message {
-    let mut builder = MessageBuilder::default().body(request.body.as_bytes());
+    let mut builder = MessageBuilder::default().body(request.body.clone());
 
     if let Some(offset) = request.offset {
         builder = builder.offset(offset);

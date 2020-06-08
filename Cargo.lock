@@ -1153,7 +1153,6 @@ name = "spartan_lib"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "rand",
  "serde",
  "thiserror",
  "uuid",

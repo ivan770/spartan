@@ -20,7 +20,7 @@ where
     /// use spartan_lib::core::payload::Identifiable;
     ///
     /// let mut db = TreeDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push(message.clone());
     ///
@@ -39,7 +39,7 @@ where
     /// use spartan_lib::core::payload::Identifiable;
     ///
     /// let mut db = TreeDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push(message);
     ///

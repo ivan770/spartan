@@ -160,13 +160,13 @@ mod tests {
     macro_rules! create_message {
         () => {
             MessageBuilder::default()
-                .body(b"Hello world")
+                .body("Hello world")
                 .compose()
                 .unwrap()
         };
         ($delay:expr) => {
             MessageBuilder::default()
-                .body(b"Hello world")
+                .body("Hello world")
                 .delay($delay)
                 .compose()
                 .unwrap()

@@ -16,7 +16,7 @@ where
     /// use spartan_lib::core::message::builder::MessageBuilder;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push(message);
     /// ```
@@ -31,7 +31,7 @@ where
     /// use spartan_lib::core::payload::Identifiable;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push(message.clone());
     ///
@@ -53,10 +53,10 @@ where
     ///
     /// // We need two test messages here: one without timeout, and one with 1 second timeout
     /// // GC condition varies between messages, but here we'll use timeout as an example
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// // Setting timeout to 0 and waiting 1-2 seconds turns message into garbage
-    /// let mut garbage_message = MessageBuilder::default().body(b"I will be deleted").timeout(0).compose().unwrap();
+    /// let mut garbage_message = MessageBuilder::default().body("I will be deleted").timeout(0).compose().unwrap();
     ///
     /// // We are going to reserve the message before adding it do database
     /// garbage_message.reserve();
@@ -83,7 +83,7 @@ where
     /// use spartan_lib::core::message::builder::MessageBuilder;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// assert_eq!(db.size(), 0);
     ///
@@ -101,7 +101,7 @@ where
     /// use spartan_lib::core::message::builder::MessageBuilder;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// assert_eq!(db.size(), 0);
     ///
@@ -130,7 +130,7 @@ where
     /// use spartan_lib::core::payload::Identifiable;
     ///
     /// let mut db = VecDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push(message.clone());
     ///
@@ -158,7 +158,7 @@ where
     /// use spartan_lib::core::payload::Identifiable;
     ///
     /// let mut db = TreeDatabase::default();
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// db.push(message.clone());
     ///

@@ -8,7 +8,7 @@ pub trait Sortable {
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Sortable;
     ///
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// dbg!(message.sort());
     /// ```

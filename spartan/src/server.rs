@@ -8,8 +8,12 @@ fn default_path() -> PathBuf {
     PathBuf::from("./spartan")
 }
 
-const fn default_timer() -> u64 {
+const fn default_persistence_timer() -> u64 {
     900
+}
+
+const fn default_gc_timer() -> u64 {
+    300
 }
 
 #[derive(Deserialize)]
@@ -17,8 +21,10 @@ pub struct Config {
     pub queues: Vec<String>,
     #[serde(default = "default_path")]
     pub path: PathBuf,
-    #[serde(default = "default_timer")]
-    pub timer: u64,
+    #[serde(default = "default_persistence_timer")]
+    pub persistence_timer: u64,
+    #[serde(default = "default_gc_timer")]
+    pub gc_timer: u64,
 }
 
 #[derive(StructOpt)]

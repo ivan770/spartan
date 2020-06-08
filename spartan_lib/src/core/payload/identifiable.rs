@@ -8,7 +8,7 @@ pub trait Identifiable {
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Identifiable;
     ///
-    /// let message = MessageBuilder::default().body(b"Hello, world").compose().unwrap();
+    /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     ///
     /// println!("Message ID is: {}", message.id());
     /// ```
