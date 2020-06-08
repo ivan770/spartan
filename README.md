@@ -47,12 +47,12 @@ cargo run --release
 
 ### Executable flags
 
-* `--config` - Change configuration file path (default: Spartan.toml).
-* `--host` - Change server host (default: 127.0.0.1:5680).
+* `--config` - Change configuration file path (default: `Spartan.toml`).
+* `--host` - Change server host (default: `127.0.0.1:5680`).
 
 ### Spartan.toml keys
 
 * `queues` - Array of queue names (required).
-* `path` - Database path (default: ./db).
-* `persistence_timer` - Amount of seconds between each database write to disk (default: 900).
-* `gc_timer` - Amount of seconds between each GC job wake (GC cycle times vary, default: 300).
+* `path` - Database path (default: `./db`).
+* `persistence_timer` - Amount of seconds between each database write to disk (default: `900`).
+* `gc_timer` - Amount of seconds between each GC job wake (GC cycle times vary, default: `300`).
