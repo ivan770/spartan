@@ -28,7 +28,7 @@ impl State {
         }
     }
 
-    fn check_tries(&self) -> bool {
+    fn has_tries(&self) -> bool {
         self.tries < self.max_tries
     }
 
@@ -46,10 +46,10 @@ impl State {
     }
 
     pub(crate) fn reservable(&self) -> bool {
-        self.status == Status::Available && self.check_tries()
+        self.status == Status::Available && self.has_tries()
     }
 
-    pub(crate) fn gc(&self) -> bool {
+    pub(crate) fn requires_gc(&self) -> bool {
         self.tries == self.max_tries && self.status == Status::Available
     }
 }
@@ -63,13 +63,13 @@ mod tests {
         let state = State::new(1);
         assert!(state.reservable());
         assert!(!state.requeueable());
-        assert!(!state.gc());
+        assert!(!state.requires_gc());
     }
 
     #[test]
     fn create_useless_state() {
         let state = State::new(0);
-        assert!(state.gc());
+        assert!(state.requires_gc());
     }
 
     #[test]
@@ -79,6 +79,6 @@ mod tests {
         state.reserve();
         assert!(state.requeueable());
         state.requeue();
-        assert!(state.gc());
+        assert!(state.requires_gc());
     }
 }
