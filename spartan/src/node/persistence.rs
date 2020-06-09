@@ -66,7 +66,7 @@ pub async fn spawn_persistence(manager: &Manager) {
                     Err(PersistenceError::FileWriteError(e)) => {
                         error!("Unable to write serialized database to file: {}", e)
                     }
-                    _ => unreachable!(),
+                    _ => (),
                 }
             })
             .await;
