@@ -6,8 +6,8 @@ use tide::{Response, StatusCode};
 macro_rules! respond {
     ($expr:expr) => {
         match $expr {
-            std::result::Result::Ok(val) => val,
-            std::result::Result::Err(err) => {
+            ::std::result::Result::Ok(val) => val,
+            ::std::result::Result::Err(err) => {
                 return std::result::Result::Ok(err.respond());
             }
         }
