@@ -11,7 +11,7 @@ where
 {
     /// Pop message from queue
     ///
-    /// Behaves like "peak", but with "obtainable" message check, message and database reservation
+    /// Behaves like "peek", but with "obtainable" message check, message and database reservation
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::{SimpleDispatcher, StatusAwareDispatcher};

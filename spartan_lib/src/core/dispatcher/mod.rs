@@ -33,16 +33,16 @@ mod tests {
                 let mut db = create_database();
                 db.push(message);
                 assert_eq!(db.size(), 1);
-                assert!(db.peak().unwrap().reservable());
+                assert!(db.peek().unwrap().reservable());
             }
 
             #[test]
-            fn peak_message() {
+            fn peek_message() {
                 let message = generate_test_message();
                 let mut db = create_database();
                 db.push(message.clone());
-                assert_eq!(db.peak().unwrap().id, message.id);
-                assert!(db.peak().unwrap().reservable());
+                assert_eq!(db.peek().unwrap().id, message.id);
+                assert!(db.peek().unwrap().reservable());
             }
 
             #[test]
@@ -82,7 +82,7 @@ mod tests {
                 assert_eq!(db.size(), 3);
                 db.gc();
                 assert_eq!(db.size(), 2);
-                assert_eq!(db.peak().unwrap().id, message.id);
+                assert_eq!(db.peek().unwrap().id, message.id);
             }
         };
     }

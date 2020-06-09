@@ -75,11 +75,11 @@ where
         Some(&mut self.objects.get_mut(&position)?.1)
     }
 
-    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<()> {
-        let message = self.objects.remove(&position)?;
+    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<M> {
+        let (id, message) = self.objects.remove(&position)?;
         self.queue_tree
-            .remove(&(message.1.sort(), message.0));
-        Some(())
+            .remove(&(message.sort(), id));
+        Some(message)
     }
 
     fn retain<F>(&mut self, predicate: F)
