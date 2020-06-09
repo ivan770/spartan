@@ -58,9 +58,9 @@ where
         F: Fn(&M) -> bool,
     {
         Some(self.queue_tree.values().find_map(|key| {
-            let message = self.objects.get(key).unwrap();
-            if predicate(&message.1) {
-                Some(message.1.id())
+            let (_, message) = self.objects.get(key).unwrap();
+            if predicate(&message) {
+                Some(message.id())
             } else {
                 None
             }
