@@ -5,7 +5,9 @@ use async_std::{
     task::sleep,
 };
 use bincode::{deserialize, serialize, Error as BincodeError};
-use std::{io::Error, time::Duration};
+use futures::stream::{iter, StreamExt};
+use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
+use std::{io::Error, path::PathBuf, time::Duration};
 use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]
@@ -24,26 +26,50 @@ pub enum PersistenceError {
 
 type PersistenceResult<T> = Result<T, PersistenceError>;
 
-pub async fn spawn_persistence(manager: &Manager) -> Result<(), PersistenceError> {
+async fn persist(
+    name: &str,
+    db: &Mutex<TreeDatabase<Message>>,
+    mut path: PathBuf,
+) -> Result<(), PersistenceError> {
+    let db = db.lock().await;
+
+    path.push(name);
+
+    info!("Saving database \"{}\"", name);
+
+    write(
+        path,
+        serialize(&*db).map_err(PersistenceError::SerializationError)?,
+    )
+    .await
+    .map_err(PersistenceError::FileWriteError)?;
+
+    info!("Saved \"{}\" successfully", name);
+
+    Ok(())
+}
+
+pub async fn spawn_persistence(manager: &Manager) {
+    let timer = Duration::from_secs(manager.config.persistence_timer);
+
     loop {
-        sleep(Duration::from_secs(manager.config.persistence_timer)).await;
+        sleep(timer).await;
 
-        for (name, db) in manager.node().db.iter() {
-            let db = db.lock().await;
+        iter(manager.node().db.iter())
+            .for_each_concurrent(None, |(name, db)| async move {
+                let path = manager.config.path.clone();
 
-            let mut path = manager.config.path.clone();
-            path.push(name);
-
-            info!("Saving database \"{}\"", name);
-            write(
-                path,
-                serialize(&*db).map_err(PersistenceError::SerializationError)?,
-            )
-            .await
-            .map_err(PersistenceError::FileWriteError)?;
-
-            info!("Saved \"{}\" successfully", name);
-        }
+                match persist(name, db, path).await {
+                    Err(PersistenceError::SerializationError(e)) => {
+                        error!("Unable to serialize database: {}", e)
+                    }
+                    Err(PersistenceError::FileWriteError(e)) => {
+                        error!("Unable to write serialized database to file: {}", e)
+                    }
+                    _ => unreachable!(),
+                }
+            })
+            .await;
     }
 }
 

@@ -44,3 +44,6 @@ version = "0.5"
 
 [dependencies.anyhow]
 version = "1.0"
+
+[dependencies.futures]
+version = "0.3"
