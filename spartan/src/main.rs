@@ -11,7 +11,7 @@ mod routing;
 mod server;
 
 use anyhow::Error;
-use node::{gc::spawn_gc, load_from_fs, persistence::PersistenceError, spawn_persistence, Manager};
+use node::{gc::spawn_gc, load_from_fs, spawn_persistence, Manager};
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
@@ -48,17 +48,7 @@ async fn main() -> Result<(), Error> {
 
     debug!("Spawning persistence job.");
 
-    tide.spawn(|ctx: JobContext<Manager>| async move {
-        match spawn_persistence(ctx.state()).await {
-            Err(PersistenceError::SerializationError(e)) => {
-                error!("Unable to serialize database: {}", e)
-            }
-            Err(PersistenceError::FileWriteError(e)) => {
-                error!("Unable to write serialized database to file: {}", e)
-            }
-            _ => unreachable!(),
-        }
-    });
+    tide.spawn(|ctx: JobContext<Manager>| async move { spawn_persistence(ctx.state()).await });
 
     tide.listen(server.host()).await?;
     Ok(())

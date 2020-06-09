@@ -1,6 +1,5 @@
 use crate::core::message::Message;
 use thiserror::Error;
-use std::fmt::Display;
 
 #[derive(Debug, Error)]
 pub enum BuilderError {
@@ -48,9 +47,9 @@ impl MessageBuilder {
     #[must_use]
     pub fn body<T>(mut self, body: T) -> Self
     where
-        T: Display
+        T: Into<String>
     {
-        self.body = Some(body.to_string());
+        self.body = Some(body.into());
         self
     }
 
@@ -68,7 +67,7 @@ impl MessageBuilder {
         self
     }
 
-    /// Message timeout. Used by GC to collect messages, that execute for too long.
+    /// Message timeout. Used by GC to collect messages that execute for too long.
     #[must_use]
     pub fn timeout(mut self, timeout: u32) -> Self {
         self.timeout = timeout;

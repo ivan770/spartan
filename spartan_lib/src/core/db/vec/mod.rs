@@ -24,21 +24,20 @@ impl<M> Database<M> for VecDatabase<M> {
     where
         F: Fn(&M) -> bool,
     {
-        Some(self.db.iter().position(predicate)?)
+        self.db.iter().position(predicate)
     }
 
     fn get(&self, position: Self::PositionKey) -> Option<&M> {
-        Some(self.db.get(position)?)
+        self.db.get(position)
     }
 
     fn get_mut(&mut self, position: Self::PositionKey) -> Option<&mut M> {
-        Some(self.db.get_mut(position)?)
+        self.db.get_mut(position)
     }
 
-    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<()> {
+    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<M> {
         if self.db.get(position).is_some() {
-            self.db.remove(position);
-            Some(())
+            Some(self.db.remove(position))
         } else {
             None
         }
@@ -69,7 +68,7 @@ impl<M> StatusAwareDatabase<M> for VecDatabase<M> {
     type RequeueKey = usize;
 
     fn reserve(&mut self, position: Self::PositionKey) -> Option<&mut M> {
-        Some(self.db.get_mut(position)?)
+        self.db.get_mut(position)
     }
 
     fn requeue<F>(&mut self, position: Self::RequeueKey, predicate: F) -> Option<&mut M>

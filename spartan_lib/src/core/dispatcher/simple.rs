@@ -35,9 +35,9 @@ where
     ///
     /// db.push(message.clone());
     ///
-    /// assert_eq!(db.peak().unwrap().id(), message.id());
+    /// assert_eq!(db.peek().unwrap().id(), message.id());
     /// ```
-    fn peak(&self) -> Option<&M>;
+    fn peek(&self) -> Option<&M>;
 
     /// Start GC cycle on queue
     ///
@@ -71,7 +71,7 @@ where
     /// db.gc();
     ///
     /// assert_eq!(db.size(), 1);
-    /// assert_eq!(db.peak().unwrap().id(), message.id());
+    /// assert_eq!(db.peek().unwrap().id(), message.id());
     /// ```
     fn gc(&mut self);
 
@@ -123,6 +123,8 @@ where
 {
     /// Delete message from queue
     ///
+    /// Returns owned message if id is present in database
+    ///
     /// ```
     /// use spartan_lib::core::dispatcher::{SimpleDispatcher, simple::Delete};
     /// use spartan_lib::core::db::vec::VecDatabase;
@@ -136,11 +138,11 @@ where
     ///
     /// assert_eq!(db.size(), 1);
     ///
-    /// db.delete(message.id());
+    /// assert_eq!(db.delete(message.id()).unwrap().id(), message.id());
     ///
     /// assert_eq!(db.size(), 0);
     /// ```
-    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<M>;
 }
 
 /// Interface for deleting messages from queue, where database position key is the same, as message ID
@@ -150,6 +152,8 @@ where
     M: Dispatchable,
 {
     /// Delete message from queue
+    ///
+    /// Returns owned message if id is present in database
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::{SimpleDispatcher, simple::PositionBasedDelete};
@@ -164,11 +168,11 @@ where
     ///
     /// assert_eq!(db.size(), 1);
     ///
-    /// db.delete(message.id());
+    /// assert_eq!(db.delete(message.id()).unwrap().id(), message.id());
     ///
     /// assert_eq!(db.size(), 0);
     /// ```
-    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()>;
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<M>;
 }
 
 impl<T, M> SimpleDispatcher<M> for T
@@ -180,7 +184,7 @@ where
         self.push_raw(message);
     }
 
-    fn peak(&self) -> Option<&M> {
+    fn peek(&self) -> Option<&M> {
         self.get(self.position(|msg| msg.obtainable())?)
     }
 
@@ -202,7 +206,7 @@ where
     T: Database<M>,
     M: Dispatchable,
 {
-    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()> {
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<M> {
         self.delete_pos(self.position(|msg| msg.id() == id)?)
     }
 }
@@ -212,7 +216,7 @@ where
     T: Database<M, PositionKey = <M as Identifiable>::Id>,
     M: Dispatchable,
 {
-    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<()> {
+    fn delete(&mut self, id: <M as Identifiable>::Id) -> Option<M> {
         self.delete_pos(id)
     }
 }

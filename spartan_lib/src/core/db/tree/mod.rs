@@ -4,10 +4,10 @@ use crate::core::{
     payload::{Identifiable, Sortable},
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, hash_map::RandomState};
 use std::hash::Hash;
 
-type MessageStore<M> = HashMap<<M as Identifiable>::Id, (u64, M)>;
+type MessageStore<M, S = RandomState> = HashMap<<M as Identifiable>::Id, (u64, M), S>;
 type Tree<M> = BTreeMap<(<M as Sortable>::Sort, u64), <M as Identifiable>::Id>;
 
 #[derive(Serialize, Deserialize)]
@@ -58,9 +58,9 @@ where
         F: Fn(&M) -> bool,
     {
         Some(self.queue_tree.values().find_map(|key| {
-            let message = self.objects.get(key).unwrap();
-            if predicate(&message.1) {
-                Some(message.1.id())
+            let (_, message) = self.objects.get(key).unwrap();
+            if predicate(&message) {
+                Some(message.id())
             } else {
                 None
             }
@@ -75,11 +75,11 @@ where
         Some(&mut self.objects.get_mut(&position)?.1)
     }
 
-    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<()> {
-        let message = self.objects.remove(&position)?;
+    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<M> {
+        let (id, message) = self.objects.remove(&position)?;
         self.queue_tree
-            .remove(&(message.1.sort(), message.0));
-        Some(())
+            .remove(&(message.sort(), id));
+        Some(message)
     }
 
     fn retain<F>(&mut self, predicate: F)

@@ -10,14 +10,14 @@ pub use persistence::{load_from_fs, spawn_persistence};
 use crate::server::Config;
 use async_std::sync::{Mutex, MutexGuard};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::{hash_map::RandomState, HashMap}, fmt::Display};
 
 pub type DB = TreeDatabase<Message>;
 type MutexDB = Mutex<DB>;
 
 #[derive(Default)]
-pub struct Node {
-    db: HashMap<String, MutexDB>,
+pub struct Node<S = RandomState> {
+    db: HashMap<String, MutexDB, S>,
 }
 
 impl Node {

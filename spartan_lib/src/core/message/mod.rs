@@ -53,7 +53,7 @@ impl Dispatchable for Message {
     }
 
     fn gc(&self) -> bool {
-        self.state.gc() || (self.state.requeueable() && self.time.expired())
+        self.state.requires_gc() || (self.state.requeueable() && self.time.expired())
     }
 }
 

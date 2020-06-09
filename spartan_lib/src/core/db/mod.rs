@@ -81,6 +81,8 @@ pub trait Database<M>: Default {
 
     /// Delete message by database position key
     ///
+    /// Returns owned message if position key is present in database
+    ///
     /// ```
     /// use spartan_lib::core::db::Database;
     /// use spartan_lib::core::db::vec::VecDatabase;
@@ -96,7 +98,7 @@ pub trait Database<M>: Default {
     ///
     /// db.delete_pos(position).unwrap();
     /// ```
-    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<()>;
+    fn delete_pos(&mut self, position: Self::PositionKey) -> Option<M>;
 
     /// Retain only messages, that match predicate
     ///
