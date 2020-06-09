@@ -4,10 +4,10 @@ use crate::core::{
     payload::{Identifiable, Sortable},
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, hash_map::RandomState};
 use std::hash::Hash;
 
-type MessageStore<M> = HashMap<<M as Identifiable>::Id, (u64, M)>;
+type MessageStore<M, S = RandomState> = HashMap<<M as Identifiable>::Id, (u64, M), S>;
 type Tree<M> = BTreeMap<(<M as Sortable>::Sort, u64), <M as Identifiable>::Id>;
 
 #[derive(Serialize, Deserialize)]
