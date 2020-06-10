@@ -1,5 +1,5 @@
 use serde::Serialize;
-use tide::{Response as TideResponse, StatusCode};
+use tide::{Body, Response as TideResponse, StatusCode};
 
 pub mod clear;
 pub mod delete;
@@ -27,14 +27,16 @@ where
     }
 
     fn respond_with_status(&self, status: StatusCode) -> TideResponse {
-        TideResponse::new(status)
-            .body_json(self)
-            .unwrap_or_else(|_| {
-                Error::new(
-                    StatusCode::InternalServerError,
-                    "Unable to serialize response to JSON",
-                )
-                .respond()
-            })
+        if let Ok(body) = Body::from_json(self) {
+            let mut response = TideResponse::new(status);
+            response.set_body(body);
+            response
+        } else {
+            Error::new(
+                StatusCode::InternalServerError,
+                "Unable to serialize response to JSON",
+            )
+            .respond()
+        }
     }
 }

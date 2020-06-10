@@ -26,7 +26,7 @@ pub enum PersistenceError {
 
 type PersistenceResult<T> = Result<T, PersistenceError>;
 
-async fn persist(
+async fn persist_db(
     name: &str,
     db: &Mutex<TreeDatabase<Message>>,
     mut path: PathBuf,
@@ -49,27 +49,31 @@ async fn persist(
     Ok(())
 }
 
+pub async fn persist_manager(manager: &Manager) {
+    iter(manager.node().db.iter())
+        .for_each_concurrent(None, |(name, db)| async move {
+            let path = manager.config.path.clone();
+
+            match persist_db(name, db, path).await {
+                Err(PersistenceError::SerializationError(e)) => {
+                    error!("Unable to serialize database: {}", e)
+                }
+                Err(PersistenceError::FileWriteError(e)) => {
+                    error!("Unable to write serialized database to file: {}", e)
+                }
+                _ => (),
+            }
+        })
+        .await;
+}
+
 pub async fn spawn_persistence(manager: &Manager) {
     let timer = Duration::from_secs(manager.config.persistence_timer);
 
     loop {
         sleep(timer).await;
 
-        iter(manager.node().db.iter())
-            .for_each_concurrent(None, |(name, db)| async move {
-                let path = manager.config.path.clone();
-
-                match persist(name, db, path).await {
-                    Err(PersistenceError::SerializationError(e)) => {
-                        error!("Unable to serialize database: {}", e)
-                    }
-                    Err(PersistenceError::FileWriteError(e)) => {
-                        error!("Unable to write serialized database to file: {}", e)
-                    }
-                    _ => (),
-                }
-            })
-            .await;
+        persist_manager(manager).await;
     }
 }
 

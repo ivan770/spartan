@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::convert::TryFrom;
-use tide::{Response, StatusCode};
+use tide::{Body, Response, StatusCode};
 
 #[macro_export]
 macro_rules! respond {
@@ -36,8 +36,9 @@ impl<'a> Error<'a> {
     }
 
     pub fn respond(&self) -> Response {
-        Response::new(StatusCode::try_from(self.status).expect("Unknown error status code"))
-            .body_json(self)
-            .expect("Cannot convert error to JSON response")
+        let mut response =
+            Response::new(StatusCode::try_from(self.status).expect("Unknown error status code"));
+        response.set_body(Body::from_json(self).expect("Cannot convert error to JSON response"));
+        response
     }
 }

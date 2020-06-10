@@ -47,3 +47,6 @@ version = "1.0"
 
 [dependencies.futures]
 version = "0.3"
+
+[dependencies.async-ctrlc]
+version = "1.2"

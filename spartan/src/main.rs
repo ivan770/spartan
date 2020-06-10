@@ -11,7 +11,7 @@ mod routing;
 mod server;
 
 use anyhow::Error;
-use node::{gc::spawn_gc, load_from_fs, spawn_persistence, Manager};
+use node::{gc::spawn_gc, load_from_fs, spawn_ctrlc_handler, spawn_persistence, Manager};
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
@@ -49,6 +49,10 @@ async fn main() -> Result<(), Error> {
     debug!("Spawning persistence job.");
 
     tide.spawn(|ctx: JobContext<Manager>| async move { spawn_persistence(ctx.state()).await });
+
+    debug!("Spawning Ctrl-C handler");
+
+    tide.spawn(|ctx: JobContext<Manager>| async move { spawn_ctrlc_handler(ctx.state()).await });
 
     tide.listen(server.host()).await?;
     Ok(())

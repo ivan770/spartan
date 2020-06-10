@@ -1,16 +1,21 @@
+pub mod exit;
 pub mod extractor;
 pub mod gc;
 pub mod manager;
 pub mod persistence;
 
+pub use exit::spawn_ctrlc_handler;
 pub use extractor::QueueExtractor;
 pub use manager::Manager;
-pub use persistence::{load_from_fs, spawn_persistence};
+pub use persistence::{load_from_fs, persist_manager, spawn_persistence};
 
 use crate::server::Config;
 use async_std::sync::{Mutex, MutexGuard};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
-use std::{collections::{hash_map::RandomState, HashMap}, fmt::Display};
+use std::{
+    collections::{hash_map::RandomState, HashMap},
+    fmt::Display,
+};
 
 pub type DB = TreeDatabase<Message>;
 type MutexDB = Mutex<DB>;
