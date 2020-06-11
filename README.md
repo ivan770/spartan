@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="./images/curl.png">
+  <img src="./images/curl.png" width="75%">
 </p>
 
 ## Features
