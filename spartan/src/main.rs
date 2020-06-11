@@ -4,10 +4,19 @@ extern crate derive_new;
 #[macro_use]
 extern crate log;
 
+/// Route actions
 mod actions;
+
+/// Node
 mod node;
+
+/// HTTP requests and responses
 mod query;
+
+/// Tide routing
 mod routing;
+
+/// Server and configuration
 mod server;
 
 use anyhow::Error;

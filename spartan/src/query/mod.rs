@@ -11,10 +11,15 @@ pub mod size;
 
 pub use error::Error;
 
+/// Trait for HTTP requests and responses
 pub trait Query {}
 
+/// Trait for converting custom types into Tide responses
 pub trait Response {
+    /// Convert custom type into Tide response with 200 status code
     fn respond(&self) -> TideResponse;
+
+    /// Convert custom type into Tide response with custom status code
     fn respond_with_status(&self, status: StatusCode) -> TideResponse;
 }
 

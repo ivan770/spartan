@@ -14,13 +14,18 @@ macro_rules! respond {
     };
 }
 
+/// Serializable errors
 #[derive(Serialize)]
 pub struct Error<'a> {
+    /// Error status code
     status: u16,
+
+    /// Error message
     message: &'a str,
 }
 
 impl<'a> Error<'a> {
+    /// Create new Error instance
     pub fn new(status: StatusCode, message: &'a str) -> Self {
         Error {
             status: status.into(),
@@ -28,6 +33,7 @@ impl<'a> Error<'a> {
         }
     }
 
+    /// Alias for "Bad Request" error
     pub fn bad_request() -> Self {
         Error {
             status: StatusCode::BadRequest.into(),
@@ -35,6 +41,7 @@ impl<'a> Error<'a> {
         }
     }
 
+    /// Convert error instance into Tide response
     pub fn respond(&self) -> Response {
         let mut response =
             Response::new(StatusCode::try_from(self.status).expect("Unknown error status code"));

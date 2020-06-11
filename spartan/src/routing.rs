@@ -7,6 +7,7 @@ macro_rules! route {
     };
 }
 
+/// Attach routes to Tide server instance
 pub fn attach_routes(tide: &mut Server<Manager>) {
     tide.at("/:queue").get(route!(pop));
     tide.at("/:queue").post(route!(push));
