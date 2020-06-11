@@ -15,6 +15,10 @@ use spartan_lib::{
 };
 use tide::Result;
 
+/// Push message to queue.
+///
+/// Requires message body. Offset, max tries, timeout, delay are optional.
+/// Returns empty response.
 pub async fn push(mut request: Request) -> Result {
     let json: PushRequest = respond!(request.body_json().await.map_err(|_| Error::bad_request()));
     let mut queue = respond!(QueueExtractor::new(&request).extract().await);
@@ -22,6 +26,7 @@ pub async fn push(mut request: Request) -> Result {
     Ok(PushResponse::new().respond())
 }
 
+/// Compose message from push request.
 pub fn apply_builder(request: &PushRequest) -> Message {
     let mut builder = MessageBuilder::default().body(request.body.clone());
 

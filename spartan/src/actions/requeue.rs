@@ -9,6 +9,10 @@ use crate::{
 use spartan_lib::core::dispatcher::StatusAwareDispatcher;
 use tide::{Result, StatusCode};
 
+/// Requeues message back to queue.
+///
+/// Requires ID of message being requeued, returns empty response.
+/// Message try counter is incremented.
 pub async fn requeue(mut request: Request) -> Result {
     let json: RequeueRequest =
         respond!(request.body_json().await.map_err(|_| Error::bad_request()));
