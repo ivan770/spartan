@@ -1,7 +1,16 @@
+/// Ctrl-C handler
 pub mod exit;
+
+/// Queue extractor from request
 pub mod extractor;
+
+/// GC handler
 pub mod gc;
+
+/// Node manager
 pub mod manager;
+
+/// Persistence handler
 pub mod persistence;
 
 pub use exit::spawn_ctrlc_handler;
@@ -20,12 +29,15 @@ use std::{
 pub type DB = TreeDatabase<Message>;
 type MutexDB = Mutex<DB>;
 
+/// Key-value node implementation
 #[derive(Default)]
 pub struct Node<S = RandomState> {
+    /// Node database
     db: HashMap<String, MutexDB, S>,
 }
 
 impl Node {
+    /// Get node queue entry
     pub fn queue<T>(&self, name: T) -> Option<&MutexDB>
     where
         T: Display,
@@ -33,6 +45,7 @@ impl Node {
         self.db.get(&name.to_string())
     }
 
+    /// Get locked queue instance
     pub async fn get<T>(&self, name: T) -> Option<MutexGuard<'_, TreeDatabase<Message>>>
     where
         T: Display,
@@ -41,6 +54,7 @@ impl Node {
         Some(self.queue(name)?.lock().await)
     }
 
+    /// Add queue entry to node
     pub fn add<T>(&mut self, name: T)
     where
         T: Display,
@@ -50,6 +64,7 @@ impl Node {
             .insert(name.to_string(), Mutex::new(TreeDatabase::default()));
     }
 
+    /// Load queues from config
     pub fn load_from_config(&mut self, config: &Config) {
         config.queues.iter().for_each(|queue| self.add(queue));
     }

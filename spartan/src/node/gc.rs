@@ -4,6 +4,9 @@ use futures::stream::{iter, StreamExt};
 use spartan_lib::core::dispatcher::SimpleDispatcher;
 use std::time::Duration;
 
+/// GC handler
+///
+/// Concurrently iterates over all databases in node, and executing GC on them.
 pub async fn spawn_gc(manager: &Manager) {
     let timer = Duration::from_secs(manager.config.gc_timer);
 

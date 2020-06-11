@@ -2,6 +2,7 @@ use serde::Serialize;
 use std::convert::TryFrom;
 use tide::{Body, Response, StatusCode};
 
+/// Custom "try" macro implementation, that returns Ok response in case of Err variant
 #[macro_export]
 macro_rules! respond {
     ($expr:expr) => {

@@ -10,6 +10,7 @@ use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::{io::Error, path::PathBuf, time::Duration};
 use thiserror::Error as ThisError;
 
+/// Enum of errors, that may occur during persistence jobs
 #[derive(ThisError, Debug)]
 pub enum PersistenceError {
     #[error("Unable to open database directory: {0}")]
@@ -26,6 +27,7 @@ pub enum PersistenceError {
 
 type PersistenceResult<T> = Result<T, PersistenceError>;
 
+/// Persist database to provided path
 async fn persist_db(
     name: &str,
     db: &Mutex<TreeDatabase<Message>>,
@@ -49,6 +51,7 @@ async fn persist_db(
     Ok(())
 }
 
+/// Persist all databases from manager
 pub async fn persist_manager(manager: &Manager) {
     iter(manager.node().db.iter())
         .for_each_concurrent(None, |(name, db)| async move {
@@ -67,6 +70,7 @@ pub async fn persist_manager(manager: &Manager) {
         .await;
 }
 
+/// Persistence job handler, that persists all databases from manager
 pub async fn spawn_persistence(manager: &Manager) {
     let timer = Duration::from_secs(manager.config.persistence_timer);
 
@@ -77,6 +81,7 @@ pub async fn spawn_persistence(manager: &Manager) {
     }
 }
 
+/// Load manager from FS
 pub async fn load_from_fs(manager: &mut Manager) -> PersistenceResult<()> {
     let files = manager
         .config
