@@ -12,15 +12,15 @@ use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]
 pub enum PersistenceError {
-    #[error("Unable to open database directory")]
+    #[error("Unable to open database directory: {0}")]
     DirectoryOpenError(Error),
-    #[error("Unable to open file in database directory")]
+    #[error("Unable to open file in database directory: {0}")]
     DatabaseFileOpenError(Error),
-    #[error("File in database directory has invalid format")]
+    #[error("File in database directory has invalid format: {0}")]
     InvalidFileFormat(BincodeError),
-    #[error("Unable to serialize database")]
+    #[error("Unable to serialize database: {0}")]
     SerializationError(BincodeError),
-    #[error("Unable to write serialized database to file")]
+    #[error("Unable to write serialized database to file: {0}")]
     FileWriteError(Error),
 }
 
