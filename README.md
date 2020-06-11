@@ -2,7 +2,7 @@
 
 <h4 align="center">
   <a href="https://ivan770.me/spartan">Website</a> |
-  <a href="https://ivan770.github.io/spartan/spartan_lib/">Documentation</a>
+  Documentation (<a href="https://ivan770.github.io/spartan/spartan/">Server</a> | <a href="https://ivan770.github.io/spartan/spartan_lib/">Library</a>)
 </h4>
 
 <p align="center">
