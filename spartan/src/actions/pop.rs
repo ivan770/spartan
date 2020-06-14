@@ -15,6 +15,6 @@ pub async fn pop(request: Request) -> Result {
     let mut queue = respond!(QueueExtractor::new(&request).extract().await);
     let message = respond!(queue
         .pop()
-        .ok_or_else(|| Error::new(StatusCode::NotFound, "Queue is empty")));
+        .ok_or_else(|| Error::new(StatusCode::NotFound, "No message available")));
     Ok(PopResponse::new(message).respond())
 }
