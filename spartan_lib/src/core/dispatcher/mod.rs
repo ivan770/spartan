@@ -12,7 +12,6 @@ mod tests {
             use crate::core::dispatcher::SimpleDispatcher;
             use crate::core::message::{builder::MessageBuilder, Message};
             use crate::core::payload::Status;
-            use chrono::{TimeZone, Utc};
             use uuid::Uuid;
 
             fn generate_test_message() -> Message {

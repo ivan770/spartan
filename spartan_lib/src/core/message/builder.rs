@@ -100,7 +100,6 @@ impl MessageBuilder {
 #[cfg(test)]
 mod tests {
     use super::MessageBuilder;
-    use chrono::Utc;
 
     #[test]
     fn creates_message() {

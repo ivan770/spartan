@@ -151,7 +151,6 @@ mod tests {
         message::{builder::MessageBuilder, Message},
         payload::Status,
     };
-    use chrono::Utc;
 
     fn create_database() -> TreeDatabase<Message> {
         TreeDatabase::default()

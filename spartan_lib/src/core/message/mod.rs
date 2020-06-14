@@ -88,7 +88,6 @@ impl Sortable for Message {
 mod tests {
     use super::builder::MessageBuilder;
     use crate::core::payload::Sortable;
-    use chrono::Utc;
 
     macro_rules! delayed_message {
         ($time:expr) => {
