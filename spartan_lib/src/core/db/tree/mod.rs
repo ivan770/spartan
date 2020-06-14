@@ -194,9 +194,9 @@ mod tests {
     fn test_position_get() {
         let mut database = create_database();
         let message1 = create_message!();
-        let message2 = create_message!(|_| Utc::today().and_hms(1, 0, 0).timestamp());
-        let message3 = create_message!(|_| Utc::today().and_hms(4, 0, 0).timestamp());
-        let message4 = create_message!(|_| Utc::today().and_hms(3, 0, 0).timestamp());
+        let message2 = create_message!(2);
+        let message3 = create_message!(5);
+        let message4 = create_message!(4);
         database.push_raw(message1.clone());
         database.push_raw(message2.clone());
         database.push_raw(message3.clone());
@@ -222,7 +222,7 @@ mod tests {
     fn test_delete() {
         let mut database = create_database();
         let message1 = create_message!();
-        let message2 = create_message!(|_| Utc::today().and_hms(1, 0, 0).timestamp());
+        let message2 = create_message!(1);
         database.push_raw(message1);
         database.push_raw(message2.clone());
         assert_eq!(database.objects.len(), 2);

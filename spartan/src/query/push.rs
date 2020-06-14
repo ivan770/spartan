@@ -7,7 +7,7 @@ pub struct PushRequest {
     pub offset: Option<i32>,
     pub max_tries: Option<u32>,
     pub timeout: Option<u32>,
-    pub delay: Option<i64>,
+    pub delay: Option<u32>,
 }
 
 #[derive(Serialize, new)]

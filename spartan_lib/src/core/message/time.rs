@@ -37,11 +37,11 @@ pub(crate) struct Time {
 }
 
 impl Time {
-    pub(crate) fn new(offset: i32, delay: Option<i64>, timeout: u32) -> Time {
+    pub(crate) fn new(offset: i32, delay: Option<u32>, timeout: u32) -> Time {
         Time {
             offset,
             timestamp: Self::get_offset_timestamp(offset),
-            delay,
+            delay: Self::convert_delay(delay, offset),
             timeout: Timeout::new(timeout),
         }
     }
@@ -64,6 +64,10 @@ impl Time {
 
     pub(crate) fn expired(&self) -> bool {
         self.timeout.expired(self.get_timestamp())
+    }
+
+    fn convert_delay(seconds: Option<u32>, offset: i32) -> Option<i64> {
+        Some(Self::get_offset_timestamp(offset) + seconds? as i64)
     }
 
     fn get_timestamp(&self) -> i64 {
@@ -97,7 +101,7 @@ mod tests {
 
     #[test]
     fn delay_test() {
-        let time = Time::new(0, Some(get_timestamp() + 2), 1);
+        let time = Time::new(0, Some(2), 1);
         assert!(!time.check_delay());
         sleep(Duration::from_secs(3));
         assert!(time.check_delay());

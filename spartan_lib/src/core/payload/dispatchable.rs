@@ -15,7 +15,7 @@ pub trait Dispatchable: Identifiable {
     /// let message = MessageBuilder::default().body("Hello, world").compose().unwrap();
     /// let delayed_message = MessageBuilder::default()
     ///     .body("Hello, world")
-    ///     .delay(|tz| (Utc::now() + Duration::minutes(10)).timestamp())
+    ///     .delay(600)
     ///     .compose()
     ///     .unwrap();
     ///

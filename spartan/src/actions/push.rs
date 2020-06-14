@@ -7,7 +7,6 @@ use crate::{
     respond, Request,
 };
 use spartan_lib::{
-    chrono::{FixedOffset, TimeZone, Utc},
     core::{
         dispatcher::SimpleDispatcher,
         message::{builder::MessageBuilder, Message},
@@ -44,7 +43,7 @@ pub fn apply_builder(request: &PushRequest) -> Message {
 
     if let Some(delay) = request.delay {
         builder = builder
-            .delay(|offset| (Utc.timestamp(delay, 0) + FixedOffset::east(offset)).timestamp());
+            .delay(delay);
     };
 
     builder.compose().expect("No message body provided")

@@ -67,7 +67,7 @@ mod tests {
                 let delayed_message = MessageBuilder::default()
                     .body("Hello, world")
                     .max_tries(3)
-                    .delay(|_| Utc.ymd(2030, 1, 1).and_hms(01, 00, 00).timestamp())
+                    .delay(900)
                     .compose()
                     .unwrap();
                 let useless_message = MessageBuilder::default()
@@ -118,7 +118,7 @@ mod tests {
                 let delayed_message = MessageBuilder::default()
                     .body("Hello, world")
                     .max_tries(3)
-                    .delay(|_| Utc.ymd(2030, 1, 1).and_hms(01, 00, 00).timestamp())
+                    .delay(900)
                     .compose()
                     .unwrap();
                 let mut db = create_database();
@@ -136,7 +136,7 @@ mod tests {
                 let delayed_message = MessageBuilder::default()
                     .body("Hello, world")
                     .max_tries(3)
-                    .delay(|_| Utc.ymd(1990, 1, 1).and_hms(01, 00, 00).timestamp())
+                    .delay(0)
                     .compose()
                     .unwrap();
                 let mut db = create_database();

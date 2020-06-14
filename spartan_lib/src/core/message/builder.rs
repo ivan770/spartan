@@ -18,7 +18,7 @@ pub enum BuilderError {
 ///     .offset(9 * 3600)
 ///     .max_tries(5)
 ///     .timeout(60)
-///     .delay(|tz| (Utc::today().and_hms(2, 0, 0) + FixedOffset::east(tz)).timestamp())
+///     .delay(10)
 ///     .compose()
 ///     .unwrap();
 /// ```
@@ -27,7 +27,7 @@ pub struct MessageBuilder {
     offset: i32,
     max_tries: u32,
     timeout: u32,
-    delay: Option<i64>,
+    delay: Option<u32>,
 }
 
 impl Default for MessageBuilder {
@@ -74,13 +74,10 @@ impl MessageBuilder {
         self
     }
 
-    /// Set message delay.
+    /// Set message delay in seconds.
     #[must_use]
-    pub fn delay<F>(mut self, delay: F) -> Self
-    where
-        F: FnOnce(i32) -> i64,
-    {
-        self.delay = Some(delay(self.offset));
+    pub fn delay(mut self, delay: u32) -> Self {
+        self.delay = Some(delay);
         self
     }
 
@@ -111,7 +108,7 @@ mod tests {
             .body("Hello, world")
             .max_tries(3)
             .offset(100)
-            .delay(|_| Utc::now().timestamp())
+            .delay(1)
             .timeout(40)
             .compose()
             .unwrap();
@@ -123,7 +120,7 @@ mod tests {
         MessageBuilder::default()
             .max_tries(3)
             .offset(100)
-            .delay(|_| Utc::now().timestamp())
+            .delay(1)
             .timeout(40)
             .compose()
             .unwrap();

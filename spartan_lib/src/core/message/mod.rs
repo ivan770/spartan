@@ -19,7 +19,7 @@ pub struct Message {
 }
 
 impl Message {
-    fn new(body: String, delay: Option<i64>, offset: i32, max_tries: u32, timeout: u32) -> Self {
+    fn new(body: String, delay: Option<u32>, offset: i32, max_tries: u32, timeout: u32) -> Self {
         Message {
             id: Message::generate_id(),
             body,
@@ -102,9 +102,9 @@ mod tests {
 
     #[test]
     fn test_sort() {
-        let message1 = delayed_message!(|_| Utc::today().and_hms(01, 00, 00).timestamp());
-        let message2 = delayed_message!(|_| Utc::today().and_hms(02, 00, 00).timestamp());
-        let message3 = delayed_message!(|_| Utc::today().and_hms(00, 00, 00).timestamp());
+        let message1 = delayed_message!(2);
+        let message2 = delayed_message!(3);
+        let message3 = delayed_message!(1);
         let mut vec = vec![message1.clone(), message2.clone(), message3.clone()];
         vec.sort_by_key(|msg| msg.sort());
         assert_eq!(vec.pop().unwrap().id, message2.id);
