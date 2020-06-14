@@ -2,7 +2,8 @@
 
 <h4 align="center">
   <a href="https://ivan770.me/spartan">Website</a> |
-  Documentation (<a href="https://ivan770.github.io/spartan/spartan/">Server</a> | <a href="https://ivan770.github.io/spartan/spartan_lib/">Library</a>)
+  Documentation (<a href="https://ivan770.github.io/spartan/spartan/">Server</a> | <a href="https://ivan770.github.io/spartan/spartan_lib/">Library</a>) |
+  <a href="https://github.com/ivan770/spartan/wiki/REST-API">REST API</a>
 </h4>
 
 <p align="center">
