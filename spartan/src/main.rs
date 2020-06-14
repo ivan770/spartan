@@ -30,7 +30,7 @@ pub type Request = TideRequest<Manager>;
 
 #[async_std::main]
 async fn main() -> Result<(), Error> {
-    pretty_env_logger::init();
+    pretty_env_logger::init_custom_env("LOG_LEVEL");
 
     let server = Server::from_args();
     debug!("Server initialized.");
