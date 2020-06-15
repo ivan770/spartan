@@ -3,3 +3,6 @@ members = [
     "spartan",
     "spartan_lib",
 ]
+
+[profile.release]
+lto = true
