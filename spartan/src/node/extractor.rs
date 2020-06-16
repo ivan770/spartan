@@ -7,16 +7,16 @@ use tide::StatusCode;
 const QUEUE_NOT_FOUND: &str = "Queue not found";
 
 /// Request queue extractor
-pub struct QueueExtractor<'a>(&'a Request);
+pub struct QueueExtractor<'request>(&'request Request);
 
-impl<'a> QueueExtractor<'a> {
+impl<'request> QueueExtractor<'request> {
     /// Create new extractor from request
-    pub fn new(request: &'a Request) -> Self {
+    pub fn new(request: &'request Request) -> Self {
         QueueExtractor(request)
     }
 
     /// Extract queue from request
-    pub async fn extract(self) -> Result<MutexGuard<'a, DB>, Error<'static>> {
+    pub async fn extract(self) -> Result<MutexGuard<'request, DB>, Error<'static>> {
         self.0
             .state()
             .node()

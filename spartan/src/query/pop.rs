@@ -3,8 +3,8 @@ use serde::Serialize;
 use spartan_lib::core::message::Message;
 
 #[derive(Serialize, new)]
-pub struct PopResponse<'a> {
-    message: &'a Message,
+pub struct PopResponse<'message> {
+    message: &'message Message,
 }
 
 impl Query for PopResponse<'_> {}
