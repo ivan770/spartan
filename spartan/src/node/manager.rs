@@ -1,5 +1,20 @@
-use super::Node;
+use super::{Node, DB};
 use crate::server::Config;
+use actix_web::{http::StatusCode, ResponseError};
+use futures_util::lock::MutexGuard;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum ManagerError {
+    #[error("Queue not found")]
+    QueueNotFound,
+}
+
+impl ResponseError for ManagerError {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::NOT_FOUND
+    }
+}
 
 /// Node manager
 pub struct Manager {
@@ -24,6 +39,14 @@ impl Manager {
     /// Get mutable node reference
     pub fn node_mut(&mut self) -> &mut Node {
         self.node.as_mut().expect("Node not loaded")
+    }
+
+    /// Obtain queue from local node
+    pub async fn queue(&self, name: &str) -> Result<MutexGuard<'_, DB>, ManagerError> {
+        self.node()
+            .get(name)
+            .await
+            .ok_or_else(|| ManagerError::QueueNotFound)
     }
 
     /// Load node instance from config

@@ -1,22 +1,25 @@
+use super::QueueError;
 use crate::{
-    node::QueueExtractor,
-    query::{
-        delete::{DeleteRequest, DeleteResponse},
-        Error, Response,
-    },
-    respond, Request,
+    node::Manager,
+    query::delete::{DeleteRequest, DeleteResponse},
+};
+use actix_web::{
+    web::{Data, Json, Path},
+    HttpResponse, Result,
 };
 use spartan_lib::core::dispatcher::simple::PositionBasedDelete;
-use tide::{Result, StatusCode};
 
 /// Delete message from queue.
 ///
 /// Requires ID of message being deleted, returns deleted message.
-pub async fn delete(mut request: Request) -> Result {
-    let json: DeleteRequest = respond!(request.body_json().await.map_err(|_| Error::bad_request()));
-    let mut queue = respond!(QueueExtractor::new(&request).extract().await);
-    let message = respond!(queue
-        .delete(json.id)
-        .ok_or_else(|| Error::new(StatusCode::NotFound, "Message not found")));
-    Ok(DeleteResponse::new(message).respond())
+pub async fn delete(
+    request: Json<DeleteRequest>,
+    manager: Data<Manager>,
+    queue: Path<(String,)>,
+) -> Result<HttpResponse> {
+    let mut queue = manager.queue(&queue.0).await?;
+    let message = queue
+        .delete(request.id)
+        .ok_or_else(|| QueueError::NoMessageAvailable)?;
+    Ok(HttpResponse::Ok().json(DeleteResponse::new(message)))
 }

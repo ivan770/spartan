@@ -1,5 +1,4 @@
-use super::Query;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct PushRequest {
@@ -9,9 +8,3 @@ pub struct PushRequest {
     pub timeout: Option<u32>,
     pub delay: Option<u32>,
 }
-
-#[derive(Serialize, new)]
-pub struct PushResponse {}
-
-impl Query for PushRequest {}
-impl Query for PushResponse {}

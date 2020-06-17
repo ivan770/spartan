@@ -13,27 +13,32 @@ mod node;
 /// HTTP requests and responses
 mod query;
 
-/// Tide routing
+/// Actix routing
 mod routing;
 
 /// Server and configuration
 mod server;
 
+use actix_rt::System;
+use actix_web::{web::Data, App, HttpServer};
 use anyhow::Error;
 use node::{gc::spawn_gc, load_from_fs, spawn_ctrlc_handler, spawn_persistence, Manager};
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
-use tide::{with_state, JobContext, Request as TideRequest};
+use tokio::{spawn, task::LocalSet};
 
-pub type Request = TideRequest<Manager>;
-
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<(), Error> {
     pretty_env_logger::init_custom_env("LOG_LEVEL");
 
     let server = Server::from_args();
     debug!("Server initialized.");
+
+    debug!("Initializing runtime.");
+
+    let local_set = LocalSet::new();
+    let sys = System::run_in_tokio("server", &local_set);
 
     info!("Loading persistence module.");
 
@@ -44,25 +49,33 @@ async fn main() -> Result<(), Error> {
 
     info!("Persistence module initialized.");
 
-    let mut tide = with_state(manager);
-    debug!("Tide initialized. Loading routes.");
+    let manager = Data::new(manager);
 
-    attach_routes(&mut tide);
+    debug!("Spawning GC handler.");
 
-    debug!("Routes loaded.");
-
-    debug!("Spawning GC job.");
-
-    tide.spawn(|ctx: JobContext<Manager>| async move { spawn_gc(ctx.state()).await });
+    let cloned_manager = manager.clone();
+    spawn(async move { spawn_gc(&cloned_manager).await });
 
     debug!("Spawning persistence job.");
 
-    tide.spawn(|ctx: JobContext<Manager>| async move { spawn_persistence(ctx.state()).await });
+    let cloned_manager = manager.clone();
+    spawn(async move { spawn_persistence(&cloned_manager).await });
 
     debug!("Spawning Ctrl-C handler");
 
-    tide.spawn(|ctx: JobContext<Manager>| async move { spawn_ctrlc_handler(ctx.state()).await });
+    let cloned_manager = manager.clone();
+    spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
 
-    tide.listen(server.host()).await?;
+    HttpServer::new(move || {
+        App::new()
+            .app_data(manager.clone())
+            .configure(attach_routes)
+    })
+    .bind(server.host())?
+    .run()
+    .await?;
+
+    sys.await?;
+
     Ok(())
 }
