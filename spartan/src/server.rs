@@ -1,7 +1,7 @@
-use async_std::fs::read;
 use serde::Deserialize;
 use std::{io::Error, net::SocketAddr, path::PathBuf};
 use structopt::StructOpt;
+use tokio::fs::read;
 use toml::from_slice;
 
 /// Default database path

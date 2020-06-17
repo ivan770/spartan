@@ -4,7 +4,7 @@ use crate::core::{
     payload::{Identifiable, Sortable},
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, hash_map::RandomState};
+use std::collections::{hash_map::RandomState, BTreeMap, HashMap};
 use std::hash::Hash;
 
 type MessageStore<M, S = RandomState> = HashMap<<M as Identifiable>::Id, (u64, M), S>;
@@ -77,8 +77,7 @@ where
 
     fn delete_pos(&mut self, position: Self::PositionKey) -> Option<M> {
         let (id, message) = self.objects.remove(&position)?;
-        self.queue_tree
-            .remove(&(message.sort(), id));
+        self.queue_tree.remove(&(message.sort(), id));
         Some(message)
     }
 

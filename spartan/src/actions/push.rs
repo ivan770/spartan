@@ -1,28 +1,25 @@
-use crate::{
-    node::QueueExtractor,
-    query::{
-        push::{PushRequest, PushResponse},
-        Error, Response,
-    },
-    respond, Request,
+use crate::{node::Manager, query::push::PushRequest};
+use actix_web::{
+    web::{Data, Json, Path},
+    HttpResponse, Result,
 };
-use spartan_lib::{
-    core::{
-        dispatcher::SimpleDispatcher,
-        message::{builder::MessageBuilder, Message},
-    },
+use spartan_lib::core::{
+    dispatcher::SimpleDispatcher,
+    message::{builder::MessageBuilder, Message},
 };
-use tide::Result;
 
 /// Push message to queue.
 ///
 /// Requires message body. Offset, max tries, timeout, delay are optional.
 /// Returns empty response.
-pub async fn push(mut request: Request) -> Result {
-    let json: PushRequest = respond!(request.body_json().await.map_err(|_| Error::bad_request()));
-    let mut queue = respond!(QueueExtractor::new(&request).extract().await);
-    queue.push(apply_builder(&json));
-    Ok(PushResponse::new().respond())
+pub async fn push(
+    request: Json<PushRequest>,
+    manager: Data<Manager>,
+    queue: Path<(String,)>,
+) -> Result<HttpResponse> {
+    let mut queue = manager.queue(&queue.0).await?;
+    queue.push(apply_builder(&request));
+    Ok(HttpResponse::Ok().json(()))
 }
 
 /// Compose message from push request.
@@ -42,8 +39,7 @@ pub fn apply_builder(request: &PushRequest) -> Message {
     };
 
     if let Some(delay) = request.delay {
-        builder = builder
-            .delay(delay);
+        builder = builder.delay(delay);
     };
 
     builder.compose().expect("No message body provided")

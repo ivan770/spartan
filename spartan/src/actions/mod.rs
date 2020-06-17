@@ -1,3 +1,6 @@
+use actix_web::{http::StatusCode, ResponseError};
+use thiserror::Error;
+
 /// Clear queue
 pub mod clear;
 
@@ -15,3 +18,15 @@ pub mod requeue;
 
 /// Get queue size
 pub mod size;
+
+#[derive(Error, Debug)]
+enum QueueError {
+    #[error("No message available")]
+    NoMessageAvailable,
+}
+
+impl ResponseError for QueueError {
+    fn status_code(&self) -> StatusCode {
+        StatusCode::NOT_FOUND
+    }
+}

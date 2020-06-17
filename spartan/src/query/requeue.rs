@@ -1,14 +1,7 @@
-use super::Query;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct RequeueRequest {
     pub id: Uuid,
 }
-
-#[derive(Serialize, new)]
-pub struct RequeueResponse {}
-
-impl Query for RequeueRequest {}
-impl Query for RequeueResponse {}

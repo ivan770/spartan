@@ -7,12 +7,15 @@ edition = "2018"
 [dependencies.spartan_lib]
 path = "../spartan_lib"
 
-[dependencies.tide]
-git = "https://github.com/ivan770/tide"
+[dependencies.actix-web]
+version = "2.0"
 
-[dependencies.async-std]
-version = "1.6.0"
-features = ["attributes"]
+[dependencies.actix-rt]
+version = "1.1"
+
+[dependencies.tokio]
+version = "0.2"
+features = ["macros", "rt-threaded", "fs"]
 
 [dependencies.structopt]
 version = "0.3"
@@ -45,8 +48,5 @@ version = "0.5"
 [dependencies.anyhow]
 version = "1.0"
 
-[dependencies.futures]
+[dependencies.futures-util]
 version = "0.3"
-
-[dependencies.async-ctrlc]
-version = "1.2"

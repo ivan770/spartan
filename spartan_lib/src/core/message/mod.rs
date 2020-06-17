@@ -47,7 +47,7 @@ impl Dispatchable for Message {
     fn obtainable(&self) -> bool {
         self.time.check_delay() && !self.time.expired()
     }
-    
+
     fn body(&self) -> &Self::Body {
         &self.body
     }

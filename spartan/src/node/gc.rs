@@ -1,6 +1,6 @@
 use super::Manager;
-use async_std::task::sleep;
-use futures::stream::{iter, StreamExt};
+use actix_rt::time::delay_for;
+use futures_util::stream::{iter, StreamExt};
 use spartan_lib::core::dispatcher::SimpleDispatcher;
 use std::time::Duration;
 
@@ -11,7 +11,7 @@ pub async fn spawn_gc(manager: &Manager) {
     let timer = Duration::from_secs(manager.config.gc_timer);
 
     loop {
-        sleep(timer).await;
+        delay_for(timer).await;
 
         iter(manager.node().db.iter())
             .for_each_concurrent(None, |(name, db)| async move {

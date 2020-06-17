@@ -1,14 +1,12 @@
 use super::Manager;
-use async_std::{
-    fs::{read, write},
-    sync::Mutex,
-    task::sleep,
-};
+use actix_rt::time::delay_for;
 use bincode::{deserialize, serialize, Error as BincodeError};
-use futures::stream::{iter, StreamExt};
+use futures_util::lock::Mutex;
+use futures_util::stream::{iter, StreamExt};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::{io::Error, path::PathBuf, time::Duration};
 use thiserror::Error as ThisError;
+use tokio::fs::{read, write};
 
 /// Enum of errors, that may occur during persistence jobs
 #[derive(ThisError, Debug)]
@@ -75,7 +73,7 @@ pub async fn spawn_persistence(manager: &Manager) {
     let timer = Duration::from_secs(manager.config.persistence_timer);
 
     loop {
-        sleep(timer).await;
+        delay_for(timer).await;
 
         persist_manager(manager).await;
     }

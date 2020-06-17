@@ -47,7 +47,7 @@ impl MessageBuilder {
     #[must_use]
     pub fn body<T>(mut self, body: T) -> Self
     where
-        T: Into<String>
+        T: Into<String>,
     {
         self.body = Some(body.into());
         self

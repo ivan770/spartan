@@ -1,5 +1,4 @@
-use crate::node::Manager;
-use tide::Server;
+use actix_web::web::{self, ServiceConfig};
 
 macro_rules! route {
     ($name:ident) => {
@@ -7,12 +6,18 @@ macro_rules! route {
     };
 }
 
-/// Attach routes to Tide server instance
-pub fn attach_routes(tide: &mut Server<Manager>) {
-    tide.at("/:queue").get(route!(pop));
-    tide.at("/:queue").post(route!(push));
-    tide.at("/:queue").delete(route!(delete));
-    tide.at("/:queue/size").get(route!(size));
-    tide.at("/:queue/requeue").post(route!(requeue));
-    tide.at("/:queue/clear").post(route!(clear));
+/// Attach routes to Actix service config
+pub fn attach_routes(config: &mut ServiceConfig) {
+    config.service(
+        web::scope("/{queue}")
+            .service(
+                web::resource("")
+                    .route(web::get().to(route!(pop)))
+                    .route(web::post().to(route!(push)))
+                    .route(web::delete().to(route!(delete))),
+            )
+            .route("/size", web::get().to(route!(size)))
+            .route("/requeue", web::post().to(route!(requeue)))
+            .route("/clear", web::post().to(route!(clear))),
+    );
 }
