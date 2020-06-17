@@ -40,14 +40,20 @@ async fn main() -> Result<(), Error> {
     let local_set = LocalSet::new();
     let sys = System::run_in_tokio("server", &local_set);
 
-    info!("Loading persistence module.");
+    debug!("Runtime initialized.");
+
+    info!("Initializing node.");
 
     let mut manager = Manager::new(server.config().await?);
     manager.load();
 
+    info!("Node initialized.");
+
+    info!("Loading queues from FS.");
+
     load_from_fs(&mut manager).await?;
 
-    info!("Persistence module initialized.");
+    info!("Queues loaded successfully.");
 
     let manager = Data::new(manager);
 
