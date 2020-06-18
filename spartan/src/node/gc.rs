@@ -7,7 +7,7 @@ use std::time::Duration;
 /// GC handler
 ///
 /// Concurrently iterates over all databases in node, and executing GC on them.
-pub async fn spawn_gc(manager: &Manager) {
+pub async fn spawn_gc(manager: &Manager<'_>) {
     let timer = Duration::from_secs(manager.config.gc_timer);
 
     loop {

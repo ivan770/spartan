@@ -14,7 +14,7 @@ use spartan_lib::core::{
 /// Returns empty response.
 pub async fn push(
     request: Json<PushRequest>,
-    manager: Data<Manager>,
+    manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
     let mut queue = manager.queue(&queue.0).await?;

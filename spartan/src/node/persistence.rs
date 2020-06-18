@@ -50,7 +50,7 @@ async fn persist_db(
 }
 
 /// Persist all databases from manager
-pub async fn persist_manager(manager: &Manager) {
+pub async fn persist_manager(manager: &Manager<'_>) {
     iter(manager.node().db.iter())
         .for_each_concurrent(None, |(name, db)| async move {
             let path = manager.config.path.clone();
@@ -69,7 +69,7 @@ pub async fn persist_manager(manager: &Manager) {
 }
 
 /// Persistence job handler, that persists all databases from manager
-pub async fn spawn_persistence(manager: &Manager) {
+pub async fn spawn_persistence(manager: &Manager<'_>) {
     let timer = Duration::from_secs(manager.config.persistence_timer);
 
     loop {
@@ -80,7 +80,7 @@ pub async fn spawn_persistence(manager: &Manager) {
 }
 
 /// Load manager from FS
-pub async fn load_from_fs(manager: &mut Manager) -> PersistenceResult<()> {
+pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
     let files = manager
         .config
         .path
@@ -95,7 +95,7 @@ pub async fn load_from_fs(manager: &mut Manager) -> PersistenceResult<()> {
             .await
             .map_err(PersistenceError::DatabaseFileOpenError)?;
         let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
-        manager.node_mut().db.insert(name, Mutex::new(db));
+        // manager.node_mut().db.
     }
 
     Ok(())

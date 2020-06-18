@@ -14,7 +14,7 @@ use spartan_lib::core::dispatcher::simple::PositionBasedDelete;
 /// Requires ID of message being deleted, returns deleted message.
 pub async fn delete(
     request: Json<DeleteRequest>,
-    manager: Data<Manager>,
+    manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
     let mut queue = manager.queue(&queue.0).await?;

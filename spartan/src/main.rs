@@ -23,19 +23,24 @@ use actix_rt::System;
 use actix_web::{web::Data, App, HttpServer};
 use anyhow::Error;
 use node::{gc::spawn_gc, load_from_fs, spawn_ctrlc_handler, spawn_persistence, Manager};
+use once_cell::sync::OnceCell;
 use routing::attach_routes;
 use server::Server;
 use structopt::StructOpt;
 use tokio::{spawn, task::LocalSet};
 
+static SERVER: OnceCell<Server> = OnceCell::new();
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     pretty_env_logger::init_custom_env("LOG_LEVEL");
 
-    let server = Server::from_args();
-    debug!("Server initialized.");
-
     debug!("Initializing runtime.");
+
+    SERVER
+        .set(Server::from_args().load_config().await?)
+        .ok()
+        .expect("Server was already initialized");
 
     let local_set = LocalSet::new();
     let sys = System::run_in_tokio("server", &local_set);
@@ -44,8 +49,7 @@ async fn main() -> Result<(), Error> {
 
     info!("Initializing node.");
 
-    let mut manager = Manager::new(server.config().await?);
-    manager.load();
+    let mut manager = Manager::new(SERVER.get().expect("Server is uninitialized").config());
 
     info!("Node initialized.");
 
@@ -77,7 +81,7 @@ async fn main() -> Result<(), Error> {
             .app_data(manager.clone())
             .configure(attach_routes)
     })
-    .bind(server.host())?
+    .bind(SERVER.get().expect("Server is uninitialized").host())?
     .run()
     .await?;
 

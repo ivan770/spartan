@@ -1376,6 +1376,7 @@ dependencies = [
  "derive-new",
  "futures-util",
  "log",
+ "once_cell",
  "pretty_env_logger",
  "serde",
  "spartan_lib",

@@ -17,28 +17,30 @@ impl ResponseError for ManagerError {
 }
 
 /// Node manager
-pub struct Manager {
+pub struct Manager<'a> {
     /// Server config
-    pub config: Config,
+    pub config: &'a Config,
 
     /// Node
-    node: Option<Node>,
+    node: Node<'a>,
 }
 
-impl Manager {
+impl<'a> Manager<'a> {
     /// Create new manager without node
-    pub fn new(config: Config) -> Manager {
-        Manager { config, node: None }
+    pub fn new(config: &'a Config) -> Manager<'a> {
+        let mut node = Node::default();
+        node.load_from_config(config);
+        Manager { config, node }
     }
 
     /// Get node reference
     pub fn node(&self) -> &Node {
-        self.node.as_ref().expect("Node not loaded")
+        &self.node
     }
 
     /// Get mutable node reference
-    pub fn node_mut(&mut self) -> &mut Node {
-        self.node.as_mut().expect("Node not loaded")
+    pub fn node_mut(&'a mut self) -> &mut Node {
+        &mut self.node
     }
 
     /// Obtain queue from local node
@@ -47,12 +49,5 @@ impl Manager {
             .get(name)
             .await
             .ok_or_else(|| ManagerError::QueueNotFound)
-    }
-
-    /// Load node instance from config
-    pub fn load(&mut self) {
-        let mut node = Node::default();
-        node.load_from_config(&self.config);
-        self.node = Some(node);
     }
 }

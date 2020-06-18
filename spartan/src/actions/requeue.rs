@@ -12,7 +12,7 @@ use spartan_lib::core::dispatcher::StatusAwareDispatcher;
 /// Message try counter is incremented.
 pub async fn requeue(
     request: Json<RequeueRequest>,
-    manager: Data<Manager>,
+    manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
     let mut queue = manager.queue(&queue.0).await?;
