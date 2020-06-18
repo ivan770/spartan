@@ -47,6 +47,10 @@ pub struct Server {
     /// Server configuration path
     #[structopt(default_value = "Spartan.toml", long)]
     config: PathBuf,
+
+    /// Loaded server configuration
+    #[structopt(skip = None)]
+    loaded_config: Option<Config>,
 }
 
 impl Server {
@@ -56,7 +60,12 @@ impl Server {
     }
 
     /// Load configuration
-    pub async fn config(&self) -> Result<Config, Error> {
-        Ok(from_slice(&read(self.config.as_path()).await?)?)
+    pub async fn load_config(mut self) -> Result<Self, Error> {
+        self.loaded_config = Some(from_slice(&read(self.config.as_path()).await?)?);
+        Ok(self)
+    }
+
+    pub fn config(&self) -> &Config {
+        self.loaded_config.as_ref().expect("Config not loaded")
     }
 }
