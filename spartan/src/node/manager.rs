@@ -22,7 +22,7 @@ pub struct Manager<'a> {
     pub config: &'a Config,
 
     /// Node
-    node: Node<'a>,
+    pub node: Node<'a>,
 }
 
 impl<'a> Manager<'a> {
@@ -33,19 +33,9 @@ impl<'a> Manager<'a> {
         Manager { config, node }
     }
 
-    /// Get node reference
-    pub fn node(&self) -> &Node {
-        &self.node
-    }
-
-    /// Get mutable node reference
-    pub fn node_mut(&'a mut self) -> &mut Node {
-        &mut self.node
-    }
-
     /// Obtain queue from local node
     pub async fn queue(&self, name: &str) -> Result<MutexGuard<'_, DB>, ManagerError> {
-        self.node()
+        self.node
             .get(name)
             .await
             .ok_or_else(|| ManagerError::QueueNotFound)

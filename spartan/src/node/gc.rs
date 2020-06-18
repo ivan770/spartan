@@ -13,7 +13,7 @@ pub async fn spawn_gc(manager: &Manager<'_>) {
     loop {
         delay_for(timer).await;
 
-        iter(manager.node().db.iter())
+        iter(manager.node.db.iter())
             .for_each_concurrent(None, |(name, db)| async move {
                 let mut db = db.lock().await;
 

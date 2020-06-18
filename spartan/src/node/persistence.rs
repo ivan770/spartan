@@ -11,10 +11,6 @@ use tokio::fs::{read, write};
 /// Enum of errors, that may occur during persistence jobs
 #[derive(ThisError, Debug)]
 pub enum PersistenceError {
-    #[error("Unable to open database directory: {0}")]
-    DirectoryOpenError(Error),
-    #[error("Unable to open file in database directory: {0}")]
-    DatabaseFileOpenError(Error),
     #[error("File in database directory has invalid format: {0}")]
     InvalidFileFormat(BincodeError),
     #[error("Unable to serialize database: {0}")]
@@ -51,7 +47,7 @@ async fn persist_db(
 
 /// Persist all databases from manager
 pub async fn persist_manager(manager: &Manager<'_>) {
-    iter(manager.node().db.iter())
+    iter(manager.node.db.iter())
         .for_each_concurrent(None, |(name, db)| async move {
             let path = manager.config.path.clone();
 
@@ -80,22 +76,18 @@ pub async fn spawn_persistence(manager: &Manager<'_>) {
 }
 
 /// Load manager from FS
-pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
-    let files = manager
-        .config
-        .path
-        .read_dir()
-        .map_err(PersistenceError::DirectoryOpenError)?
-        .filter_map(|file| file.ok())
-        .filter_map(|file| Some((file.file_name().into_string().ok()?, file)));
+pub async fn load_from_fs<'a>(manager: &mut Manager<'a>) -> PersistenceResult<()> {
+    for queue in manager.config.queues.iter() {
+        let mut path = manager.config.path.clone();
+        path.push(queue);
 
-    for (name, data) in files {
-        info!("Loading \"{}\" from file", name);
-        let file_buf = read(data.path())
-            .await
-            .map_err(PersistenceError::DatabaseFileOpenError)?;
-        let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
-        // manager.node_mut().db.
+        match read(path).await {
+            Ok(file_buf) => {
+                let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
+                manager.node.db.insert(queue, Mutex::new(db));
+            }
+            Err(e) => error!("Unable to load database {}: {}", queue, e),
+        }
     }
 
     Ok(())
