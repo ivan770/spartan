@@ -86,7 +86,7 @@ pub async fn load_from_fs<'a>(manager: &mut Manager<'a>) -> PersistenceResult<()
                 let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
                 manager.node.db.insert(queue, Mutex::new(db));
             }
-            Err(e) => error!("Unable to load database {}: {}", queue, e),
+            Err(e) => warn!("Unable to load database {}: {}", queue, e),
         }
     }
 
