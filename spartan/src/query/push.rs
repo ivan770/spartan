@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
-#[derive(Default, Deserialize)]
-#[cfg_attr(test, derive(serde::Serialize))]
+#[derive(Deserialize)]
+#[cfg_attr(test, derive(Default, serde::Serialize))]
 pub struct PushRequest {
     pub body: String,
     pub offset: Option<i32>,

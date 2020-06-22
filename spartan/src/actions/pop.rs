@@ -16,3 +16,34 @@ pub async fn pop(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<H
     let message = queue.pop().ok_or_else(|| QueueError::NoMessageAvailable)?;
     Ok(HttpResponse::Ok().json(PopResponse::new(message)))
 }
+
+#[cfg(test)]
+mod tests {
+    use actix_web::{web::Bytes, test::{read_response, init_service, read_response_json}};
+    use crate::{server::Config, init_application, test_request, query::{pop::TestPopResponse, push::PushRequest}};
+    use once_cell::sync::Lazy;
+
+    static CONFIG: Lazy<Config> = Lazy::new(|| Config::default());
+
+    #[actix_rt::test]
+    async fn test_empty_pop() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+        let pop = read_response(&mut app, test_request!(get, "/test")).await;
+        assert_eq!(pop, Bytes::from_static(b"No message available"));
+    }
+
+    #[actix_rt::test]
+    async fn test_message_pop() {
+        use spartan_lib::core::payload::Dispatchable;
+
+        let mut app = init_service(init_application!(&CONFIG)).await;
+
+        read_response(&mut app, test_request!(post, "/test", &PushRequest {
+            body: String::from("Hello, world"),
+            ..Default::default()
+        })).await;
+
+        let pop: TestPopResponse = read_response_json(&mut app, test_request!(get, "/test")).await;
+        assert_eq!(pop.message.body(), "Hello, world");
+    }
+}
