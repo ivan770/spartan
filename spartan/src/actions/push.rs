@@ -18,13 +18,13 @@ pub async fn push(
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
     let mut queue = manager.queue(&queue.0).await?;
-    queue.push(apply_builder(&request));
+    queue.push(apply_builder(request.into_inner()));
     Ok(HttpResponse::Ok().json(()))
 }
 
 /// Compose message from push request.
-pub fn apply_builder(request: &PushRequest) -> Message {
-    let mut builder = MessageBuilder::default().body(request.body.clone());
+pub fn apply_builder(request: PushRequest) -> Message {
+    let mut builder = MessageBuilder::default().body(request.body);
 
     if let Some(offset) = request.offset {
         builder = builder.offset(offset);
