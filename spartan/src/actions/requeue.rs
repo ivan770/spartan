@@ -24,8 +24,16 @@ pub async fn requeue(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{web::Bytes, test::{read_response, init_service, read_response_json}};
-    use crate::{server::Config, init_application, test_request, query::{push::PushRequest, requeue::RequeueRequest, pop::TestPopResponse}};
+    use crate::{
+        init_application,
+        query::{pop::TestPopResponse, push::PushRequest, requeue::RequeueRequest},
+        server::Config,
+        test_request,
+    };
+    use actix_web::{
+        test::{init_service, read_response, read_response_json},
+        web::Bytes,
+    };
     use once_cell::sync::Lazy;
     use uuid::Uuid;
 
@@ -36,7 +44,11 @@ mod tests {
         let mut app = init_service(init_application!(&CONFIG)).await;
         let resp = read_response(
             &mut app,
-            test_request!(post, "/test/requeue", &RequeueRequest { id: Uuid::new_v4() }),
+            test_request!(
+                post,
+                "/test/requeue",
+                &RequeueRequest { id: Uuid::new_v4() }
+            ),
         )
         .await;
         assert_eq!(resp, Bytes::from_static(b"No message available"));
@@ -60,21 +72,35 @@ mod tests {
         )
         .await;
 
-        let first_pop: TestPopResponse = read_response_json(&mut app, test_request!(get, "/test")).await;
+        let first_pop: TestPopResponse =
+            read_response_json(&mut app, test_request!(get, "/test")).await;
 
         read_response(
             &mut app,
-            test_request!(post, "/test/requeue", &RequeueRequest { id: first_pop.message.id }),
+            test_request!(
+                post,
+                "/test/requeue",
+                &RequeueRequest {
+                    id: first_pop.message.id
+                }
+            ),
         )
         .await;
 
-        let second_pop: TestPopResponse = read_response_json(&mut app, test_request!(get, "/test")).await;
+        let second_pop: TestPopResponse =
+            read_response_json(&mut app, test_request!(get, "/test")).await;
 
         assert_eq!(first_pop.message.id, second_pop.message.id);
 
         read_response(
             &mut app,
-            test_request!(post, "/test/requeue", &RequeueRequest { id: second_pop.message.id }),
+            test_request!(
+                post,
+                "/test/requeue",
+                &RequeueRequest {
+                    id: second_pop.message.id
+                }
+            ),
         )
         .await;
 

@@ -15,8 +15,13 @@ pub async fn size(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<
 
 #[cfg(test)]
 mod tests {
-    use crate::{server::Config, init_application, query::{push::PushRequest, size::SizeResponse}, test_request};
-    use actix_web::test::{read_response_json, init_service, read_response};
+    use crate::{
+        init_application,
+        query::{push::PushRequest, size::SizeResponse},
+        server::Config,
+        test_request,
+    };
+    use actix_web::test::{init_service, read_response, read_response_json};
     use once_cell::sync::Lazy;
 
     static CONFIG: Lazy<Config> = Lazy::new(|| Config::default());
@@ -24,16 +29,26 @@ mod tests {
     #[actix_rt::test]
     async fn test_size() {
         let mut app = init_service(init_application!(&CONFIG)).await;
-        
-        let size: SizeResponse = read_response_json(&mut app, test_request!(get, "/test/size")).await;
+
+        let size: SizeResponse =
+            read_response_json(&mut app, test_request!(get, "/test/size")).await;
         assert_eq!(size.size, 0);
 
-        read_response(&mut app, test_request!(post, "/test", &PushRequest {
-            body: String::from("Hello, world"),
-            ..Default::default()
-        })).await;
+        read_response(
+            &mut app,
+            test_request!(
+                post,
+                "/test",
+                &PushRequest {
+                    body: String::from("Hello, world"),
+                    ..Default::default()
+                }
+            ),
+        )
+        .await;
 
-        let size: SizeResponse = read_response_json(&mut app, test_request!(get, "/test/size")).await;
+        let size: SizeResponse =
+            read_response_json(&mut app, test_request!(get, "/test/size")).await;
         assert_eq!(size.size, 1);
     }
 }

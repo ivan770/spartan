@@ -47,8 +47,16 @@ pub fn apply_builder(request: &PushRequest) -> Message {
 
 #[cfg(test)]
 mod tests {
-    use crate::{server::Config, init_application, test_request, query::{push::PushRequest, pop::TestPopResponse}};
-    use actix_web::{web::Bytes, test::{read_response, init_service, read_response_json}};
+    use crate::{
+        init_application,
+        query::{pop::TestPopResponse, push::PushRequest},
+        server::Config,
+        test_request,
+    };
+    use actix_web::{
+        test::{init_service, read_response, read_response_json},
+        web::Bytes,
+    };
     use once_cell::sync::Lazy;
 
     static CONFIG: Lazy<Config> = Lazy::new(|| Config::default());
@@ -59,10 +67,18 @@ mod tests {
 
         let mut app = init_service(init_application!(&CONFIG)).await;
 
-        read_response(&mut app, test_request!(post, "/test", &PushRequest {
-            body: String::from("Hello, world"),
-            ..Default::default()
-        })).await;
+        read_response(
+            &mut app,
+            test_request!(
+                post,
+                "/test",
+                &PushRequest {
+                    body: String::from("Hello, world"),
+                    ..Default::default()
+                }
+            ),
+        )
+        .await;
 
         let pop: TestPopResponse = read_response_json(&mut app, test_request!(get, "/test")).await;
         assert_eq!(pop.message.body(), "Hello, world");
@@ -72,11 +88,19 @@ mod tests {
     async fn test_delayed_push() {
         let mut app = init_service(init_application!(&CONFIG)).await;
 
-        read_response(&mut app, test_request!(post, "/test", &PushRequest {
-            body: String::from("Hello, world"),
-            delay: Some(900),
-            ..Default::default()
-        })).await;
+        read_response(
+            &mut app,
+            test_request!(
+                post,
+                "/test",
+                &PushRequest {
+                    body: String::from("Hello, world"),
+                    delay: Some(900),
+                    ..Default::default()
+                }
+            ),
+        )
+        .await;
 
         let pop = read_response(&mut app, test_request!(get, "/test")).await;
         assert_eq!(pop, Bytes::from_static(b"No message available"));
