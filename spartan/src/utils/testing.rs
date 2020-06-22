@@ -1,5 +1,5 @@
-use once_cell::sync::Lazy;
 use crate::server::Config;
+use once_cell::sync::Lazy;
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| Config::default());
 

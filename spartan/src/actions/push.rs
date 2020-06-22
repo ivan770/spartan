@@ -51,7 +51,7 @@ mod tests {
         init_application,
         query::{pop::TestPopResponse, push::PushRequest},
         test_request,
-        utils::testing::CONFIG
+        utils::testing::CONFIG,
     };
     use actix_web::{
         test::{init_service, read_response, read_response_json},
