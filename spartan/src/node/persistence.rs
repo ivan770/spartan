@@ -76,7 +76,7 @@ pub async fn spawn_persistence(manager: &Manager<'_>) {
 }
 
 /// Load manager from FS
-pub async fn load_from_fs<'a>(manager: &mut Manager<'a>) -> PersistenceResult<()> {
+pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
     for queue in manager.config.queues.iter() {
         let mut path = manager.config.path.clone();
         path.push(queue);
