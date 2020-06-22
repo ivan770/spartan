@@ -5,3 +5,9 @@ use spartan_lib::core::message::Message;
 pub struct PopResponse<'message> {
     message: &'message Message,
 }
+
+#[cfg(test)]
+#[derive(serde::Deserialize)]
+pub struct TestPopResponse {
+    pub message: Message,
+}
