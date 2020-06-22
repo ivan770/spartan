@@ -8,3 +8,19 @@ macro_rules! init_application {
             .configure(crate::routing::attach_routes)
     };
 }
+
+#[macro_export]
+macro_rules! test_request {
+    ($method:ident, $uri:expr) => {
+        actix_web::test::TestRequest::$method()
+            .uri($uri)
+            .to_request()
+    };
+
+    ($method:ident, $uri:expr, $body:expr) => {
+        actix_web::test::TestRequest::$method()
+            .set_json($body)
+            .uri($uri)
+            .to_request()
+    };
+}

@@ -20,26 +20,20 @@ mod tests {
         init_application,
         query::{push::PushRequest, size::SizeResponse},
         server::Config,
+        test_request,
     };
     use actix_web::{
-        test::{init_service, read_response, read_response_json, TestRequest},
+        test::{init_service, read_response, read_response_json},
         web::Bytes,
     };
     use once_cell::sync::Lazy;
-    use std::path::PathBuf;
 
-    static CONFIG: Lazy<Config> = Lazy::new(|| Config {
-        gc_timer: 10,
-        persistence_timer: 30,
-        path: PathBuf::from("./db"),
-        queues: vec![String::from("test")],
-    });
+    static CONFIG: Lazy<Config> = Lazy::new(|| Config::default());
 
     #[actix_rt::test]
     async fn test_clear() {
         let mut app = init_service(init_application!(&CONFIG)).await;
-        let req = TestRequest::post().uri("/test/clear").to_request();
-        let resp = read_response(&mut app, req).await;
+        let resp = read_response(&mut app, test_request!(post, "/test/clear")).await;
         assert_eq!(resp, Bytes::from_static(b"null"));
     }
 
@@ -48,25 +42,28 @@ mod tests {
         let mut app = init_service(init_application!(&CONFIG)).await;
 
         {
-            let post_req = TestRequest::post()
-                .set_json(&PushRequest {
-                    body: String::from("Hello, world"),
-                    ..Default::default()
-                })
-                .uri("/test")
-                .to_request();
-            read_response(&mut app, post_req).await;
+            read_response(
+                &mut app,
+                test_request!(
+                    post,
+                    "/test",
+                    &PushRequest {
+                        body: String::from("Hello, world"),
+                        ..Default::default()
+                    }
+                ),
+            )
+            .await;
 
-            let size_req = TestRequest::get().uri("/test/size").to_request();
-            let size_res: SizeResponse = read_response_json(&mut app, size_req).await;
+            let size_res: SizeResponse =
+                read_response_json(&mut app, test_request!(get, "/test/size")).await;
             assert_eq!(size_res.size, 1);
         }
 
-        let req = TestRequest::post().uri("/test/clear").to_request();
-        read_response(&mut app, req).await;
+        read_response(&mut app, test_request!(post, "/test/clear")).await;
 
-        let size_req = TestRequest::get().uri("/test/size").to_request();
-        let size_res: SizeResponse = read_response_json(&mut app, size_req).await;
+        let size_res: SizeResponse =
+            read_response_json(&mut app, test_request!(get, "/test/size")).await;
         assert_eq!(size_res.size, 0);
     }
 }
