@@ -1,3 +1,8 @@
+use once_cell::sync::Lazy;
+use crate::server::Config;
+
+pub static CONFIG: Lazy<Config> = Lazy::new(|| Config::default());
+
 #[macro_export]
 macro_rules! init_application_from_data {
     ($data:expr) => {

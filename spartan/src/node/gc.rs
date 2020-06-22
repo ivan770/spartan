@@ -34,12 +34,9 @@ pub async fn spawn_gc(manager: &Manager<'_>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{node::Manager, server::Config};
-    use once_cell::sync::Lazy;
+    use crate::{node::Manager, utils::testing::CONFIG};
     use spartan_lib::core::{dispatcher::SimpleDispatcher, message::builder::MessageBuilder, payload::Status};
     use super::execute_gc;
-
-    static CONFIG: Lazy<Config> = Lazy::new(|| Config::default());
 
     #[tokio::test]
     async fn test_gc() {

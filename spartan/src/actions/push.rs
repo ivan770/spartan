@@ -50,16 +50,13 @@ mod tests {
     use crate::{
         init_application,
         query::{pop::TestPopResponse, push::PushRequest},
-        server::Config,
         test_request,
+        utils::testing::CONFIG
     };
     use actix_web::{
         test::{init_service, read_response, read_response_json},
         web::Bytes,
     };
-    use once_cell::sync::Lazy;
-
-    static CONFIG: Lazy<Config> = Lazy::new(|| Config::default());
 
     #[actix_rt::test]
     async fn test_push() {
