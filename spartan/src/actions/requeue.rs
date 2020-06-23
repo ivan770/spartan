@@ -18,7 +18,7 @@ pub async fn requeue(
     let mut queue = manager.queue(&queue.0).await?;
     queue
         .requeue(request.id)
-        .ok_or_else(|| QueueError::NoMessageAvailable)?;
+        .ok_or_else(|| QueueError::MessageNotFound)?;
     Ok(HttpResponse::Ok().json(()))
 }
 
@@ -48,7 +48,7 @@ mod tests {
             ),
         )
         .await;
-        assert_eq!(resp, Bytes::from_static(b"No message available"));
+        assert_eq!(resp, Bytes::from_static(b"Message not found"));
     }
 
     #[actix_rt::test]

@@ -20,7 +20,7 @@ pub async fn delete(
     let mut queue = manager.queue(&queue.0).await?;
     let message = queue
         .delete(request.id)
-        .ok_or_else(|| QueueError::NoMessageAvailable)?;
+        .ok_or_else(|| QueueError::MessageNotFound)?;
     Ok(HttpResponse::Ok().json(DeleteResponse::new(message)))
 }
 
@@ -51,7 +51,7 @@ mod tests {
             test_request!(delete, "/test", &DeleteRequest { id: Uuid::new_v4() }),
         )
         .await;
-        assert_eq!(resp, Bytes::from_static(b"No message available"));
+        assert_eq!(resp, Bytes::from_static(b"Message not found"));
     }
 
     #[actix_rt::test]

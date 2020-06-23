@@ -23,6 +23,8 @@ pub mod size;
 enum QueueError {
     #[error("No message available")]
     NoMessageAvailable,
+    #[error("Message not found")]
+    MessageNotFound
 }
 
 impl ResponseError for QueueError {

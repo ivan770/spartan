@@ -106,7 +106,7 @@ mod tests {
             queues: vec![String::from("test"), String::from("test2")],
             ..Default::default()
         };
-        
+
         {
             let manager = Manager::new(&config);
 
