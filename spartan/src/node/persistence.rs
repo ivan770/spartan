@@ -4,7 +4,7 @@ use bincode::{deserialize, serialize, Error as BincodeError};
 use futures_util::lock::Mutex;
 use futures_util::stream::{iter, StreamExt};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
-use std::{io::Error, path::PathBuf, time::Duration};
+use std::{io::Error, path::Path, time::Duration};
 use thiserror::Error as ThisError;
 use tokio::fs::{read, write};
 
@@ -25,16 +25,14 @@ type PersistenceResult<T> = Result<T, PersistenceError>;
 async fn persist_db(
     name: &str,
     db: &Mutex<TreeDatabase<Message>>,
-    mut path: PathBuf,
+    path: &Path,
 ) -> Result<(), PersistenceError> {
     let db = db.lock().await;
-
-    path.push(name);
 
     info!("Saving database \"{}\"", name);
 
     write(
-        path,
+        path.join(name),
         serialize(&*db).map_err(PersistenceError::SerializationError)?,
     )
     .await
@@ -49,9 +47,7 @@ async fn persist_db(
 pub async fn persist_manager(manager: &Manager<'_>) {
     iter(manager.node.db.iter())
         .for_each_concurrent(None, |(name, db)| async move {
-            let path = manager.config.path.clone();
-
-            match persist_db(name, db, path).await {
+            match persist_db(name, db, &manager.config.path).await {
                 Err(PersistenceError::SerializationError(e)) => {
                     error!("Unable to serialize database: {}", e)
                 }
@@ -78,10 +74,7 @@ pub async fn spawn_persistence(manager: &Manager<'_>) {
 /// Load manager from FS
 pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
     for queue in manager.config.queues.iter() {
-        let mut path = manager.config.path.clone();
-        path.push(queue);
-
-        match read(path).await {
+        match read(manager.config.path.join(queue)).await {
             Ok(file_buf) => {
                 let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
                 manager.node.db.insert(queue, Mutex::new(db));
