@@ -19,6 +19,9 @@ mod routing;
 /// Server and configuration
 mod server;
 
+/// Utilities for easier development
+pub mod utils;
+
 use actix_rt::System;
 use actix_web::{web::Data, App, HttpServer};
 use anyhow::Error;

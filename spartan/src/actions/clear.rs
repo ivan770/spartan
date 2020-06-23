@@ -13,3 +13,54 @@ pub async fn clear(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result
     queue.clear();
     Ok(HttpResponse::Ok().json(()))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        init_application,
+        query::{push::PushRequest, size::SizeResponse},
+        test_request,
+        utils::testing::CONFIG,
+    };
+    use actix_web::{
+        test::{init_service, read_response, read_response_json},
+        web::Bytes,
+    };
+
+    #[actix_rt::test]
+    async fn test_clear() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+        let resp = read_response(&mut app, test_request!(post, "/test/clear")).await;
+        assert_eq!(resp, Bytes::from_static(b"null"));
+    }
+
+    #[actix_rt::test]
+    async fn test_clear_fullchain() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+
+        {
+            read_response(
+                &mut app,
+                test_request!(
+                    post,
+                    "/test",
+                    &PushRequest {
+                        body: String::from("Hello, world"),
+                        ..Default::default()
+                    }
+                ),
+            )
+            .await;
+
+            let size_res: SizeResponse =
+                read_response_json(&mut app, test_request!(get, "/test/size")).await;
+            assert_eq!(size_res.size, 1);
+        }
+
+        read_response(&mut app, test_request!(post, "/test/clear")).await;
+
+        let size_res: SizeResponse =
+            read_response_json(&mut app, test_request!(get, "/test/size")).await;
+        assert_eq!(size_res.size, 0);
+    }
+}

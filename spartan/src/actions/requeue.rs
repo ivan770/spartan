@@ -21,3 +21,88 @@ pub async fn requeue(
         .ok_or_else(|| QueueError::NoMessageAvailable)?;
     Ok(HttpResponse::Ok().json(()))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        init_application,
+        query::{pop::TestPopResponse, push::PushRequest, requeue::RequeueRequest},
+        test_request,
+        utils::testing::CONFIG,
+    };
+    use actix_web::{
+        test::{init_service, read_response, read_response_json},
+        web::Bytes,
+    };
+    use uuid::Uuid;
+
+    #[actix_rt::test]
+    async fn test_empty_requeue() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+        let resp = read_response(
+            &mut app,
+            test_request!(
+                post,
+                "/test/requeue",
+                &RequeueRequest { id: Uuid::new_v4() }
+            ),
+        )
+        .await;
+        assert_eq!(resp, Bytes::from_static(b"No message available"));
+    }
+
+    #[actix_rt::test]
+    async fn test_message_requeue() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+
+        read_response(
+            &mut app,
+            test_request!(
+                post,
+                "/test",
+                &PushRequest {
+                    body: String::from("Hello, world"),
+                    max_tries: Some(2),
+                    ..Default::default()
+                }
+            ),
+        )
+        .await;
+
+        let first_pop: TestPopResponse =
+            read_response_json(&mut app, test_request!(get, "/test")).await;
+
+        read_response(
+            &mut app,
+            test_request!(
+                post,
+                "/test/requeue",
+                &RequeueRequest {
+                    id: first_pop.message.id
+                }
+            ),
+        )
+        .await;
+
+        let second_pop: TestPopResponse =
+            read_response_json(&mut app, test_request!(get, "/test")).await;
+
+        assert_eq!(first_pop.message.id, second_pop.message.id);
+
+        read_response(
+            &mut app,
+            test_request!(
+                post,
+                "/test/requeue",
+                &RequeueRequest {
+                    id: second_pop.message.id
+                }
+            ),
+        )
+        .await;
+
+        let third_pop = read_response(&mut app, test_request!(get, "/test")).await;
+
+        assert_eq!(third_pop, Bytes::from_static(b"No message available"));
+    }
+}

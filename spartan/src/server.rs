@@ -38,6 +38,18 @@ pub struct Config {
     pub gc_timer: u64,
 }
 
+#[cfg(test)]
+impl Default for Config {
+    fn default() -> Config {
+        Config {
+            gc_timer: 10,
+            persistence_timer: 30,
+            path: PathBuf::from("./db"),
+            queues: vec![String::from("test")],
+        }
+    }
+}
+
 #[derive(StructOpt)]
 pub struct Server {
     /// Server host
