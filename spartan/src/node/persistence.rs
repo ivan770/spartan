@@ -92,3 +92,47 @@ pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{load_from_fs, persist_manager};
+    use crate::{node::Manager, server::Config};
+    use spartan_lib::core::{
+        dispatcher::{SimpleDispatcher, StatusAwareDispatcher},
+        message::builder::MessageBuilder,
+        payload::Dispatchable,
+    };
+    use tempfile::TempDir;
+
+    #[tokio::test]
+    async fn test_persistence() {
+        let tempdir = TempDir::new().expect("Unable to create temporary test directory");
+
+        let config = Config {
+            path: tempdir.path().to_owned(),
+            queues: vec![String::from("test"), String::from("test2")],
+            ..Default::default()
+        };
+        
+        {
+            let manager = Manager::new(&config);
+
+            let message = MessageBuilder::default()
+                .body("Hello, world")
+                .compose()
+                .unwrap();
+            manager.queue("test").await.unwrap().push(message);
+
+            persist_manager(&manager).await;
+        }
+
+        let mut manager = Manager::new(&config);
+        load_from_fs(&mut manager).await.unwrap();
+
+        manager.queue("test2").await.unwrap();
+        assert_eq!(
+            manager.queue("test").await.unwrap().pop().unwrap().body(),
+            "Hello, world"
+        );
+    }
+}
