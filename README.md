@@ -31,12 +31,9 @@
 ### Download binary from GitHub
 
 1. Download latest release from [GitHub](https://github.com/ivan770/spartan/releases/latest).
-2. Create Spartan.toml configuration file with example configuration below:
-```
-queues = ["default"]
-```
+2. Create Spartan.toml configuration file using `./spartan init`, add queues to it.
 3. Create empty directory with name `db` (you may change directory name using `Spartan.toml`).
-4. Run binary using `./spartan`, or `./spartan.exe` if you are using Windows.
+4. Start server with `./spartan start`.
 
 ### Build from source
 
@@ -45,14 +42,17 @@ Make sure you have Rust toolchain installed on your system.
 ```
 git clone https://github.com/ivan770/spartan
 cd spartan
-cargo run --release
+cargo build --release
 ```
 
 ## Configuration
 
-### Executable flags
+### Generic flags
 
 * `--config` - Change configuration file path (default: `Spartan.toml`).
+
+### `start` command flags
+
 * `--host` - Change server host (default: `127.0.0.1:5680`).
 
 ### Spartan.toml keys
