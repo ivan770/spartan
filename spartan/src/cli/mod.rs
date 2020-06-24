@@ -2,8 +2,11 @@
 mod commands;
 
 use crate::config::Config;
-use commands::start::StartCommand;
-use std::{io::Error, path::PathBuf};
+use commands::{init::InitCommand, start::StartCommand};
+use std::{
+    io::Error,
+    path::{Path, PathBuf},
+};
 use structopt::StructOpt;
 use tokio::fs::read;
 use toml::from_slice;
@@ -12,6 +15,8 @@ use toml::from_slice;
 pub enum Command {
     #[structopt(about = "Start Spartan MQ server")]
     Start(StartCommand),
+    #[structopt(about = "Initialize configuration file")]
+    Init(InitCommand),
 }
 
 #[derive(StructOpt)]
@@ -31,12 +36,20 @@ pub struct Server {
 impl Server {
     /// Load configuration
     pub async fn load_config(mut self) -> Result<Self, Error> {
-        self.loaded_config = Some(from_slice(&read(self.config.as_path()).await?)?);
+        match read(self.config.as_path()).await {
+            Ok(file) => self.loaded_config = Some(from_slice(&file)?),
+            Err(e) => info!("Unable to load configuration file: {}", e),
+        };
+
         Ok(self)
     }
 
-    pub fn config(&self) -> &Config {
-        self.loaded_config.as_ref().expect("Config not loaded")
+    pub fn config(&self) -> Option<&Config> {
+        self.loaded_config.as_ref()
+    }
+
+    pub fn config_path(&self) -> &Path {
+        self.config.as_path()
     }
 
     pub fn command(&self) -> &Command {

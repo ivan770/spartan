@@ -89,7 +89,7 @@ pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
 #[cfg(test)]
 mod tests {
     use super::{load_from_fs, persist_manager};
-    use crate::{node::Manager, config::Config};
+    use crate::{config::Config, node::Manager};
     use spartan_lib::core::{
         dispatcher::{SimpleDispatcher, StatusAwareDispatcher},
         message::builder::MessageBuilder,

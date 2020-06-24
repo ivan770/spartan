@@ -6,11 +6,12 @@ use crate::{
     },
     routing::attach_routes,
 };
+use actix_rt::System;
 use actix_web::{web::Data, App, HttpServer};
 use std::{io::Error as IoError, net::SocketAddr};
 use structopt::StructOpt;
 use thiserror::Error;
-use tokio::spawn;
+use tokio::{spawn, task::LocalSet};
 
 #[derive(Error, Debug)]
 pub enum StartCommandError {
@@ -20,6 +21,8 @@ pub enum StartCommandError {
     AddressBinding(IoError),
     #[error("Internal server error: {0}")]
     ServerError(IoError),
+    #[error("Unable to load configuration file")]
+    ConfigFileError,
 }
 
 #[derive(StructOpt)]
@@ -35,9 +38,20 @@ impl StartCommand {
     }
 
     pub async fn dispatch(&self, server: &'static Server) -> Result<(), StartCommandError> {
+        debug!("Initializing runtime.");
+
+        let local_set = LocalSet::new();
+        let sys = System::run_in_tokio("server", &local_set);
+
+        debug!("Runtime initialized.");
+
         info!("Initializing node.");
 
-        let mut manager = Manager::new(server.config());
+        let mut manager = Manager::new(
+            server
+                .config()
+                .ok_or_else(|| StartCommandError::ConfigFileError)?,
+        );
 
         info!("Node initialized.");
 
@@ -76,6 +90,8 @@ impl StartCommand {
         .run()
         .await
         .map_err(StartCommandError::ServerError)?;
+
+        sys.await.map_err(StartCommandError::ServerError)?;
 
         Ok(())
     }
