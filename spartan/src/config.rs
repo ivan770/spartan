@@ -1,8 +1,5 @@
 use serde::Deserialize;
-use std::{io::Error, net::SocketAddr, path::PathBuf};
-use structopt::StructOpt;
-use tokio::fs::read;
-use toml::from_slice;
+use std::path::PathBuf;
 
 /// Default database path
 fn default_path() -> PathBuf {
@@ -47,37 +44,5 @@ impl Default for Config {
             path: PathBuf::from("./db"),
             queues: vec![String::from("test")],
         }
-    }
-}
-
-#[derive(StructOpt)]
-pub struct Server {
-    /// Server host
-    #[structopt(default_value = "127.0.0.1:5680", long)]
-    host: SocketAddr,
-
-    /// Server configuration path
-    #[structopt(default_value = "Spartan.toml", long)]
-    config: PathBuf,
-
-    /// Loaded server configuration
-    #[structopt(skip = None)]
-    loaded_config: Option<Config>,
-}
-
-impl Server {
-    /// Get server host
-    pub fn host(&self) -> SocketAddr {
-        self.host
-    }
-
-    /// Load configuration
-    pub async fn load_config(mut self) -> Result<Self, Error> {
-        self.loaded_config = Some(from_slice(&read(self.config.as_path()).await?)?);
-        Ok(self)
-    }
-
-    pub fn config(&self) -> &Config {
-        self.loaded_config.as_ref().expect("Config not loaded")
     }
 }

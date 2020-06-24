@@ -1,5 +1,5 @@
 use super::{Node, DB};
-use crate::server::Config;
+use crate::config::Config;
 use actix_web::{http::StatusCode, ResponseError};
 use futures_util::lock::MutexGuard;
 use thiserror::Error;

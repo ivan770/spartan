@@ -14,7 +14,7 @@ pub use exit::spawn_ctrlc_handler;
 pub use manager::Manager;
 pub use persistence::{load_from_fs, persist_manager, spawn_persistence};
 
-use crate::server::Config;
+use crate::config::Config;
 use futures_util::lock::{Mutex, MutexGuard};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::collections::{hash_map::RandomState, HashMap};

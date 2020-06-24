@@ -7,6 +7,9 @@ extern crate log;
 /// Route actions
 mod actions;
 
+/// CLI
+mod cli;
+
 /// Node
 mod node;
 
@@ -16,21 +19,18 @@ mod query;
 /// Actix routing
 mod routing;
 
-/// Server and configuration
-mod server;
+/// Configuration
+mod config;
 
 /// Utilities for easier development
 pub mod utils;
 
 use actix_rt::System;
-use actix_web::{web::Data, App, HttpServer};
 use anyhow::Error;
-use node::{gc::spawn_gc, load_from_fs, spawn_ctrlc_handler, spawn_persistence, Manager};
+use cli::Server;
 use once_cell::sync::OnceCell;
-use routing::attach_routes;
-use server::Server;
 use structopt::StructOpt;
-use tokio::{spawn, task::LocalSet};
+use tokio::task::LocalSet;
 
 static SERVER: OnceCell<Server> = OnceCell::new();
 
@@ -50,43 +50,11 @@ async fn main() -> Result<(), Error> {
 
     debug!("Runtime initialized.");
 
-    info!("Initializing node.");
+    let server = SERVER.get().expect("Server is not initialized");
 
-    let mut manager = Manager::new(SERVER.get().expect("Server is uninitialized").config());
-
-    info!("Node initialized.");
-
-    info!("Loading queues from FS.");
-
-    load_from_fs(&mut manager).await?;
-
-    info!("Queues loaded successfully.");
-
-    let manager = Data::new(manager);
-
-    debug!("Spawning GC handler.");
-
-    let cloned_manager = manager.clone();
-    spawn(async move { spawn_gc(&cloned_manager).await });
-
-    debug!("Spawning persistence job.");
-
-    let cloned_manager = manager.clone();
-    spawn(async move { spawn_persistence(&cloned_manager).await });
-
-    debug!("Spawning Ctrl-C handler");
-
-    let cloned_manager = manager.clone();
-    spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
-
-    HttpServer::new(move || {
-        App::new()
-            .app_data(manager.clone())
-            .configure(attach_routes)
-    })
-    .bind(SERVER.get().expect("Server is uninitialized").host())?
-    .run()
-    .await?;
+    match server.command() {
+        cli::Command::Start(command) => command.dispatch(server).await?,
+    };
 
     sys.await?;
 

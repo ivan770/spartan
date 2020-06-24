@@ -24,7 +24,7 @@ enum QueueError {
     #[error("No message available")]
     NoMessageAvailable,
     #[error("Message not found")]
-    MessageNotFound
+    MessageNotFound,
 }
 
 impl ResponseError for QueueError {
