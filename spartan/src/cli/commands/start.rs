@@ -47,11 +47,10 @@ impl StartCommand {
 
         info!("Initializing node.");
 
-        let mut manager = Manager::new(
-            server
-                .config()
-                .ok_or_else(|| StartCommandError::ConfigFileError)?,
-        );
+        let config = server
+            .config()
+            .ok_or_else(|| StartCommandError::ConfigFileError)?;
+        let mut manager = Manager::new(config);
 
         info!("Node initialized.");
 
@@ -80,7 +79,7 @@ impl StartCommand {
         let cloned_manager = manager.clone();
         spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
 
-        start_http_server(self.host(), manager, server)
+        start_http_server(self.host(), manager, config)
             .await
             .map_err(StartCommandError::HttpServerError)?;
 

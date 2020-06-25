@@ -1,8 +1,8 @@
+pub mod key;
+
+use key::Key;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, HashSet},
-    path::PathBuf,
-};
+use std::{collections::HashSet, path::PathBuf};
 
 /// Default database path
 fn default_path() -> PathBuf {
@@ -41,7 +41,7 @@ pub struct Config {
     pub encryption_key: Option<String>,
 
     /// Queue access keys
-    pub access_keys: Option<HashMap<String, HashSet<String>>>,
+    pub access_keys: Option<HashSet<Key>>,
 }
 
 #[cfg(not(test))]

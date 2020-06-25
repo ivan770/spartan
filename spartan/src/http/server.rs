@@ -1,4 +1,4 @@
-use crate::{cli::Server, node::Manager, routing::attach_routes};
+use crate::{config::Config, node::Manager, routing::attach_routes};
 use actix_web::{web::Data, App, HttpServer};
 use std::{io::Error as IoError, net::SocketAddr};
 use thiserror::Error;
@@ -14,21 +14,14 @@ pub enum ServerError {
 pub async fn start_http_server(
     host: SocketAddr,
     manager: Data<Manager<'static>>,
-    server: &'static Server,
+    config: &'static Config,
 ) -> Result<(), ServerError> {
     HttpServer::new(move || {
-        let app = App::new()
+        App::new()
             .app_data(manager.clone())
-            .configure(attach_routes);
-
-        if server
-            .config()
-            .expect("Config not loaded")
-            .access_keys
-            .is_some()
-        {}
-
-        app
+            .configure(move |service_config| {
+                attach_routes(config, service_config);
+            })
     })
     .bind(host)
     .map_err(ServerError::AddressBinding)?
