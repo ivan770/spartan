@@ -1,5 +1,5 @@
 use super::QueueError;
-use crate::{node::Manager, query::requeue::RequeueRequest};
+use crate::{http::query::requeue::RequeueRequest, node::Manager};
 use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
@@ -25,9 +25,8 @@ pub async fn requeue(
 #[cfg(test)]
 mod tests {
     use crate::{
-        init_application,
-        query::{pop::TestPopResponse, push::PushRequest, requeue::RequeueRequest},
-        test_request,
+        http::query::{pop::TestPopResponse, push::PushRequest, requeue::RequeueRequest},
+        init_application, test_request,
         utils::testing::CONFIG,
     };
     use actix_web::{

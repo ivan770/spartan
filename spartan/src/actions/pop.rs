@@ -1,5 +1,5 @@
 use super::QueueError;
-use crate::{node::Manager, query::pop::PopResponse};
+use crate::{http::query::pop::PopResponse, node::Manager};
 use actix_web::{
     web::{Data, Path},
     HttpResponse, Result,
@@ -20,9 +20,8 @@ pub async fn pop(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<H
 #[cfg(test)]
 mod tests {
     use crate::{
-        init_application,
-        query::{pop::TestPopResponse, push::PushRequest},
-        test_request,
+        http::query::{pop::TestPopResponse, push::PushRequest},
+        init_application, test_request,
         utils::testing::CONFIG,
     };
     use actix_web::{

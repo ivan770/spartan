@@ -17,9 +17,8 @@ pub async fn clear(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result
 #[cfg(test)]
 mod tests {
     use crate::{
-        init_application,
-        query::{push::PushRequest, size::SizeResponse},
-        test_request,
+        http::query::{push::PushRequest, size::SizeResponse},
+        init_application, test_request,
         utils::testing::CONFIG,
     };
     use actix_web::{

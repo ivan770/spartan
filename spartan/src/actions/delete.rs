@@ -1,7 +1,7 @@
 use super::QueueError;
 use crate::{
+    http::query::delete::{DeleteRequest, DeleteResponse},
     node::Manager,
-    query::delete::{DeleteRequest, DeleteResponse},
 };
 use actix_web::{
     web::{Data, Json, Path},
@@ -27,14 +27,13 @@ pub async fn delete(
 #[cfg(test)]
 mod tests {
     use crate::{
-        init_application,
-        query::{
+        http::query::{
             delete::{DeleteRequest, DeleteResponse},
             pop::TestPopResponse,
             push::PushRequest,
             size::SizeResponse,
         },
-        test_request,
+        init_application, test_request,
         utils::testing::CONFIG,
     };
     use actix_web::{

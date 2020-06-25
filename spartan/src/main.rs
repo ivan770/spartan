@@ -13,8 +13,8 @@ mod cli;
 /// Node
 mod node;
 
-/// HTTP requests and responses
-mod query;
+/// HTTP server and query structs
+mod http;
 
 /// Actix routing
 mod routing;

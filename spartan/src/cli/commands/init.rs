@@ -3,7 +3,7 @@ use std::io::Error as IoError;
 use structopt::StructOpt;
 use thiserror::Error;
 use tokio::fs::write;
-use toml::to_vec;
+use toml::to_string_pretty;
 
 #[derive(Error, Debug)]
 pub enum InitCommandError {
@@ -22,7 +22,7 @@ impl InitCommand {
 
         write(
             server.config_path(),
-            to_vec(&config).map_err(|_| InitCommandError::ConfigSerializationError)?,
+            to_string_pretty(&config).map_err(|_| InitCommandError::ConfigSerializationError)?,
         )
         .await
         .map_err(InitCommandError::ConfigWriteError)?;
