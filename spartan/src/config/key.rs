@@ -5,6 +5,8 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+const WILDCARD_QUEUE: &'static str = "*";
+
 #[derive(Serialize, Deserialize, Eq)]
 pub struct Key {
     key: String,
@@ -13,7 +15,7 @@ pub struct Key {
 
 impl Key {
     pub fn has_queue(&self, queue: &str) -> bool {
-        self.queues.contains(queue)
+        self.queues.contains(WILDCARD_QUEUE) || self.queues.contains(queue)
     }
 }
 

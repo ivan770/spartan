@@ -98,8 +98,6 @@ impl<S> AccessMiddleware<S> {
     fn parse_request(&self, req: &ServiceRequest) -> Result<(), AccessError> {
         if self.has_access_keys() {
             if let Some(queue) = req.match_info().get("queue") {
-                //TODO: Authorization header parsing
-
                 let key = req
                     .headers()
                     .get("Authorization")
@@ -107,10 +105,15 @@ impl<S> AccessMiddleware<S> {
                     .to_str()
                     .map_err(|_| AccessError::IncorrectKeyHeader)?;
 
-                if self.check_access(key, queue) {
-                    Ok(())
+                if key.starts_with("Bearer") {
+                    self.check_access(
+                        key.split_ascii_whitespace()
+                            .nth(1)
+                            .ok_or_else(|| AccessError::IncorrectKeyHeader)?,
+                        queue,
+                    )
                 } else {
-                    Err(AccessError::AccessDenied)
+                    Err(AccessError::IncorrectKeyHeader)
                 }
             } else {
                 Ok(())
@@ -120,7 +123,7 @@ impl<S> AccessMiddleware<S> {
         }
     }
 
-    fn check_access(&self, key: &str, queue: &str) -> bool {
+    fn check_access(&self, key: &str, queue: &str) -> Result<(), AccessError> {
         let keys = self
             .config
             .access_keys
@@ -128,9 +131,13 @@ impl<S> AccessMiddleware<S> {
             .expect("Config doesn't have access keys");
 
         if let Some(key) = keys.get(key) {
-            key.has_queue(queue)
+            if key.has_queue(queue) {
+                Ok(())
+            } else {
+                Err(AccessError::AccessDenied)
+            }
         } else {
-            false
+            Err(AccessError::AccessDenied)
         }
     }
 
