@@ -1,4 +1,4 @@
-use crate::{node::Manager, query::push::PushRequest};
+use crate::{http::query::push::PushRequest, node::Manager};
 use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
@@ -48,9 +48,8 @@ pub fn apply_builder(request: PushRequest) -> Message {
 #[cfg(test)]
 mod tests {
     use crate::{
-        init_application,
-        query::{pop::TestPopResponse, push::PushRequest},
-        test_request,
+        http::query::{pop::TestPopResponse, push::PushRequest},
+        init_application, test_request,
         utils::testing::CONFIG,
     };
     use actix_web::{

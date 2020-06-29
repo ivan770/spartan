@@ -1,4 +1,4 @@
-use crate::{node::Manager, query::size::SizeResponse};
+use crate::{http::query::size::SizeResponse, node::Manager};
 use actix_web::{
     web::{Data, Path},
     HttpResponse, Result,
@@ -16,9 +16,8 @@ pub async fn size(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<
 #[cfg(test)]
 mod tests {
     use crate::{
-        init_application,
-        query::{push::PushRequest, size::SizeResponse},
-        test_request,
+        http::query::{push::PushRequest, size::SizeResponse},
+        init_application, test_request,
         utils::testing::CONFIG,
     };
     use actix_web::test::{init_service, read_response, read_response_json};

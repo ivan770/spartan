@@ -1,13 +1,13 @@
 use crate::{
     cli::Server,
+    http::server::{start_http_server, ServerError},
     node::{
         gc::spawn_gc, load_from_fs, persistence::PersistenceError, spawn_ctrlc_handler,
         spawn_persistence, Manager,
     },
-    routing::attach_routes,
 };
 use actix_rt::System;
-use actix_web::{web::Data, App, HttpServer};
+use actix_web::web::Data;
 use std::{io::Error as IoError, net::SocketAddr};
 use structopt::StructOpt;
 use thiserror::Error;
@@ -17,12 +17,12 @@ use tokio::{spawn, task::LocalSet};
 pub enum StartCommandError {
     #[error("Unable to restore DB from FS: {0}")]
     RestoreDB(PersistenceError),
-    #[error("Unable to bind server to address: {0}")]
-    AddressBinding(IoError),
-    #[error("Internal server error: {0}")]
-    ServerError(IoError),
     #[error("Unable to load configuration file")]
     ConfigFileError,
+    #[error("Internal runtime error")]
+    RuntimeError(IoError),
+    #[error("HTTP server error: {0}")]
+    HttpServerError(ServerError),
 }
 
 #[derive(StructOpt)]
@@ -47,11 +47,10 @@ impl StartCommand {
 
         info!("Initializing node.");
 
-        let mut manager = Manager::new(
-            server
-                .config()
-                .ok_or_else(|| StartCommandError::ConfigFileError)?,
-        );
+        let config = server
+            .config()
+            .ok_or_else(|| StartCommandError::ConfigFileError)?;
+        let mut manager = Manager::new(config);
 
         info!("Node initialized.");
 
@@ -80,18 +79,11 @@ impl StartCommand {
         let cloned_manager = manager.clone();
         spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
 
-        HttpServer::new(move || {
-            App::new()
-                .app_data(manager.clone())
-                .configure(attach_routes)
-        })
-        .bind(self.host())
-        .map_err(StartCommandError::AddressBinding)?
-        .run()
-        .await
-        .map_err(StartCommandError::ServerError)?;
+        start_http_server(self.host(), manager, config)
+            .await
+            .map_err(StartCommandError::HttpServerError)?;
 
-        sys.await.map_err(StartCommandError::ServerError)?;
+        sys.await.map_err(StartCommandError::RuntimeError)?;
 
         Ok(())
     }

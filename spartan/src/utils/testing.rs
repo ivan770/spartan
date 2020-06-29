@@ -8,7 +8,7 @@ macro_rules! init_application_from_data {
     ($data:expr) => {
         actix_web::App::new()
             .app_data($data)
-            .configure(crate::routing::attach_routes)
+            .configure(crate::routing::attach_test_routes)
     };
 }
 
