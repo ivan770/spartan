@@ -62,3 +62,31 @@ cargo build --release
 * `path` - Database path (default: `./db`).
 * `persistence_timer` - Amount of seconds between each database write to disk (default: `900`).
 * `gc_timer` - Amount of seconds between each GC job wake (GC cycle times vary, default: `300`).
+* `access_keys` - Table of queue access keys. Anonymous access to queues will not be permitted if this key has any value.
+
+#### `access_keys`
+Spartan has authentication and authorization mechanism using access keys.
+
+To get access to protected queue, you need to have valid `Authorization` header in your request, with access key in it.
+
+Keys may have multiple queues attached to them (you may also use `*` to create a wildcard key).
+
+Example of configuration:
+```toml
+[[access_keys]]
+key = "IHaveAccessToAllQueues"
+queues = ["*"]
+
+[[access_keys]]
+key = "IHaveAccessToTestQueue"
+queues = ["test"]
+
+[[access_keys]]
+key = "HelloWorld"
+queues = ["test", "test2"]
+```
+
+Example of valid HTTP Authorization header:
+```
+Authorization: Bearer IHaveAccessToAllQueues
+```
