@@ -5,12 +5,12 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-const WILDCARD_QUEUE: &'static str = "*";
+const WILDCARD_QUEUE: &str = "*";
 
-#[derive(Serialize, Deserialize, Eq)]
+#[derive(Serialize, Deserialize, Eq, Clone)]
 pub struct Key {
-    key: String,
-    queues: HashSet<String>,
+    pub key: String,
+    pub queues: HashSet<String>,
 }
 
 impl Key {

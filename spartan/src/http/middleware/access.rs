@@ -94,8 +94,11 @@ where
     }
 }
 
-impl<S> AccessMiddleware<S> {
-    fn parse_request(&self, req: &ServiceRequest) -> Result<(), AccessError> {
+impl<S> AccessMiddleware<S>
+where
+    S: Service<Request = ServiceRequest>,
+{
+    fn parse_request(&self, req: &<S as Service>::Request) -> Result<(), AccessError> {
         if self.has_access_keys() {
             if let Some(queue) = req.match_info().get("queue") {
                 let key = req
@@ -143,5 +146,52 @@ impl<S> AccessMiddleware<S> {
 
     fn has_access_keys(&self) -> bool {
         self.config.access_keys.is_some()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        config::{key::Key, Config},
+        node::Manager,
+        routing::attach_routes,
+        test_request,
+    };
+    use actix_service::Service;
+    use actix_web::{http::StatusCode, test::init_service, web::Data, App};
+    use once_cell::sync::Lazy;
+
+    static CONFIG: Lazy<Config> = Lazy::new(|| Config {
+        access_keys: Some(
+            [Key {
+                key: String::from("testing"),
+                queues: [String::from("test")].iter().cloned().collect(),
+            }]
+            .iter()
+            .cloned()
+            .collect(),
+        ),
+        ..Default::default()
+    });
+
+    #[actix_rt::test]
+    async fn test_missing_header() {
+        let mut app = init_service(
+            App::new()
+                .app_data(Data::new(Manager::new(&CONFIG)))
+                .configure(|service_config| {
+                    attach_routes(&CONFIG, service_config);
+                }),
+        )
+        .await;
+
+        let status = app
+            .call(test_request!(get, "/test"))
+            .await
+            .unwrap_err()
+            .as_response_error()
+            .status_code();
+
+        assert_eq!(status, StatusCode::BAD_REQUEST);
     }
 }
