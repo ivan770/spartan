@@ -168,10 +168,16 @@ mod tests {
 
     static CONFIG: Lazy<Config> = Lazy::new(|| Config {
         access_keys: Some(
-            [Key {
-                key: String::from("testing"),
-                queues: [String::from("test")].iter().cloned().collect(),
-            }]
+            [
+                Key {
+                    key: String::from("testing"),
+                    queues: [String::from("test")].iter().cloned().collect(),
+                },
+                Key {
+                    key: String::from("wildcard"),
+                    queues: [String::from("*")].iter().cloned().collect(),
+                },
+            ]
             .iter()
             .cloned()
             .collect(),
@@ -220,5 +226,60 @@ mod tests {
             .status_code();
 
         assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[actix_rt::test]
+    async fn test_queue_not_allowed() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+
+        let status = app
+            .call(
+                TestRequest::get()
+                    .uri("/test2")
+                    .header("Authorization", "Bearer testing")
+                    .to_request(),
+            )
+            .await
+            .unwrap_err()
+            .as_response_error()
+            .status_code();
+
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+
+    #[actix_rt::test]
+    async fn test_queue_allowed() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+
+        let status = app
+            .call(
+                TestRequest::get()
+                    .uri("/test/size")
+                    .header("Authorization", "Bearer testing")
+                    .to_request(),
+            )
+            .await
+            .unwrap()
+            .status();
+
+        assert_eq!(status, StatusCode::OK);
+    }
+
+    #[actix_rt::test]
+    async fn test_wildcard() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+
+        let status = app
+            .call(
+                TestRequest::get()
+                    .uri("/test/size")
+                    .header("Authorization", "Bearer wildcard")
+                    .to_request(),
+            )
+            .await
+            .unwrap()
+            .status();
+
+        assert_eq!(status, StatusCode::OK);
     }
 }
