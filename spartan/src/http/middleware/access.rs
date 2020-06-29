@@ -158,7 +158,12 @@ mod tests {
         test_request,
     };
     use actix_service::Service;
-    use actix_web::{http::StatusCode, test::init_service, web::Data, App};
+    use actix_web::{
+        http::StatusCode,
+        test::{init_service, TestRequest},
+        web::Data,
+        App,
+    };
     use once_cell::sync::Lazy;
 
     static CONFIG: Lazy<Config> = Lazy::new(|| Config {
@@ -174,16 +179,19 @@ mod tests {
         ..Default::default()
     });
 
+    macro_rules! init_application {
+        ($config:expr) => {
+            App::new()
+                .app_data(Data::new(Manager::new($config)))
+                .configure(|service_config| {
+                    attach_routes($config, service_config);
+                })
+        };
+    }
+
     #[actix_rt::test]
     async fn test_missing_header() {
-        let mut app = init_service(
-            App::new()
-                .app_data(Data::new(Manager::new(&CONFIG)))
-                .configure(|service_config| {
-                    attach_routes(&CONFIG, service_config);
-                }),
-        )
-        .await;
+        let mut app = init_service(init_application!(&CONFIG)).await;
 
         let status = app
             .call(test_request!(get, "/test"))
@@ -193,5 +201,24 @@ mod tests {
             .status_code();
 
         assert_eq!(status, StatusCode::BAD_REQUEST);
+    }
+
+    #[actix_rt::test]
+    async fn test_incorrect_key() {
+        let mut app = init_service(init_application!(&CONFIG)).await;
+
+        let status = app
+            .call(
+                TestRequest::get()
+                    .uri("/test")
+                    .header("Authorization", "Bearer test123")
+                    .to_request(),
+            )
+            .await
+            .unwrap_err()
+            .as_response_error()
+            .status_code();
+
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
     }
 }
