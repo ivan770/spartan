@@ -19,6 +19,11 @@ const fn default_gc_timer() -> u64 {
     300
 }
 
+/// Enable replication by default
+const fn default_replication() -> bool {
+    false
+}
+
 /// Server configuration
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -33,6 +38,9 @@ pub struct Config {
     /// Amount of seconds between GC jobs
     #[serde(default = "default_gc_timer")]
     pub gc_timer: u64,
+
+    #[serde(default = "default_replication")]
+    pub replication: bool,
 
     /// Array of queues
     pub queues: Vec<String>,
@@ -51,6 +59,7 @@ impl Default for Config {
             path: default_path(),
             persistence_timer: default_persistence_timer(),
             gc_timer: default_gc_timer(),
+            replication: default_replication(),
             queues: Vec::new(),
             encryption_key: None,
             access_keys: None,
@@ -66,6 +75,7 @@ impl Default for Config {
             persistence_timer: 30,
             gc_timer: 10,
             queues: vec![String::from("test")],
+            replication: default_replication(),
             encryption_key: None,
             access_keys: None,
         }

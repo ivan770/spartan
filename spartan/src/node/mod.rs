@@ -10,6 +10,9 @@ pub mod manager;
 /// Persistence handler
 pub mod persistence;
 
+/// Raft
+pub mod raft;
+
 pub use exit::spawn_ctrlc_handler;
 pub use manager::Manager;
 pub use persistence::{load_from_fs, persist_manager, spawn_persistence};
