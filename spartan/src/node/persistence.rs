@@ -1,10 +1,11 @@
 use super::Manager;
+use actix::{AsyncContext, Handler, Message as ActixMessage, fut::wrap_future, ActorFuture, ResponseActFuture, AtomicResponse};
 use actix_rt::time::delay_for;
 use bincode::{deserialize, serialize, Error as BincodeError};
 use futures_util::lock::Mutex;
-use futures_util::stream::{iter, StreamExt};
+use futures_util::{stream::{iter, StreamExt}};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
-use std::{io::Error, path::Path, time::Duration};
+use std::{io::Error, path::Path, time::Duration, pin::Pin, future::Future};
 use thiserror::Error as ThisError;
 use tokio::fs::{read, write};
 
@@ -20,6 +21,34 @@ pub enum PersistenceError {
 }
 
 type PersistenceResult<T> = Result<T, PersistenceError>;
+
+pub struct LoadFromFs {}
+
+impl LoadFromFs {
+    pub fn new() -> Self {
+        LoadFromFs {}
+    }
+
+    pub fn test<T>(&self, f: T)
+    where
+        T: Future<Output = ()> + 'static
+    {
+        
+    }
+}
+
+impl ActixMessage for LoadFromFs {
+    type Result = ();
+}
+
+impl Handler<LoadFromFs> for Manager<'static> {
+    type Result = ();
+
+    fn handle(&mut self, msg: LoadFromFs, ctx: &mut Self::Context) -> Self::Result {
+        let f = wrap_future::<_, Self>(persist_manager(self));
+        ctx.wait(f);
+    }
+}
 
 /// Persist database to provided path
 async fn persist_db(

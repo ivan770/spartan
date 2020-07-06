@@ -1,13 +1,13 @@
 use super::{
-    raft::{entry::LogEntry, guard::QueueGuard},
+    raft::entry::LogEntry,
     Node, DB,
 };
 use crate::config::Config;
-use actix_raft::{messages::Entry, AppData};
 use actix_web::{http::StatusCode, ResponseError};
-use futures_util::lock::Mutex;
-use std::collections::BTreeMap;
+use futures_util::lock::{MutexGuard, Mutex};
 use thiserror::Error;
+use std::collections::BTreeMap;
+use actix_raft::{AppData, messages::Entry};
 
 #[derive(Error, Debug)]
 pub enum ManagerError {
@@ -24,7 +24,7 @@ impl ResponseError for ManagerError {
 /// Node manager
 pub struct Manager<'a, E = LogEntry>
 where
-    E: AppData,
+    E: AppData
 {
     /// Server config
     pub config: &'a Config,
@@ -34,7 +34,7 @@ where
 
     // TODO: Use concurrent BTreeMap
     /// Raft log
-    replication_log: Option<Mutex<BTreeMap<u64, Entry<E>>>>,
+    pub replication_log: BTreeMap<u64, Entry<E>>,
 }
 
 impl<'a> Manager<'a> {
@@ -43,16 +43,12 @@ impl<'a> Manager<'a> {
         let mut node = Node::default();
         node.load_from_config(config);
 
-        let replication_log = if config.replication {
-            Some(Mutex::new(BTreeMap::new()))
-        } else {
-            None
-        };
+        let replication_log = BTreeMap::new();
 
         Manager {
             config,
             node,
-            replication_log,
+            replication_log
         }
     }
 
@@ -60,17 +56,11 @@ impl<'a> Manager<'a> {
     pub async fn queue(
         &'a self,
         name: &'a str,
-    ) -> Result<QueueGuard<'a, LogEntry, DB>, ManagerError> {
-        let queue = self
+    ) -> Result<MutexGuard<'a, DB>, ManagerError> {
+        Ok(self
             .node
             .get(name)
             .await
-            .ok_or_else(|| ManagerError::QueueNotFound)?;
-
-        if let Some(log) = self.replication_log.as_ref() {
-            Ok(QueueGuard::new(name, queue, Some(log.lock().await)))
-        } else {
-            Ok(QueueGuard::new(name, queue, None))
-        }
+            .ok_or_else(|| ManagerError::QueueNotFound)?)
     }
 }

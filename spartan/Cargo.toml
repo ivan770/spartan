@@ -8,7 +8,7 @@ edition = "2018"
 path = "../spartan_lib"
 
 [dependencies.actix]
-version = "0.9"
+version = "0.10.0-alpha.3"
 
 [dependencies.actix-web]
 version = "2.0"
@@ -20,7 +20,8 @@ version = "1.1"
 version = "1.0"
 
 [dependencies.actix-raft]
-version = "0.4"
+git = "https://github.com/raultang/actix-raft"
+branch = "actix-0.10.0-alpha.3"
 
 [dependencies.tokio]
 version = "0.2"

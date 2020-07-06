@@ -2,7 +2,7 @@ use crate::{
     cli::Server,
     http::server::{start_http_server, ServerError},
     node::{
-        gc::spawn_gc, load_from_fs, persistence::PersistenceError, spawn_ctrlc_handler,
+        gc::spawn_gc, load_from_fs, persistence::{LoadFromFs, PersistenceError}, spawn_ctrlc_handler,
         spawn_persistence, Manager,
     },
 };
@@ -12,6 +12,8 @@ use std::{io::Error as IoError, net::SocketAddr};
 use structopt::StructOpt;
 use thiserror::Error;
 use tokio::{spawn, task::LocalSet};
+
+use actix::Actor;
 
 #[derive(Error, Debug)]
 pub enum StartCommandError {
@@ -62,26 +64,26 @@ impl StartCommand {
 
         info!("Queues loaded successfully.");
 
-        let manager = Data::new(manager);
+        let manager = manager.start();
 
         debug!("Spawning GC handler.");
 
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_gc(&cloned_manager).await });
+        // let cloned_manager = manager.clone();
+        // spawn(async move { spawn_gc(&cloned_manager).await });
 
-        debug!("Spawning persistence job.");
+        // debug!("Spawning persistence job.");
 
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_persistence(&cloned_manager).await });
+        // let cloned_manager = manager.clone();
+        // spawn(async move { spawn_persistence(&cloned_manager).await });
 
-        debug!("Spawning Ctrl-C handler");
+        // debug!("Spawning Ctrl-C handler");
 
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
+        // let cloned_manager = manager.clone();
+        // spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
 
-        start_http_server(self.host(), manager, config)
-            .await
-            .map_err(StartCommandError::HttpServerError)?;
+        // start_http_server(self.host(), manager, config)
+        //     .await
+        //     .map_err(StartCommandError::HttpServerError)?;
 
         sys.await.map_err(StartCommandError::RuntimeError)?;
 
