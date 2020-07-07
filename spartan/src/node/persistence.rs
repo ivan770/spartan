@@ -1,9 +1,8 @@
-use super::Manager;
+use super::{MutexDB, Manager};
 use actix_rt::time::delay_for;
 use bincode::{deserialize, serialize, Error as BincodeError};
 use futures_util::lock::Mutex;
 use futures_util::stream::{iter, StreamExt};
-use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::{io::Error, path::Path, time::Duration};
 use thiserror::Error as ThisError;
 use tokio::fs::{read, write};
@@ -24,7 +23,7 @@ type PersistenceResult<T> = Result<T, PersistenceError>;
 /// Persist database to provided path
 async fn persist_db(
     name: &str,
-    db: &Mutex<TreeDatabase<Message>>,
+    db: &MutexDB,
     path: &Path,
 ) -> Result<(), PersistenceError> {
     let db = db.lock().await;

@@ -10,6 +10,9 @@ pub mod manager;
 /// Persistence handler
 pub mod persistence;
 
+/// Database replication
+pub mod replication;
+
 pub use exit::spawn_ctrlc_handler;
 pub use manager::Manager;
 pub use persistence::{load_from_fs, persist_manager, spawn_persistence};
@@ -18,8 +21,9 @@ use crate::config::Config;
 use futures_util::lock::{Mutex, MutexGuard};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::collections::{hash_map::RandomState, HashMap};
+use replication::storage::ReplicatedDatabase;
 
-pub type DB = TreeDatabase<Message>;
+pub type DB = ReplicatedDatabase<TreeDatabase<Message>>;
 type MutexDB = Mutex<DB>;
 
 /// Key-value node implementation
@@ -36,7 +40,7 @@ impl<'a> Node<'a> {
     }
 
     /// Get locked queue instance
-    pub async fn get(&self, name: &str) -> Option<MutexGuard<'_, TreeDatabase<Message>>> {
+    pub async fn get(&self, name: &str) -> Option<MutexGuard<'_, DB>> {
         debug!("Obtaining queue \"{}\"", name);
         Some(self.queue(name)?.lock().await)
     }
@@ -44,7 +48,7 @@ impl<'a> Node<'a> {
     /// Add queue entry to node
     pub fn add(&mut self, name: &'a str) {
         info!("Initializing queue \"{}\"", name);
-        self.db.insert(name, Mutex::new(TreeDatabase::default()));
+        self.db.insert(name, Mutex::new(DB::default()));
     }
 
     /// Load queues from config
