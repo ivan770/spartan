@@ -1,7 +1,14 @@
-use serde::{Serialize, Deserialize};
-use crate::node::replication::event::Event;
-use spartan_lib::core::{message::Message, dispatcher::{StatusAwareDispatcher, SimpleDispatcher, simple::{PositionBasedDelete, Delete}}, payload::Identifiable};
 use super::storage::ReplicationStorage;
+use crate::node::replication::event::Event;
+use serde::{Deserialize, Serialize};
+use spartan_lib::core::{
+    dispatcher::{
+        simple::{Delete, PositionBasedDelete},
+        SimpleDispatcher, StatusAwareDispatcher,
+    },
+    message::Message,
+    payload::Identifiable,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct ReplicatedDatabase<DB> {

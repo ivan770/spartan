@@ -14,7 +14,7 @@ impl Default for PrimaryStorage {
         PrimaryStorage {
             next_index: 1,
             gc_threshold: 0,
-            log: BTreeMap::new()
+            log: BTreeMap::new(),
         }
     }
 }
