@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
-use spartan_lib::core::{payload::Identifiable, message::Message};
+use serde::{Deserialize, Serialize};
+use spartan_lib::core::{message::Message, payload::Identifiable};
 
 #[derive(Serialize, Deserialize)]
 pub enum Event {

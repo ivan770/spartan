@@ -1,46 +1,22 @@
-use std::collections::BTreeMap;
-use super::event::Event;
-use spartan_lib::core::{message::Message, dispatcher::{StatusAwareDispatcher, SimpleDispatcher, simple::{PositionBasedDelete, Delete}}, payload::Identifiable};
 use serde::{Serialize, Deserialize};
-
-#[derive(Serialize, Deserialize)]
-pub struct ReplicationStorage {
-    next_index: u64,
-    gc_threshold: u64,
-    log: BTreeMap<u64, Event>
-}
-
-impl Default for ReplicationStorage {
-    fn default() -> Self {
-        ReplicationStorage {
-            next_index: 1,
-            gc_threshold: 0,
-            log: BTreeMap::new()
-        }
-    }
-}
-
-impl ReplicationStorage {
-    pub fn push(&mut self, event: Event) {
-        self.log.insert(self.next_index, event);
-        self.next_index += 1;
-    }
-}
+use crate::node::replication::event::Event;
+use spartan_lib::core::{message::Message, dispatcher::{StatusAwareDispatcher, SimpleDispatcher, simple::{PositionBasedDelete, Delete}}, payload::Identifiable};
+use super::storage::ReplicationStorage;
 
 #[derive(Serialize, Deserialize)]
 pub struct ReplicatedDatabase<DB> {
     inner: DB,
-    storage: Option<ReplicationStorage>
+    storage: Option<ReplicationStorage>,
 }
 
 impl<DB> Default for ReplicatedDatabase<DB>
 where
-    DB: Default
+    DB: Default,
 {
     fn default() -> Self {
         ReplicatedDatabase {
             inner: DB::default(),
-            storage: None
+            storage: None,
         }
     }
 }
@@ -48,10 +24,10 @@ where
 impl<DB> ReplicatedDatabase<DB> {
     pub fn push_event<F>(&mut self, event: F)
     where
-        F: FnOnce() -> Event
+        F: FnOnce() -> Event,
     {
         if let Some(storage) = &mut self.storage {
-            storage.push(event());
+            storage.get_primary().push(event());
         }
     }
 }
@@ -89,7 +65,7 @@ where
 
 impl<DB> StatusAwareDispatcher<Message> for ReplicatedDatabase<DB>
 where
-    DB: StatusAwareDispatcher<Message>
+    DB: StatusAwareDispatcher<Message>,
 {
     fn pop(&mut self) -> Option<&Message> {
         self.push_event(|| Event::Pop);
@@ -101,12 +77,12 @@ where
         self.push_event(|| Event::Requeue(id));
 
         self.inner.requeue(id)
-    }    
+    }
 }
 
 impl<DB> Delete<Message> for ReplicatedDatabase<DB>
 where
-    DB: Delete<Message>
+    DB: Delete<Message>,
 {
     fn delete(&mut self, id: <Message as Identifiable>::Id) -> Option<Message> {
         self.push_event(|| Event::Delete(id));
@@ -117,7 +93,7 @@ where
 
 impl<DB> PositionBasedDelete<Message> for ReplicatedDatabase<DB>
 where
-    DB: PositionBasedDelete<Message>
+    DB: PositionBasedDelete<Message>,
 {
     fn delete(&mut self, id: <Message as Identifiable>::Id) -> Option<Message> {
         self.push_event(|| Event::Delete(id));

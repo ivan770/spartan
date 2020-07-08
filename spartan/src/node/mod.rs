@@ -19,9 +19,9 @@ pub use persistence::{load_from_fs, persist_manager, spawn_persistence};
 
 use crate::config::Config;
 use futures_util::lock::{Mutex, MutexGuard};
+use replication::database::ReplicatedDatabase;
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::collections::{hash_map::RandomState, HashMap};
-use replication::storage::ReplicatedDatabase;
 
 pub type DB = ReplicatedDatabase<TreeDatabase<Message>>;
 type MutexDB = Mutex<DB>;

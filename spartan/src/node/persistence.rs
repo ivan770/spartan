@@ -1,4 +1,4 @@
-use super::{MutexDB, Manager};
+use super::{Manager, MutexDB};
 use actix_rt::time::delay_for;
 use bincode::{deserialize, serialize, Error as BincodeError};
 use futures_util::lock::Mutex;
@@ -21,11 +21,7 @@ pub enum PersistenceError {
 type PersistenceResult<T> = Result<T, PersistenceError>;
 
 /// Persist database to provided path
-async fn persist_db(
-    name: &str,
-    db: &MutexDB,
-    path: &Path,
-) -> Result<(), PersistenceError> {
+async fn persist_db(name: &str, db: &MutexDB, path: &Path) -> Result<(), PersistenceError> {
     let db = db.lock().await;
 
     info!("Saving database \"{}\"", name);
