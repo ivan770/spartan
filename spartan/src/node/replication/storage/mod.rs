@@ -14,12 +14,6 @@ pub enum ReplicationStorage {
     Replica(ReplicaStorage),
 }
 
-impl Default for ReplicationStorage {
-    fn default() -> Self {
-        ReplicationStorage::Primary(PrimaryStorage::default())
-    }
-}
-
 impl ReplicationStorage {
     pub fn get_primary(&mut self) -> &mut PrimaryStorage {
         match self {
