@@ -24,4 +24,32 @@ impl PrimaryStorage {
         self.log.insert(self.next_index, event);
         self.next_index += 1;
     }
+
+    pub fn gc(&mut self) {
+        let gc_threshold = self.gc_threshold;
+
+        self.log
+            .drain_filter(|index, _| *index <= gc_threshold)
+            .for_each(drop);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::PrimaryStorage;
+    use crate::node::replication::event::Event;
+
+    #[test]
+    fn test_gc() {
+        let mut storage = PrimaryStorage::default();
+
+        for _ in 0..6 {
+            storage.push(Event::Pop);
+        }
+
+        storage.gc_threshold = 4;
+        storage.gc();
+
+        assert_eq!(storage.log.iter().map(|(k, _)| k).next(), Some(&5));
+    }
 }

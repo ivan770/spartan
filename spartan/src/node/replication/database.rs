@@ -29,13 +29,22 @@ where
 }
 
 impl<DB> ReplicatedDatabase<DB> {
-    pub fn push_event<F>(&mut self, event: F)
+    fn call_storage<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut ReplicationStorage),
+    {
+        self.storage.as_mut().map(f);
+    }
+
+    fn push_event<F>(&mut self, event: F)
     where
         F: FnOnce() -> Event,
     {
-        if let Some(storage) = &mut self.storage {
-            storage.get_primary().push(event());
-        }
+        self.call_storage(|storage| storage.get_primary().push(event()));
+    }
+
+    fn gc(&mut self) {
+        self.call_storage(|storage| storage.get_primary().gc());
     }
 }
 
@@ -56,6 +65,7 @@ where
     fn gc(&mut self) {
         self.push_event(|| Event::Gc);
 
+        ReplicatedDatabase::gc(self);
         self.inner.gc()
     }
 
