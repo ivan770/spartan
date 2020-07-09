@@ -27,7 +27,7 @@ jobs:
           name: linux
           path: target/release/spartan
   win:
-    name: Build Win
+    name: Build Windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,5 +44,5 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v1
         with:
-          name: linux
+          name: windows
           path: target/release/spartan.exe
