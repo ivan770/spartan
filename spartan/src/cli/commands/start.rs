@@ -2,8 +2,8 @@ use crate::{
     cli::Server,
     http::server::{start_http_server, ServerError},
     node::{
-        gc::spawn_gc, load_from_fs, persistence::PersistenceError, spawn_ctrlc_handler,
-        spawn_persistence, Manager,
+        gc::spawn_gc, load_from_fs, persistence::PersistenceError,
+        replication::job::spawn_replication, spawn_ctrlc_handler, spawn_persistence, Manager,
     },
 };
 use actix_rt::System;
@@ -73,6 +73,11 @@ impl StartCommand {
 
         let cloned_manager = manager.clone();
         spawn(async move { spawn_persistence(&cloned_manager).await });
+
+        debug!("Spawning replication job.");
+
+        let cloned_manager = manager.clone();
+        spawn(async move { spawn_replication(&cloned_manager).await });
 
         debug!("Spawning Ctrl-C handler");
 

@@ -46,6 +46,10 @@ impl<DB> ReplicatedDatabase<DB> {
     fn gc(&mut self) {
         self.call_storage(|storage| storage.get_primary().gc());
     }
+
+    pub fn get_storage(&mut self) -> &mut Option<ReplicationStorage> {
+        &mut self.storage
+    }
 }
 
 impl<DB> SimpleDispatcher<Message> for ReplicatedDatabase<DB>

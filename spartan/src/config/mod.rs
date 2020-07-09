@@ -1,6 +1,11 @@
+/// Queue access key
 pub mod key;
 
+/// Replication config
+pub mod replication;
+
 use key::Key;
+use replication::Replication;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, path::PathBuf};
 
@@ -42,6 +47,9 @@ pub struct Config {
 
     /// Queue access keys
     pub access_keys: Option<HashSet<Key>>,
+
+    /// Replication config
+    pub replication: Option<Replication>,
 }
 
 #[cfg(not(test))]
@@ -54,6 +62,7 @@ impl Default for Config {
             queues: Vec::new(),
             encryption_key: None,
             access_keys: None,
+            replication: None,
         }
     }
 }
@@ -68,6 +77,7 @@ impl Default for Config {
             queues: vec![String::from("test")],
             encryption_key: None,
             access_keys: None,
+            replication: None,
         }
     }
 }

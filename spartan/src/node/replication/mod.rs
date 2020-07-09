@@ -6,3 +6,6 @@ pub mod event;
 
 /// Replication proxy database
 pub mod database;
+
+/// Replication job
+pub mod job;
