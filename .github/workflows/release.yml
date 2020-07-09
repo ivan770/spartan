@@ -10,21 +10,39 @@ jobs:
     name: Build Linux
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --release --verbose
-    - uses: actions/upload-artifact@v1
-      with:
-        name: linux
-        path: target/release/spartan
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            override: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Upload binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: linux
+          path: target/release/spartan
   win:
     name: Build Win
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --release --verbose
-    - uses: actions/upload-artifact@v1
-      with:
-        name: win
-        path: target/release/spartan.exe
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: nightly
+            override: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Upload binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: linux
+          path: target/release/spartan.exe
