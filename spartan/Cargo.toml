@@ -18,7 +18,7 @@ version = "1.0"
 
 [dependencies.tokio]
 version = "0.2"
-features = ["macros", "rt-threaded", "fs"]
+features = ["macros", "rt-threaded", "fs", "tcp"]
 
 [dependencies.structopt]
 version = "0.3"

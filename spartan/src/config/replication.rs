@@ -1,14 +1,22 @@
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
+/// Default amount of seconds between replication jobs
+const fn default_replication_timer() -> u64 {
+    180
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Primary {
-    destination: Vec<SocketAddr>,
+    pub destination: Vec<SocketAddr>,
+
+    #[serde(default = "default_replication_timer")]
+    pub replication_timer: u64,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Replica {
-    host: SocketAddr,
+    pub host: SocketAddr,
 }
 
 #[derive(Serialize, Deserialize)]
