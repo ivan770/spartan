@@ -4,14 +4,18 @@ pub mod stream;
 /// Replication index exchange
 pub mod index;
 
+/// Replication error
+pub mod error;
+
 use super::storage::{primary::PrimaryStorage, ReplicationStorage};
 use crate::{
     config::replication::{Primary, Replication},
     node::Manager,
 };
 use actix_rt::time::delay_for;
+use error::ReplicationResult;
 use std::time::Duration;
-use stream::{StreamPool, StreamResult};
+use stream::StreamPool;
 use tokio::io::Result as IoResult;
 
 async fn prepare_storage(manager: &Manager<'_>) {
@@ -30,12 +34,10 @@ async fn prepare_storage(manager: &Manager<'_>) {
     }
 }
 
-async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> StreamResult<()> {
+async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> ReplicationResult<()> {
     pool.ping().await?;
 
-    for host in pool.ask().await {
-
-    }
+    pool.ask().await?.sync(manager).await?;
 
     Ok(())
 }

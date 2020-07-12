@@ -32,6 +32,10 @@ impl PrimaryStorage {
             .drain_filter(|index, _| *index <= gc_threshold)
             .for_each(drop);
     }
+
+    pub fn slice(&self, start: u64) -> Box<[(&u64, &Event)]> {
+        self.log.range(start..).collect()
+    }
 }
 
 #[cfg(test)]
