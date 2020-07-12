@@ -2,41 +2,29 @@ use super::{
     error::{ReplicationError, ReplicationResult},
     index::{BatchAskIndex, RecvIndex},
 };
-use crate::{config::replication::Primary, node::replication::event::Event};
+use crate::{
+    config::replication::Primary,
+    node::replication::{
+        event::Event,
+        messages::primary::{Request, Response},
+    },
+};
 use bincode::{deserialize, serialize};
-use serde::{Deserialize, Serialize};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
 };
-
-#[derive(Serialize)]
-pub enum StreamRequest<'a> {
-    Ping,
-    AskIndex,
-    SendRange(Box<[(&'a u64, &'a Event)]>),
-}
-
-#[derive(Deserialize)]
-pub enum StreamResponse {
-    Pong,
-    RecvIndex(Vec<(Box<str>, u64)>),
-    RecvRange,
-}
 
 pub(super) struct Stream(TcpStream);
 
 pub(super) struct StreamPool(Box<[Stream]>);
 
 impl<'a> Stream {
-    fn serialize(message: &StreamRequest) -> ReplicationResult<Vec<u8>> {
+    fn serialize(message: &Request) -> ReplicationResult<Vec<u8>> {
         serialize(&message).map_err(|e| ReplicationError::SerializationError(e))
     }
 
-    pub async fn exchange(
-        &mut self,
-        message: &StreamRequest<'_>,
-    ) -> ReplicationResult<StreamResponse> {
+    pub async fn exchange(&mut self, message: &Request<'_>) -> ReplicationResult<Response> {
         let (mut receive, mut send) = self.0.split();
 
         send.write_all(&Self::serialize(message)?)
@@ -55,22 +43,22 @@ impl<'a> Stream {
     }
 
     pub async fn ping(&mut self) -> ReplicationResult<()> {
-        match self.exchange(&StreamRequest::Ping).await? {
-            StreamResponse::Pong => Ok(()),
+        match self.exchange(&Request::Ping).await? {
+            Response::Pong => Ok(()),
             _ => Err(ReplicationError::ProtocolMismatch),
         }
     }
 
     pub async fn ask(&'a mut self) -> ReplicationResult<RecvIndex<'a>> {
-        match self.exchange(&StreamRequest::AskIndex).await? {
-            StreamResponse::RecvIndex(recv) => Ok(RecvIndex::new(self, recv.into_boxed_slice())),
+        match self.exchange(&Request::AskIndex).await? {
+            Response::RecvIndex(recv) => Ok(RecvIndex::new(self, recv.into_boxed_slice())),
             _ => Err(ReplicationError::ProtocolMismatch),
         }
     }
 
     pub async fn send_range(&mut self, range: Box<[(&u64, &Event)]>) -> ReplicationResult<()> {
-        match self.exchange(&StreamRequest::SendRange(range)).await? {
-            StreamResponse::RecvRange => Ok(()),
+        match self.exchange(&Request::SendRange(range)).await? {
+            Response::RecvRange => Ok(()),
             _ => Err(ReplicationError::ProtocolMismatch),
         }
     }

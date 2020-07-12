@@ -49,8 +49,8 @@ async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config:
         delay_for(timer).await;
 
         match replicate_manager(manager, pool).await {
-            Err(e) => error!("Error happened during replication attempt: {}", e),
             Ok(_) => info!("Database replicated successfully!"),
+            Err(e) => error!("Error happened during replication attempt: {}", e),
         }
     }
 }
