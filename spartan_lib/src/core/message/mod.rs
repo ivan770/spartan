@@ -13,13 +13,13 @@ use uuid::Uuid;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     pub id: Uuid,
-    body: String,
+    body: Box<str>,
     state: State,
     time: Time,
 }
 
 impl Message {
-    fn new(body: String, delay: Option<u32>, offset: i32, max_tries: u32, timeout: u32) -> Self {
+    fn new(body: Box<str>, delay: Option<u32>, offset: i32, max_tries: u32, timeout: u32) -> Self {
         Message {
             id: Message::generate_id(),
             body,

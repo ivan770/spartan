@@ -2,11 +2,14 @@ pub mod key;
 
 use key::Key;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, path::PathBuf};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+};
 
 /// Default database path
-fn default_path() -> PathBuf {
-    PathBuf::from("./db")
+fn default_path() -> Box<Path> {
+    PathBuf::from("./db").into_boxed_path()
 }
 
 /// Default amount of seconds between persistence jobs
@@ -24,7 +27,7 @@ const fn default_gc_timer() -> u64 {
 pub struct Config {
     /// Database path
     #[serde(default = "default_path")]
-    pub path: PathBuf,
+    pub path: Box<Path>,
 
     /// Amount of seconds between persistence jobs
     #[serde(default = "default_persistence_timer")]
@@ -35,10 +38,10 @@ pub struct Config {
     pub gc_timer: u64,
 
     /// Array of queues
-    pub queues: Vec<String>,
+    pub queues: Box<[Box<str>]>,
 
     /// Persistence encryption key
-    pub encryption_key: Option<String>,
+    pub encryption_key: Option<Box<str>>,
 
     /// Queue access keys
     pub access_keys: Option<HashSet<Key>>,
@@ -51,7 +54,7 @@ impl Default for Config {
             path: default_path(),
             persistence_timer: default_persistence_timer(),
             gc_timer: default_gc_timer(),
-            queues: Vec::new(),
+            queues: Box::new([]),
             encryption_key: None,
             access_keys: None,
         }
@@ -65,7 +68,7 @@ impl Default for Config {
             path: default_path(),
             persistence_timer: 30,
             gc_timer: 10,
-            queues: vec![String::from("test")],
+            queues: Box::new([String::from("test").into_boxed_str()]),
             encryption_key: None,
             access_keys: None,
         }

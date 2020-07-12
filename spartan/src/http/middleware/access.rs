@@ -170,12 +170,18 @@ mod tests {
         access_keys: Some(
             [
                 Key {
-                    key: String::from("testing"),
-                    queues: [String::from("test")].iter().cloned().collect(),
+                    key: String::from("testing").into_boxed_str(),
+                    queues: [String::from("test").into_boxed_str()]
+                        .iter()
+                        .cloned()
+                        .collect(),
                 },
                 Key {
-                    key: String::from("wildcard"),
-                    queues: [String::from("*")].iter().cloned().collect(),
+                    key: String::from("wildcard").into_boxed_str(),
+                    queues: [String::from("*").into_boxed_str()]
+                        .iter()
+                        .cloned()
+                        .collect(),
                 },
             ]
             .iter()
