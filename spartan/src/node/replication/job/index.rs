@@ -2,11 +2,11 @@ use super::stream::Stream;
 
 pub(super) struct RecvIndex<'a> {
     stream: &'a mut Stream,
-    indexes: Vec<(Box<str>, u64)>,
+    indexes: Box<[(Box<str>, u64)]>,
 }
 
 impl<'a> RecvIndex<'a> {
-    pub fn new(stream: &'a mut Stream, indexes: Vec<(Box<str>, u64)>) -> Self {
+    pub fn new(stream: &'a mut Stream, indexes: Box<[(Box<str>, u64)]>) -> Self {
         RecvIndex { stream, indexes }
     }
 }

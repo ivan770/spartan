@@ -29,7 +29,7 @@ pub enum StreamMessage {
 
 pub(super) struct Stream(TcpStream);
 
-pub(super) struct StreamPool(Vec<Stream>);
+pub(super) struct StreamPool(Box<[Stream]>);
 
 impl<'a> Stream {
     fn serialize(message: &StreamMessage) -> StreamResult<Vec<u8>> {
@@ -50,6 +50,7 @@ impl<'a> Stream {
             .await
             .map_err(|e| StreamError::SocketError(e))?;
 
+        // TODO: Optimize by using pre-allocated buffer
         let mut buf = Vec::new();
 
         receive
@@ -61,7 +62,7 @@ impl<'a> Stream {
             deserialize(&buf).map_err(|e| StreamError::SerializationError(e))?;
 
         match buf {
-            StreamMessage::RecvIndex(recv) => Ok(RecvIndex::new(self, recv)),
+            StreamMessage::RecvIndex(recv) => Ok(RecvIndex::new(self, recv.into_boxed_slice())),
             _ => Err(StreamError::ProtocolMismatch),
         }
     }
@@ -79,11 +80,11 @@ impl<'a> StreamPool {
             ));
         }
 
-        Ok(StreamPool(pool))
+        Ok(StreamPool(pool.into_boxed_slice()))
     }
 
     pub async fn ping(&mut self) -> StreamResult<()> {
-        for host in &mut self.0 {
+        for host in &mut *self.0 {
             host.ping().await?;
         }
 
@@ -91,9 +92,9 @@ impl<'a> StreamPool {
     }
 
     pub async fn ask(&'a mut self) -> StreamResult<BatchAskIndex<'a>> {
-        let mut batch = BatchAskIndex::with_capacity(self.0.capacity());
+        let mut batch = BatchAskIndex::with_capacity(self.0.len());
 
-        for host in &mut self.0 {
+        for host in &mut *self.0 {
             batch.push(host.ask().await?);
         }
 
