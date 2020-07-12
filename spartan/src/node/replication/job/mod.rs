@@ -1,6 +1,9 @@
 /// Tokio TCP stream abstraction
 pub mod stream;
 
+/// Replication index exchange
+pub mod index;
+
 use super::storage::{primary::PrimaryStorage, ReplicationStorage};
 use crate::{
     config::replication::{Primary, Replication},
@@ -30,6 +33,10 @@ async fn prepare_storage(manager: &Manager<'_>) {
 async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> StreamResult<()> {
     pool.ping().await?;
 
+    for host in pool.ask().await {
+
+    }
+
     Ok(())
 }
 
@@ -41,7 +48,7 @@ async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config:
 
         match replicate_manager(manager, pool).await {
             Err(e) => error!("Error happened during replication attempt: {}", e),
-            Ok(_) => info!("Database replicated successfully!")
+            Ok(_) => info!("Database replicated successfully!"),
         }
     }
 }
