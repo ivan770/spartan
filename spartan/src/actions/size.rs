@@ -36,7 +36,7 @@ mod tests {
                 post,
                 "/test",
                 &PushRequest {
-                    body: String::from("Hello, world"),
+                    body: String::from("Hello, world").into_boxed_str(),
                     ..Default::default()
                 }
             ),
