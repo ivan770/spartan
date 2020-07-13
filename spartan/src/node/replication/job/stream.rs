@@ -75,7 +75,7 @@ impl<'a> StreamPool {
     pub async fn from_config(config: &Primary) -> ReplicationResult<StreamPool> {
         let mut pool = Vec::with_capacity(config.destination.len());
 
-        for host in &config.destination {
+        for host in &*config.destination {
             pool.push(Stream(
                 BytesCodec::new().framed(
                     TcpStream::connect(host)

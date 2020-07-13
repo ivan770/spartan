@@ -8,7 +8,7 @@ const fn default_replication_timer() -> u64 {
 
 #[derive(Serialize, Deserialize)]
 pub struct Primary {
-    pub destination: Vec<SocketAddr>,
+    pub destination: Box<[SocketAddr]>,
 
     #[serde(default = "default_replication_timer")]
     pub replication_timer: u64,
