@@ -57,5 +57,9 @@ version = "0.3"
 [dependencies.once_cell]
 version = "1.4"
 
+[dependencies.maybe-owned]
+version = "0.3"
+features = ["serde"]
+
 [dev-dependencies.tempfile]
 version = "3.1"

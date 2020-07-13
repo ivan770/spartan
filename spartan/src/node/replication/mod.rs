@@ -11,4 +11,4 @@ pub mod database;
 pub mod job;
 
 /// Replication TCP messages
-pub mod messages;
+pub mod message;

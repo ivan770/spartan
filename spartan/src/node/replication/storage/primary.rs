@@ -1,4 +1,5 @@
 use crate::node::replication::event::Event;
+use maybe_owned::MaybeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -33,8 +34,11 @@ impl PrimaryStorage {
             .for_each(drop);
     }
 
-    pub fn slice(&self, start: u64) -> Box<[(&u64, &Event)]> {
-        self.log.range(start..).collect()
+    pub fn slice(&self, start: u64) -> Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]> {
+        self.log
+            .range(start..)
+            .map(|(k, v)| (MaybeOwned::Borrowed(k), MaybeOwned::Borrowed(v)))
+            .collect()
     }
 }
 

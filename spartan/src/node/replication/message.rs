@@ -1,0 +1,17 @@
+use crate::node::replication::event::Event;
+use maybe_owned::MaybeOwned;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+pub enum PrimaryRequest<'a> {
+    Ping,
+    AskIndex,
+    SendRange(Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event>)]>),
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum ReplicaRequest {
+    Pong,
+    RecvIndex(Box<[(Box<str>, u64)]>),
+    RecvRange,
+}
