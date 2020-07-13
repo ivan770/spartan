@@ -2,7 +2,7 @@
 mod commands;
 
 use crate::config::Config;
-use commands::{init::InitCommand, start::StartCommand};
+use commands::{init::InitCommand, replica::ReplicaCommand, start::StartCommand};
 use std::{
     io::Error,
     path::{Path, PathBuf},
@@ -17,6 +17,8 @@ pub enum Command {
     Start(StartCommand),
     #[structopt(about = "Initialize configuration file")]
     Init(InitCommand),
+    #[structopt(about = "Start replication server")]
+    Replica(ReplicaCommand),
 }
 
 #[derive(StructOpt)]

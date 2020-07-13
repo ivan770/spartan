@@ -56,11 +56,8 @@ async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config:
 }
 
 pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
-    manager
-        .config
-        .replication
-        .as_ref()
-        .map(|config| async move {
+    Ok(match manager.config.replication.as_ref() {
+        Some(config) => {
             match config {
                 Replication::Primary(config) => {
                     prepare_storage(manager).await;
@@ -74,7 +71,7 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
                     panic!("Starting replication job while in replica mode is not allowed")
                 }
             };
-        });
-
-    Ok(())
+        },
+        None => ()
+    })
 }
