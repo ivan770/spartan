@@ -10,13 +10,12 @@ use crate::{
     },
 };
 use bincode::{deserialize, serialize};
+use futures_util::{SinkExt, StreamExt};
 use maybe_owned::MaybeOwned;
-use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
-    net::TcpStream,
-};
+use tokio::net::TcpStream;
+use tokio_util::codec::{BytesCodec, Decoder, Framed};
 
-pub(super) struct Stream(TcpStream);
+pub(super) struct Stream(Framed<TcpStream, BytesCodec>);
 
 pub(super) struct StreamPool(Box<[Stream]>);
 
@@ -29,19 +28,20 @@ impl<'a> Stream {
         &mut self,
         message: &PrimaryRequest<'_>,
     ) -> ReplicationResult<ReplicaRequest> {
-        let (mut receive, mut send) = self.0.split();
-
-        send.write_all(&Self::serialize(message)?)
+        self.0
+            .send(Self::serialize(message)?.into())
             .await
             .map_err(|e| ReplicationError::SocketError(e))?;
 
-        // TODO: Optimize by using pre-allocated buffer
-        let mut buf = Vec::new();
-
-        receive
-            .read_to_end(&mut buf)
+        self.0
+            .flush()
             .await
             .map_err(|e| ReplicationError::SocketError(e))?;
+
+        let buf = match self.0.next().await {
+            Some(r) => r.map_err(|e| ReplicationError::SocketError(e))?,
+            None => Err(ReplicationError::EmptySocket)?,
+        };
 
         Ok(deserialize(&buf).map_err(|e| ReplicationError::SerializationError(e))?)
     }
@@ -77,9 +77,11 @@ impl<'a> StreamPool {
 
         for host in &config.destination {
             pool.push(Stream(
-                TcpStream::connect(host)
-                    .await
-                    .map_err(|e| ReplicationError::SocketError(e))?,
+                BytesCodec::new().framed(
+                    TcpStream::connect(host)
+                        .await
+                        .map_err(|e| ReplicationError::SocketError(e))?,
+                ),
             ));
         }
 

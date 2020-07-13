@@ -8,6 +8,8 @@ pub(super) enum ReplicationError {
     SerializationError(Box<ErrorKind>),
     #[error("TCP connection error: {0}")]
     SocketError(IoError),
+    #[error("TCP socket is empty")]
+    EmptySocket,
     #[error("Protocol mismatch")]
     ProtocolMismatch,
     #[error("Queue configuration mismatch")]

@@ -61,5 +61,8 @@ version = "1.4"
 version = "0.3"
 features = ["serde"]
 
+[dependencies.tokio-util]
+version = "0.3"
+
 [dev-dependencies.tempfile]
 version = "3.1"

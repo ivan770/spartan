@@ -71,7 +71,7 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
                     panic!("Starting replication job while in replica mode is not allowed")
                 }
             };
-        },
-        None => ()
+        }
+        None => (),
     })
 }

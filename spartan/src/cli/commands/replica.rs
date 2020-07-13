@@ -9,13 +9,15 @@ use crate::{
     },
 };
 use bincode::{deserialize, serialize, ErrorKind};
+use futures_util::{SinkExt, StreamExt};
 use std::future::Future;
 use structopt::StructOpt;
 use thiserror::Error;
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, Error as IoError},
+    io::Error as IoError,
     net::{TcpListener, TcpStream},
 };
+use tokio_util::codec::{BytesCodec, Decoder, Framed};
 
 #[derive(Error, Debug)]
 pub enum ReplicaCommandError {
@@ -25,6 +27,8 @@ pub enum ReplicaCommandError {
     ReplicaConfigNotFound,
     #[error("TCP socket error: {0}")]
     SocketError(IoError),
+    #[error("Empty TCP socket")]
+    EmptySocket,
     #[error("Packet serialization error: {0}")]
     SerializationError(Box<ErrorKind>),
 }
@@ -52,27 +56,30 @@ impl ReplicaCommand {
             _ => Err(ReplicaCommandError::ReplicaConfigNotFound),
         }?;
 
-        match socket.accept().await {
-            Ok((mut socket, _)) => {
-                ReplicaSocket::new(&manager, &mut socket)
-                    .exchange(accept_connection)
-                    .await?
+        loop {
+            match socket.accept().await {
+                Ok((socket, _)) => {
+                    ReplicaSocket::new(&manager, socket)
+                        .exchange(accept_connection)
+                        .await?
+                }
+                Err(e) => Err(ReplicaCommandError::SocketError(e))?,
             }
-            Err(e) => Err(ReplicaCommandError::SocketError(e))?,
         }
-
-        Ok(())
     }
 }
 
 struct ReplicaSocket<'a> {
     manager: &'a Manager<'a>,
-    socket: &'a mut TcpStream,
+    socket: Framed<TcpStream, BytesCodec>,
 }
 
 impl<'a> ReplicaSocket<'a> {
-    fn new(manager: &'a Manager<'a>, socket: &'a mut TcpStream) -> Self {
-        ReplicaSocket { manager, socket }
+    fn new(manager: &'a Manager<'a>, socket: TcpStream) -> Self {
+        ReplicaSocket {
+            manager,
+            socket: BytesCodec::new().framed(socket),
+        }
     }
 
     async fn exchange<F, Fut>(&mut self, f: F) -> Result<(), ReplicaCommandError>
@@ -80,14 +87,10 @@ impl<'a> ReplicaSocket<'a> {
         F: FnOnce(PrimaryRequest<'static>, &'a Manager<'a>) -> Fut,
         Fut: Future<Output = ReplicaRequest>,
     {
-        let (mut receive, mut send) = self.socket.split();
-
-        let mut buf = Vec::new();
-
-        receive
-            .read_to_end(&mut buf)
-            .await
-            .map_err(|e| ReplicaCommandError::SocketError(e))?;
+        let buf = match self.socket.next().await {
+            Some(r) => r.map_err(|e| ReplicaCommandError::SocketError(e))?,
+            None => Err(ReplicaCommandError::EmptySocket)?,
+        };
 
         let request = f(
             deserialize(&buf).map_err(|e| ReplicaCommandError::SerializationError(e))?,
@@ -95,11 +98,19 @@ impl<'a> ReplicaSocket<'a> {
         )
         .await;
 
-        send.write_all(
-            &serialize(&request).map_err(|e| ReplicaCommandError::SerializationError(e))?,
-        )
-        .await
-        .map_err(|e| ReplicaCommandError::SocketError(e))?;
+        self.socket
+            .send(
+                serialize(&request)
+                    .map_err(|e| ReplicaCommandError::SerializationError(e))?
+                    .into(),
+            )
+            .await
+            .map_err(|e| ReplicaCommandError::SocketError(e))?;
+
+        self.socket
+            .flush()
+            .await
+            .map_err(|e| ReplicaCommandError::SocketError(e))?;
 
         Ok(())
     }
@@ -113,7 +124,7 @@ async fn accept_connection(
         PrimaryRequest::Ping => {
             info!("Pong!");
             ReplicaRequest::Pong
-        },
+        }
         _ => unimplemented!(),
     }
 }
