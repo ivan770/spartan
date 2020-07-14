@@ -4,6 +4,7 @@ pub mod primary;
 /// Storage for replica's
 pub mod replica;
 
+use crate::node::Manager;
 use primary::PrimaryStorage;
 use replica::ReplicaStorage;
 use serde::{Deserialize, Serialize};
@@ -26,6 +27,22 @@ impl ReplicationStorage {
         match self {
             ReplicationStorage::Replica(storage) => storage,
             _ => panic!("Replication storage is in primary mode."),
+        }
+    }
+
+    pub async fn prepare<F, R>(manager: &Manager<'_>, filter: F, replace: R)
+    where
+        F: Fn(&&ReplicationStorage) -> bool + Copy,
+        R: Fn() -> ReplicationStorage,
+    {
+        for (_, db) in manager.node.db.iter() {
+            let mut db = db.lock().await;
+
+            let storage = db.get_storage().as_ref().filter(filter);
+
+            if storage.is_none() {
+                db.get_storage().replace(replace());
+            }
         }
     }
 }

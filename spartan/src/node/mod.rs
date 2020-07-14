@@ -51,6 +51,10 @@ impl<'a> Node<'a> {
         self.db.insert(name, Mutex::new(DB::default()));
     }
 
+    pub fn iter(&'a self) -> impl Iterator<Item = (&&'a str, &'a MutexDB)> {
+        self.db.iter()
+    }
+
     /// Load queues from config
     pub fn load_from_config(&mut self, config: &'a Config) {
         config.queues.iter().for_each(|queue| self.add(queue));

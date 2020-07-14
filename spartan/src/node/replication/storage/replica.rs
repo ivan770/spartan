@@ -12,6 +12,10 @@ impl Default for ReplicaStorage {
 }
 
 impl ReplicaStorage {
+    pub fn get_index(&self) -> u64 {
+        self.confirmed_index
+    }
+
     pub fn confirm(&mut self) {
         self.confirmed_index += 1;
     }

@@ -4,7 +4,10 @@ use crate::{
     node::{
         load_from_fs,
         persistence::PersistenceError,
-        replication::message::{PrimaryRequest, ReplicaRequest},
+        replication::{
+            message::{PrimaryRequest, ReplicaRequest},
+            storage::{replica::ReplicaStorage, ReplicationStorage},
+        },
         Manager,
     },
 };
@@ -45,6 +48,13 @@ impl ReplicaCommand {
             .await
             .map_err(|e| ReplicaCommandError::PersistenceError(e))?;
 
+        ReplicationStorage::prepare(
+            &manager,
+            |storage| matches!(storage, ReplicationStorage::Replica(_)),
+            || ReplicationStorage::Replica(ReplicaStorage::default()),
+        )
+        .await;
+
         let mut socket = match config
             .replication
             .as_ref()
@@ -84,35 +94,35 @@ impl<'a> ReplicaSocket<'a> {
 
     async fn exchange<F, Fut>(&mut self, f: F) -> Result<(), ReplicaCommandError>
     where
-        F: FnOnce(PrimaryRequest<'static>, &'a Manager<'a>) -> Fut,
+        F: Fn(PrimaryRequest<'static>, &'a Manager<'a>) -> Fut,
         Fut: Future<Output = ReplicaRequest>,
     {
-        let buf = match self.socket.next().await {
-            Some(r) => r.map_err(|e| ReplicaCommandError::SocketError(e))?,
-            None => Err(ReplicaCommandError::EmptySocket)?,
-        };
+        loop {
+            let buf = match self.socket.next().await {
+                Some(r) => r.map_err(|e| ReplicaCommandError::SocketError(e))?,
+                None => Err(ReplicaCommandError::EmptySocket)?,
+            };
 
-        let request = f(
-            deserialize(&buf).map_err(|e| ReplicaCommandError::SerializationError(e))?,
-            self.manager,
-        )
-        .await;
-
-        self.socket
-            .send(
-                serialize(&request)
-                    .map_err(|e| ReplicaCommandError::SerializationError(e))?
-                    .into(),
+            let request = f(
+                deserialize(&buf).map_err(|e| ReplicaCommandError::SerializationError(e))?,
+                self.manager,
             )
-            .await
-            .map_err(|e| ReplicaCommandError::SocketError(e))?;
+            .await;
 
-        self.socket
-            .flush()
-            .await
-            .map_err(|e| ReplicaCommandError::SocketError(e))?;
+            self.socket
+                .send(
+                    serialize(&request)
+                        .map_err(|e| ReplicaCommandError::SerializationError(e))?
+                        .into(),
+                )
+                .await
+                .map_err(|e| ReplicaCommandError::SocketError(e))?;
 
-        Ok(())
+            self.socket
+                .flush()
+                .await
+                .map_err(|e| ReplicaCommandError::SocketError(e))?;
+        }
     }
 }
 
@@ -121,10 +131,25 @@ async fn accept_connection(
     manager: &Manager<'_>,
 ) -> ReplicaRequest {
     match request {
-        PrimaryRequest::Ping => {
-            info!("Pong!");
-            ReplicaRequest::Pong
+        PrimaryRequest::Ping => ReplicaRequest::Pong,
+        PrimaryRequest::AskIndex => {
+            let mut indexes = Vec::with_capacity(manager.config.queues.len());
+
+            for (name, db) in manager.node.iter() {
+                let index = db
+                    .lock()
+                    .await
+                    .get_storage()
+                    .as_mut()
+                    .expect("No database present")
+                    .get_replica()
+                    .get_index();
+
+                indexes.push((name.to_string().into_boxed_str(), index));
+            }
+
+            ReplicaRequest::RecvIndex(indexes.into_boxed_slice())
         }
-        _ => unimplemented!(),
+        PrimaryRequest::SendRange(queue, range) => ReplicaRequest::RecvRange,
     }
 }

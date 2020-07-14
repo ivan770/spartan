@@ -18,6 +18,7 @@ impl<'a> RecvIndex<'a> {
         for (name, start) in self.indexes.iter() {
             self.stream
                 .send_range(
+                    name,
                     manager
                         .queue(name)
                         .await

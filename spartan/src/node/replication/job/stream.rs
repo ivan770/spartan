@@ -12,6 +12,7 @@ use crate::{
 use bincode::{deserialize, serialize};
 use futures_util::{SinkExt, StreamExt};
 use maybe_owned::MaybeOwned;
+use std::borrow::Cow;
 use tokio::net::TcpStream;
 use tokio_util::codec::{BytesCodec, Decoder, Framed};
 
@@ -62,9 +63,13 @@ impl<'a> Stream {
 
     pub async fn send_range(
         &mut self,
+        queue: &str,
         range: Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event>)]>,
     ) -> ReplicationResult<()> {
-        match self.exchange(&PrimaryRequest::SendRange(range)).await? {
+        match self
+            .exchange(&PrimaryRequest::SendRange(Cow::Borrowed(queue), range))
+            .await?
+        {
             ReplicaRequest::RecvRange => Ok(()),
             _ => Err(ReplicationError::ProtocolMismatch),
         }
