@@ -46,7 +46,7 @@ impl ReplicaCommand {
 
         load_from_fs(&mut manager)
             .await
-            .map_err(|e| ReplicaCommandError::PersistenceError(e))?;
+            .map_err(ReplicaCommandError::PersistenceError)?;
 
         ReplicationStorage::prepare(
             &manager,
@@ -62,7 +62,7 @@ impl ReplicaCommand {
         {
             Replication::Replica(config) => TcpListener::bind(config.host)
                 .await
-                .map_err(|e| ReplicaCommandError::SocketError(e)),
+                .map_err(ReplicaCommandError::SocketError),
             _ => Err(ReplicaCommandError::ReplicaConfigNotFound),
         }?;
 
@@ -73,7 +73,7 @@ impl ReplicaCommand {
                         .exchange(accept_connection)
                         .await?
                 }
-                Err(e) => Err(ReplicaCommandError::SocketError(e))?,
+                Err(e) => return Err(ReplicaCommandError::SocketError(e)),
             }
         }
     }
@@ -99,12 +99,12 @@ impl<'a> ReplicaSocket<'a> {
     {
         loop {
             let buf = match self.socket.next().await {
-                Some(r) => r.map_err(|e| ReplicaCommandError::SocketError(e))?,
-                None => Err(ReplicaCommandError::EmptySocket)?,
+                Some(r) => r.map_err(ReplicaCommandError::SocketError)?,
+                None => return Err(ReplicaCommandError::EmptySocket),
             };
 
             let request = f(
-                deserialize(&buf).map_err(|e| ReplicaCommandError::SerializationError(e))?,
+                deserialize(&buf).map_err(ReplicaCommandError::SerializationError)?,
                 self.manager,
             )
             .await;
@@ -112,16 +112,16 @@ impl<'a> ReplicaSocket<'a> {
             self.socket
                 .send(
                     serialize(&request)
-                        .map_err(|e| ReplicaCommandError::SerializationError(e))?
+                        .map_err(ReplicaCommandError::SerializationError)?
                         .into(),
                 )
                 .await
-                .map_err(|e| ReplicaCommandError::SocketError(e))?;
+                .map_err(ReplicaCommandError::SocketError)?;
 
             self.socket
                 .flush()
                 .await
-                .map_err(|e| ReplicaCommandError::SocketError(e))?;
+                .map_err(ReplicaCommandError::SocketError)?;
         }
     }
 }

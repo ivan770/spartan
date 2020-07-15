@@ -3,6 +3,7 @@ use super::{
     stream::Stream,
 };
 use crate::node::Manager;
+use futures_util::{stream::iter, StreamExt, TryStreamExt};
 
 pub(super) struct RecvIndex<'a> {
     stream: &'a mut Stream,
@@ -52,9 +53,10 @@ impl<'a> BatchAskIndex<'a> {
     }
 
     pub async fn sync(&mut self, manager: &Manager<'_>) -> ReplicationResult<()> {
-        for host in &mut self.batch {
-            host.sync(manager).await?;
-        }
+        iter(self.batch.iter_mut())
+            .map(Ok)
+            .try_for_each_concurrent(None, |host| async move { host.sync(manager).await })
+            .await?;
 
         Ok(())
     }

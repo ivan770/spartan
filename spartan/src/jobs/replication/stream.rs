@@ -10,7 +10,7 @@ use crate::{
     },
 };
 use bincode::{deserialize, serialize};
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{stream::iter, SinkExt, StreamExt, TryStreamExt};
 use maybe_owned::MaybeOwned;
 use std::borrow::Cow;
 use tokio::net::TcpStream;
@@ -22,7 +22,7 @@ pub(super) struct StreamPool(Box<[Stream]>);
 
 impl<'a> Stream {
     fn serialize(message: &PrimaryRequest) -> ReplicationResult<Vec<u8>> {
-        serialize(&message).map_err(|e| ReplicationError::SerializationError(e))
+        serialize(&message).map_err(ReplicationError::SerializationError)
     }
 
     pub async fn exchange(
@@ -32,19 +32,19 @@ impl<'a> Stream {
         self.0
             .send(Self::serialize(message)?.into())
             .await
-            .map_err(|e| ReplicationError::SocketError(e))?;
+            .map_err(ReplicationError::SocketError)?;
 
         self.0
             .flush()
             .await
-            .map_err(|e| ReplicationError::SocketError(e))?;
+            .map_err(ReplicationError::SocketError)?;
 
         let buf = match self.0.next().await {
-            Some(r) => r.map_err(|e| ReplicationError::SocketError(e))?,
-            None => Err(ReplicationError::EmptySocket)?,
+            Some(r) => r.map_err(ReplicationError::SocketError)?,
+            None => return Err(ReplicationError::EmptySocket),
         };
 
-        Ok(deserialize(&buf).map_err(|e| ReplicationError::SerializationError(e))?)
+        Ok(deserialize(&buf).map_err(ReplicationError::SerializationError)?)
     }
 
     pub async fn ping(&mut self) -> ReplicationResult<()> {
@@ -72,7 +72,8 @@ impl<'a> Stream {
         {
             ReplicaRequest::RecvRange => Ok(()),
             ReplicaRequest::QueueNotFound(queue) => {
-                Ok(warn!("Queue {} not found on replica", queue))
+                warn!("Queue {} not found on replica", queue);
+                Ok(())
             }
             _ => Err(ReplicationError::ProtocolMismatch),
         }
@@ -88,7 +89,7 @@ impl<'a> StreamPool {
                 BytesCodec::new().framed(
                     TcpStream::connect(host)
                         .await
-                        .map_err(|e| ReplicationError::SocketError(e))?,
+                        .map_err(ReplicationError::SocketError)?,
                 ),
             ));
         }
@@ -97,9 +98,10 @@ impl<'a> StreamPool {
     }
 
     pub async fn ping(&mut self) -> ReplicationResult<()> {
-        for host in &mut *self.0 {
-            host.ping().await?;
-        }
+        iter(self.0.iter_mut())
+            .map(Ok)
+            .try_for_each_concurrent(None, |stream| async move { stream.ping().await })
+            .await?;
 
         Ok(())
     }

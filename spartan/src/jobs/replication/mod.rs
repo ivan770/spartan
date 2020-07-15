@@ -42,27 +42,26 @@ async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config:
 }
 
 pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
-    Ok(match manager.config.replication.as_ref() {
-        Some(config) => {
-            match config {
-                Replication::Primary(config) => {
-                    ReplicationStorage::prepare(
-                        manager,
-                        |storage| matches!(storage, ReplicationStorage::Primary(_)),
-                        || ReplicationStorage::Primary(PrimaryStorage::default()),
-                    )
-                    .await;
+    if let Some(config) = manager.config.replication.as_ref() {
+        match config {
+            Replication::Primary(config) => {
+                ReplicationStorage::prepare(
+                    manager,
+                    |storage| matches!(storage, ReplicationStorage::Primary(_)),
+                    || ReplicationStorage::Primary(PrimaryStorage::default()),
+                )
+                .await;
 
-                    match StreamPool::from_config(config).await {
-                        Ok(mut pool) => start_replication(manager, &mut pool, config).await,
-                        Err(e) => error!("Unable to open connection pool: {}", e),
-                    }
+                match StreamPool::from_config(config).await {
+                    Ok(mut pool) => start_replication(manager, &mut pool, config).await,
+                    Err(e) => error!("Unable to open connection pool: {}", e),
                 }
-                Replication::Replica(_) => {
-                    panic!("Starting replication job while in replica mode is not allowed")
-                }
-            };
-        }
-        None => (),
-    })
+            }
+            Replication::Replica(_) => {
+                panic!("Starting replication job while in replica mode is not allowed")
+            }
+        };
+    }
+
+    Ok(())
 }
