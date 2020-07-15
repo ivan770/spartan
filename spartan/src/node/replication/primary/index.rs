@@ -1,11 +1,11 @@
 use super::{
-    error::{ReplicationError, ReplicationResult},
+    error::{PrimaryError, PrimaryResult},
     stream::Stream,
 };
 use crate::node::Manager;
 use futures_util::{stream::iter, StreamExt, TryStreamExt};
 
-pub(super) struct RecvIndex<'a> {
+pub struct RecvIndex<'a> {
     stream: &'a mut Stream,
     indexes: Box<[(Box<str>, u64)]>,
 }
@@ -15,7 +15,7 @@ impl<'a> RecvIndex<'a> {
         RecvIndex { stream, indexes }
     }
 
-    pub async fn sync(&mut self, manager: &Manager<'_>) -> ReplicationResult<()> {
+    pub async fn sync(&mut self, manager: &Manager<'_>) -> PrimaryResult<()> {
         for (name, start) in self.indexes.iter() {
             self.stream
                 .send_range(
@@ -23,7 +23,7 @@ impl<'a> RecvIndex<'a> {
                     manager
                         .queue(name)
                         .await
-                        .map_err(|_| ReplicationError::QueueConfigMismatch)?
+                        .map_err(|_| PrimaryError::QueueConfigMismatch)?
                         .get_storage()
                         .as_mut()
                         .expect("Replication storage is uninitialized")
@@ -37,7 +37,7 @@ impl<'a> RecvIndex<'a> {
     }
 }
 
-pub(super) struct BatchAskIndex<'a> {
+pub struct BatchAskIndex<'a> {
     batch: Vec<RecvIndex<'a>>,
 }
 
@@ -52,7 +52,7 @@ impl<'a> BatchAskIndex<'a> {
         self.batch.push(index);
     }
 
-    pub async fn sync(&mut self, manager: &Manager<'_>) -> ReplicationResult<()> {
+    pub async fn sync(&mut self, manager: &Manager<'_>) -> PrimaryResult<()> {
         iter(self.batch.iter_mut())
             .map(Ok)
             .try_for_each_concurrent(None, |host| async move { host.sync(manager).await })

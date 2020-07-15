@@ -3,7 +3,7 @@ use thiserror::Error;
 use tokio::io::Error as IoError;
 
 #[derive(Error, Debug)]
-pub(super) enum ReplicationError {
+pub enum PrimaryError {
     #[error("Unable to serialize stream message: {0}")]
     SerializationError(Box<ErrorKind>),
     #[error("TCP connection error: {0}")]
@@ -16,4 +16,4 @@ pub(super) enum ReplicationError {
     QueueConfigMismatch,
 }
 
-pub(super) type ReplicationResult<T> = Result<T, ReplicationError>;
+pub type PrimaryResult<T> = Result<T, PrimaryError>;

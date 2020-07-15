@@ -9,3 +9,9 @@ pub mod database;
 
 /// Replication TCP messages
 pub mod message;
+
+/// Primary replication node
+pub mod primary;
+
+/// Replica replication node
+pub mod replica;

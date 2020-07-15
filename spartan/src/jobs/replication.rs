@@ -1,26 +1,18 @@
-/// Tokio TCP stream abstraction
-pub mod stream;
-
-/// Replication index exchange
-pub mod index;
-
-/// Replication error
-pub mod error;
-
 use crate::{
     config::replication::{Primary, Replication},
     node::{
-        replication::storage::{primary::PrimaryStorage, ReplicationStorage},
+        replication::{
+            primary::{error::PrimaryResult, stream::StreamPool},
+            storage::{primary::PrimaryStorage, ReplicationStorage},
+        },
         Manager,
     },
 };
 use actix_rt::time::delay_for;
-use error::ReplicationResult;
 use std::time::Duration;
-use stream::StreamPool;
 use tokio::io::Result as IoResult;
 
-async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> ReplicationResult<()> {
+async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> PrimaryResult<()> {
     pool.ping().await?;
 
     pool.ask().await?.sync(manager).await?;
