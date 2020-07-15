@@ -7,10 +7,12 @@ pub mod index;
 /// Replication error
 pub mod error;
 
-use super::storage::{primary::PrimaryStorage, ReplicationStorage};
 use crate::{
     config::replication::{Primary, Replication},
-    node::Manager,
+    node::{
+        replication::storage::{primary::PrimaryStorage, ReplicationStorage},
+        Manager,
+    },
 };
 use actix_rt::time::delay_for;
 use error::ReplicationResult;

@@ -1,4 +1,4 @@
-use super::Manager;
+use crate::node::Manager;
 use actix_rt::time::delay_for;
 use futures_util::stream::{iter, StreamExt};
 use spartan_lib::core::dispatcher::SimpleDispatcher;
@@ -6,7 +6,7 @@ use std::time::Duration;
 
 /// Concurrently iterates over all databases in node, and executes GC on them.
 async fn execute_gc(manager: &Manager<'_>) {
-    iter(manager.node.db.iter())
+    iter(manager.node.iter())
         .for_each_concurrent(None, |(name, db)| async move {
             let mut db = db.lock().await;
 

@@ -1,4 +1,5 @@
-use super::{persist_manager, Manager};
+use super::persistence::persist_manager;
+use crate::node::Manager;
 use actix_rt::signal::ctrl_c;
 use std::process::exit;
 

@@ -1,9 +1,8 @@
 use crate::{
     cli::Server,
     config::replication::Replication,
+    jobs::persistence::{load_from_fs, PersistenceError},
     node::{
-        load_from_fs,
-        persistence::PersistenceError,
         replication::{
             event::Event,
             message::{PrimaryRequest, ReplicaRequest},
@@ -151,14 +150,12 @@ async fn accept_connection<'a>(
 
             ReplicaRequest::RecvIndex(indexes.into_boxed_slice())
         }
-        PrimaryRequest::SendRange(queue, range) => {
-            match manager.queue(&queue).await {
-                Ok(mut db) => {
-                    Event::apply_events(&mut *db, range);
-                    ReplicaRequest::RecvRange
-                }
-                Err(_) => ReplicaRequest::QueueNotFound(queue),
+        PrimaryRequest::SendRange(queue, range) => match manager.queue(&queue).await {
+            Ok(mut db) => {
+                Event::apply_events(&mut *db, range);
+                ReplicaRequest::RecvRange
             }
-        }
+            Err(_) => ReplicaRequest::QueueNotFound(queue),
+        },
     }
 }

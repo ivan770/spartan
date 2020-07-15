@@ -71,7 +71,9 @@ impl<'a> Stream {
             .await?
         {
             ReplicaRequest::RecvRange => Ok(()),
-            ReplicaRequest::QueueNotFound(queue) => Ok(warn!("Queue {} not found on replica", queue)),
+            ReplicaRequest::QueueNotFound(queue) => {
+                Ok(warn!("Queue {} not found on replica", queue))
+            }
             _ => Err(ReplicationError::ProtocolMismatch),
         }
     }

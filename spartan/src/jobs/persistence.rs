@@ -1,7 +1,6 @@
-use super::{Manager, MutexDB};
+use crate::node::{Manager, MutexDB};
 use actix_rt::time::delay_for;
 use bincode::{deserialize, serialize, Error as BincodeError};
-use futures_util::lock::Mutex;
 use futures_util::stream::{iter, StreamExt};
 use std::{io::Error, path::Path, time::Duration};
 use thiserror::Error as ThisError;
@@ -40,7 +39,7 @@ async fn persist_db(name: &str, db: &MutexDB, path: &Path) -> Result<(), Persist
 
 /// Persist all databases from manager
 pub async fn persist_manager(manager: &Manager<'_>) {
-    iter(manager.node.db.iter())
+    iter(manager.node.iter())
         .for_each_concurrent(None, |(name, db)| async move {
             match persist_db(name, db, &manager.config.path).await {
                 Err(PersistenceError::SerializationError(e)) => {
@@ -72,7 +71,7 @@ pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
         match read(manager.config.path.join(queue)).await {
             Ok(file_buf) => {
                 let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
-                manager.node.db.insert(queue, Mutex::new(db));
+                manager.node.add_db(queue, db);
             }
             Err(e) => warn!("Unable to load database {}: {}", queue, e),
         }

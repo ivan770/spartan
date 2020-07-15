@@ -24,6 +24,9 @@ mod routing;
 /// Configuration
 mod config;
 
+/// Background jobs
+mod jobs;
+
 /// Utilities for easier development
 pub mod utils;
 

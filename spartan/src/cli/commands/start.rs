@@ -1,10 +1,13 @@
 use crate::{
     cli::Server,
     http::server::{start_http_server, ServerError},
-    node::{
-        gc::spawn_gc, load_from_fs, persistence::PersistenceError,
-        replication::job::spawn_replication, spawn_ctrlc_handler, spawn_persistence, Manager,
+    jobs::{
+        exit::spawn_ctrlc_handler,
+        gc::spawn_gc,
+        persistence::{load_from_fs, spawn_persistence, PersistenceError},
+        replication::spawn_replication,
     },
+    node::Manager,
 };
 use actix_rt::System;
 use actix_web::web::Data;
