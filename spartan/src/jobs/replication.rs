@@ -39,12 +39,13 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
     if let Some(config) = manager.config.replication.as_ref() {
         match config {
             Replication::Primary(config) => {
-                ReplicationStorage::prepare(
-                    manager,
-                    |storage| matches!(storage, ReplicationStorage::Primary(_)),
-                    || ReplicationStorage::Primary(PrimaryStorage::default()),
-                )
-                .await;
+                manager
+                    .node
+                    .prepare_replication(
+                        |storage| matches!(storage, ReplicationStorage::Primary(_)),
+                        || ReplicationStorage::Primary(PrimaryStorage::default()),
+                    )
+                    .await;
 
                 match StreamPool::from_config(config).await {
                     Ok(mut pool) => start_replication(manager, &mut pool, config).await,

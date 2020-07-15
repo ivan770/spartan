@@ -41,12 +41,13 @@ impl ReplicaCommand {
         let cloned_manager = manager.clone();
         spawn(async move { spawn_persistence(&cloned_manager).await });
 
-        ReplicationStorage::prepare(
-            &manager,
-            |storage| matches!(storage, ReplicationStorage::Replica(_)),
-            || ReplicationStorage::Replica(ReplicaStorage::default()),
-        )
-        .await;
+        manager
+            .node
+            .prepare_replication(
+                |storage| matches!(storage, ReplicationStorage::Replica(_)),
+                || ReplicationStorage::Replica(ReplicaStorage::default()),
+            )
+            .await;
 
         let mut socket = match config
             .replication
