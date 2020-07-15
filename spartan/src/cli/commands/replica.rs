@@ -4,7 +4,7 @@ use crate::{
     jobs::persistence::{load_from_fs, PersistenceError},
     node::{
         replication::{
-            event::Event,
+            event::ApplyEvent,
             message::{PrimaryRequest, ReplicaRequest},
             storage::{replica::ReplicaStorage, ReplicationStorage},
         },
@@ -152,7 +152,7 @@ async fn accept_connection<'a>(
         }
         PrimaryRequest::SendRange(queue, range) => match manager.queue(&queue).await {
             Ok(mut db) => {
-                Event::apply_events(&mut *db, range);
+                db.apply_events(range);
                 ReplicaRequest::RecvRange
             }
             Err(_) => ReplicaRequest::QueueNotFound(queue),

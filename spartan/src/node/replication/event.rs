@@ -17,11 +17,22 @@ pub enum Event {
     Clear,
 }
 
-impl Event {
-    fn apply_event(self, queue: &mut DB) {
-        let queue = &mut **queue;
+pub trait ApplyEvent {
+    /// Apply single event to database
+    fn apply_event(&mut self, event: Event);
 
-        match self {
+    /// Apply slice of events to database
+    fn apply_events(
+        &mut self,
+        events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>,
+    ) -> Option<()>;
+}
+
+impl ApplyEvent for DB {
+    fn apply_event(&mut self, event: Event) {
+        let queue = &mut **self;
+
+        match event {
             Event::Push(message) => queue.push(message),
             Event::Pop => {
                 queue.pop();
@@ -41,8 +52,8 @@ impl Event {
         }
     }
 
-    pub fn apply_events(
-        queue: &mut DB,
+    fn apply_events(
+        &mut self,
         events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>,
     ) -> Option<()> {
         let index = *events.last()?.0;
@@ -52,12 +63,11 @@ impl Event {
             .into_vec()
             .into_iter()
             .for_each(|(_, event)| match event {
-                MaybeOwned::Owned(event) => event.apply_event(queue),
+                MaybeOwned::Owned(event) => self.apply_event(event),
                 MaybeOwned::Borrowed(_) => unreachable!(),
             });
 
-        queue
-            .get_storage()
+        self.get_storage()
             .as_mut()
             .expect("No storage provided")
             .get_replica()
