@@ -49,25 +49,27 @@ impl ReplicaCommand {
             )
             .await;
 
-        let mut socket = match config
+        let config = match config
             .replication
             .as_ref()
             .ok_or_else(|| ReplicaError::ReplicaConfigNotFound)?
         {
-            Replication::Replica(config) => TcpListener::bind(config.host)
-                .await
-                .map_err(ReplicaError::SocketError),
+            Replication::Replica(config) => Ok(config),
             _ => Err(ReplicaError::ReplicaConfigNotFound),
         }?;
+
+        let mut socket = TcpListener::bind(config.host)
+            .await
+            .map_err(ReplicaError::SocketError)?;
 
         loop {
             match socket.accept().await {
                 Ok((socket, _)) => {
-                    ReplicaSocket::new(&manager, socket)
+                    ReplicaSocket::new(&manager, config, socket)
                         .exchange(accept_connection)
-                        .await?
+                        .await
                 }
-                Err(e) => return Err(ReplicaError::SocketError(e)),
+                Err(e) => error!("Unable to accept TCP connection: {}", e),
             }
         }
     }
