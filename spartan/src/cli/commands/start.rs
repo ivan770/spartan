@@ -67,22 +67,14 @@ impl StartCommand {
 
         let manager = Data::new(manager);
 
-        debug!("Spawning GC handler.");
-
         let cloned_manager = manager.clone();
         spawn(async move { spawn_gc(&cloned_manager).await });
-
-        debug!("Spawning persistence job.");
 
         let cloned_manager = manager.clone();
         spawn(async move { spawn_persistence(&cloned_manager).await });
 
-        debug!("Spawning replication job.");
-
         let cloned_manager = manager.clone();
         spawn(async move { spawn_replication(&cloned_manager).await });
-
-        debug!("Spawning Ctrl-C handler");
 
         let cloned_manager = manager.clone();
         spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });

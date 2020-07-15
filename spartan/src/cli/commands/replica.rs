@@ -1,7 +1,7 @@
 use crate::{
     cli::Server,
     config::replication::Replication,
-    jobs::persistence::{load_from_fs, PersistenceError},
+    jobs::{persistence::{load_from_fs, PersistenceError, spawn_persistence}, exit::spawn_ctrlc_handler},
     node::{
         replication::{
             event::ApplyEvent,
@@ -13,12 +13,12 @@ use crate::{
 };
 use bincode::{deserialize, serialize, ErrorKind};
 use futures_util::{SinkExt, StreamExt};
-use std::future::Future;
+use std::{sync::Arc, future::Future};
 use structopt::StructOpt;
 use thiserror::Error;
 use tokio::{
     io::Error as IoError,
-    net::{TcpListener, TcpStream},
+    net::{TcpListener, TcpStream}, spawn,
 };
 use tokio_util::codec::{BytesCodec, Decoder, Framed};
 
@@ -40,13 +40,21 @@ pub enum ReplicaCommandError {
 pub struct ReplicaCommand {}
 
 impl ReplicaCommand {
-    pub async fn dispatch(&self, server: &Server) -> Result<(), ReplicaCommandError> {
+    pub async fn dispatch(&self, server: &'static Server) -> Result<(), ReplicaCommandError> {
         let config = server.config().expect("Config not loaded");
         let mut manager = Manager::new(config);
 
         load_from_fs(&mut manager)
             .await
             .map_err(ReplicaCommandError::PersistenceError)?;
+
+        let manager = Arc::new(manager);
+
+        let cloned_manager = manager.clone();
+        spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
+
+        let cloned_manager = manager.clone();
+        spawn(async move { spawn_persistence(&cloned_manager).await });
 
         ReplicationStorage::prepare(
             &manager,

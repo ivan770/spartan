@@ -56,6 +56,8 @@ pub async fn persist_manager(manager: &Manager<'_>) {
 
 /// Persistence job handler, that persists all databases from manager
 pub async fn spawn_persistence(manager: &Manager<'_>) {
+    debug!("Spawning persistence job.");
+
     let timer = Duration::from_secs(manager.config.persistence_timer);
 
     loop {

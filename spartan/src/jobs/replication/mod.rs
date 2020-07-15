@@ -42,6 +42,8 @@ async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config:
 }
 
 pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
+    debug!("Spawning replication job.");
+
     if let Some(config) = manager.config.replication.as_ref() {
         match config {
             Replication::Primary(config) => {

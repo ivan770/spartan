@@ -7,6 +7,8 @@ use std::process::exit;
 ///
 /// Listens to Ctrl-C signal, and after receiving one starts persisting database.
 pub async fn spawn_ctrlc_handler(manager: &Manager<'_>) {
+    debug!("Spawning Ctrl-C handler");
+
     ctrl_c().await.expect("Unable to listen to Ctrl-C signal.");
 
     persist_manager(manager).await;

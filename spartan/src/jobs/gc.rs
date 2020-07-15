@@ -23,6 +23,8 @@ async fn execute_gc(manager: &Manager<'_>) {
 ///
 /// Periodically iterates over all databases in node, and executes GC on them.
 pub async fn spawn_gc(manager: &Manager<'_>) {
+    debug!("Spawning GC handler.");
+
     let timer = Duration::from_secs(manager.config.gc_timer);
 
     loop {
