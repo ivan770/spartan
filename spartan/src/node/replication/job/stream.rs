@@ -28,7 +28,7 @@ impl<'a> Stream {
     pub async fn exchange(
         &mut self,
         message: &PrimaryRequest<'_>,
-    ) -> ReplicationResult<ReplicaRequest> {
+    ) -> ReplicationResult<ReplicaRequest<'_>> {
         self.0
             .send(Self::serialize(message)?.into())
             .await
@@ -71,6 +71,7 @@ impl<'a> Stream {
             .await?
         {
             ReplicaRequest::RecvRange => Ok(()),
+            ReplicaRequest::QueueNotFound(queue) => Ok(warn!("Queue {} not found on replica", queue)),
             _ => Err(ReplicationError::ProtocolMismatch),
         }
     }

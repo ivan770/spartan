@@ -16,7 +16,7 @@ impl ReplicaStorage {
         self.confirmed_index
     }
 
-    pub fn confirm(&mut self) {
-        self.confirmed_index += 1;
+    pub fn confirm(&mut self, index: u64) {
+        self.confirmed_index = index;
     }
 }

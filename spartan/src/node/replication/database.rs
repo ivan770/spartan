@@ -9,6 +9,7 @@ use spartan_lib::core::{
     message::Message,
     payload::Identifiable,
 };
+use std::ops::{Deref, DerefMut};
 
 #[derive(Serialize, Deserialize)]
 pub struct ReplicatedDatabase<DB> {
@@ -25,6 +26,20 @@ where
             inner: DB::default(),
             storage: None,
         }
+    }
+}
+
+impl<DB> Deref for ReplicatedDatabase<DB> {
+    type Target = DB;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<DB> DerefMut for ReplicatedDatabase<DB> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }
 

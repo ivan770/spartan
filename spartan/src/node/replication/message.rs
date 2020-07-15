@@ -14,8 +14,9 @@ pub enum PrimaryRequest<'a> {
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum ReplicaRequest {
+pub enum ReplicaRequest<'a> {
     Pong,
     RecvIndex(Box<[(Box<str>, u64)]>),
     RecvRange,
+    QueueNotFound(Cow<'a, str>),
 }

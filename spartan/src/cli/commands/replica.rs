@@ -5,6 +5,7 @@ use crate::{
         load_from_fs,
         persistence::PersistenceError,
         replication::{
+            event::Event,
             message::{PrimaryRequest, ReplicaRequest},
             storage::{replica::ReplicaStorage, ReplicationStorage},
         },
@@ -95,7 +96,7 @@ impl<'a> ReplicaSocket<'a> {
     async fn exchange<F, Fut>(&mut self, f: F) -> Result<(), ReplicaCommandError>
     where
         F: Fn(PrimaryRequest<'static>, &'a Manager<'a>) -> Fut,
-        Fut: Future<Output = ReplicaRequest>,
+        Fut: Future<Output = ReplicaRequest<'a>>,
     {
         loop {
             let buf = match self.socket.next().await {
@@ -126,10 +127,10 @@ impl<'a> ReplicaSocket<'a> {
     }
 }
 
-async fn accept_connection(
+async fn accept_connection<'a>(
     request: PrimaryRequest<'static>,
-    manager: &Manager<'_>,
-) -> ReplicaRequest {
+    manager: &Manager<'a>,
+) -> ReplicaRequest<'a> {
     match request {
         PrimaryRequest::Ping => ReplicaRequest::Pong,
         PrimaryRequest::AskIndex => {
@@ -150,6 +151,14 @@ async fn accept_connection(
 
             ReplicaRequest::RecvIndex(indexes.into_boxed_slice())
         }
-        PrimaryRequest::SendRange(queue, range) => ReplicaRequest::RecvRange,
+        PrimaryRequest::SendRange(queue, range) => {
+            match manager.queue(&queue).await {
+                Ok(mut db) => {
+                    Event::apply_events(&mut *db, range);
+                    ReplicaRequest::RecvRange
+                }
+                Err(_) => ReplicaRequest::QueueNotFound(queue),
+            }
+        }
     }
 }
