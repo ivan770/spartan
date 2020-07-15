@@ -68,7 +68,7 @@ pub async fn spawn_persistence(manager: &Manager<'_>) {
 /// Load manager from FS
 pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
     for queue in manager.config.queues.iter() {
-        match read(manager.config.path.join(queue)).await {
+        match read(manager.config.path.join(&**queue)).await {
             Ok(file_buf) => {
                 let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
                 manager.node.add_db(queue, db);
@@ -96,8 +96,11 @@ mod tests {
         let tempdir = TempDir::new().expect("Unable to create temporary test directory");
 
         let config = Config {
-            path: tempdir.path().to_owned(),
-            queues: vec![String::from("test"), String::from("test2")],
+            path: tempdir.path().to_owned().into_boxed_path(),
+            queues: Box::new([
+                String::from("test").into_boxed_str(),
+                String::from("test2").into_boxed_str(),
+            ]),
             ..Default::default()
         };
 

@@ -23,7 +23,7 @@ pub enum BuilderError {
 ///     .unwrap();
 /// ```
 pub struct MessageBuilder {
-    body: Option<String>,
+    body: Option<Box<str>>,
     offset: i32,
     max_tries: u32,
     timeout: u32,
@@ -47,7 +47,7 @@ impl MessageBuilder {
     #[must_use]
     pub fn body<T>(mut self, body: T) -> Self
     where
-        T: Into<String>,
+        T: Into<Box<str>>,
     {
         self.body = Some(body.into());
         self

@@ -9,8 +9,8 @@ const WILDCARD_QUEUE: &str = "*";
 
 #[derive(Serialize, Deserialize, Eq, Clone)]
 pub struct Key {
-    pub key: String,
-    pub queues: HashSet<String>,
+    pub key: Box<str>,
+    pub queues: HashSet<Box<str>>,
 }
 
 impl Key {
@@ -21,7 +21,7 @@ impl Key {
 
 impl Borrow<str> for Key {
     fn borrow(&self) -> &str {
-        self.key.as_str()
+        &self.key
     }
 }
 
