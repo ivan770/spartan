@@ -45,7 +45,10 @@ impl<'a> ReplicaSocket<'a> {
             delay_for(timer).await;
 
             match self.process(f).await {
-                Err(ReplicaError::EmptySocket) => return,
+                Err(ReplicaError::EmptySocket) => {
+                    error!("Empty TCP socket");
+                    return
+                },
                 Err(e) => error!("Error occured during replication process: {}", e),
                 _ => (),
             }

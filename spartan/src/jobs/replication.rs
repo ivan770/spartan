@@ -2,7 +2,7 @@ use crate::{
     config::replication::{Primary, Replication},
     node::{
         replication::{
-            primary::{error::PrimaryResult, stream::StreamPool},
+            primary::{error::{PrimaryError, PrimaryResult}, stream::StreamPool},
             storage::{primary::PrimaryStorage, ReplicationStorage},
         },
         Manager,
@@ -38,6 +38,14 @@ async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config:
 
         match replicate_manager(manager, pool).await {
             Ok(_) => info!("Database replicated successfully!"),
+            Err(PrimaryError::EmptySocket) => {
+                error!("Empty TCP socket");
+                return;
+            },
+            Err(PrimaryError::SocketError(e)) => {
+                error!("TCP socket error: {}", e);
+                return;
+            }
             Err(e) => error!("Error happened during replication attempt: {}", e),
         }
     }
@@ -57,9 +65,15 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
                     )
                     .await;
 
-                match StreamPool::from_config(config).await {
-                    Ok(mut pool) => start_replication(manager, &mut pool, config).await,
-                    Err(e) => error!("Unable to open connection pool: {}", e),
+                let timer = Duration::from_secs(config.try_timer);
+                
+                loop {
+                    delay_for(timer).await;
+
+                    match StreamPool::from_config(config).await {
+                        Ok(mut pool) => start_replication(manager, &mut pool, config).await,
+                        Err(e) => error!("Unable to open connection pool: {}", e),
+                    }
                 }
             }
             Replication::Replica(_) => {
