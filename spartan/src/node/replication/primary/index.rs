@@ -4,6 +4,11 @@ use super::{
 };
 use crate::node::Manager;
 use futures_util::{stream::iter, StreamExt, TryStreamExt};
+use itertools::Itertools;
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
 
 pub struct RecvIndex<'a> {
     stream: &'a mut Stream,
@@ -59,5 +64,32 @@ impl<'a> BatchAskIndex<'a> {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn set_gc(&self, manager: &Manager<'_>) {
+        let iter = self
+            .batch
+            .iter()
+            .map(|index| index.indexes.iter())
+            .flatten()
+            .sorted_by(|a, b| Ord::cmp(&a, &b))
+            .unique_by(|(name, _)| {
+                let mut hasher = DefaultHasher::new();
+                name.hash(&mut hasher);
+                hasher.finish()
+            });
+
+        for (queue, index) in iter {
+            let mut m = manager
+                .queue(&queue)
+                .await
+                .expect("set_gc called without sync before");
+
+            m.get_storage()
+                .as_mut()
+                .unwrap()
+                .get_primary()
+                .set_gc_threshold(*index);
+        }
     }
 }

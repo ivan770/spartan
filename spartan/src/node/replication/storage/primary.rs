@@ -40,6 +40,10 @@ impl PrimaryStorage {
             .map(|(k, v)| (MaybeOwned::Borrowed(k), MaybeOwned::Borrowed(v)))
             .collect()
     }
+
+    pub fn set_gc_threshold(&mut self, threshold: u64) {
+        self.gc_threshold = threshold;
+    }
 }
 
 #[cfg(test)]

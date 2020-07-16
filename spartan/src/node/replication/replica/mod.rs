@@ -93,6 +93,7 @@ pub async fn accept_connection<'a>(
     match request {
         PrimaryRequest::Ping => ReplicaRequest::Pong,
         PrimaryRequest::AskIndex => {
+            debug!("Preparing indexes for primary node.");
             let mut indexes = Vec::with_capacity(manager.config.queues.len());
 
             for (name, db) in manager.node.iter() {
@@ -112,6 +113,7 @@ pub async fn accept_connection<'a>(
         }
         PrimaryRequest::SendRange(queue, range) => match manager.queue(&queue).await {
             Ok(mut db) => {
+                debug!("Applying event slice.");
                 db.apply_events(range);
                 ReplicaRequest::RecvRange
             }

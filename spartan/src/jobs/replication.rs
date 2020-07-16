@@ -13,9 +13,17 @@ use std::time::Duration;
 use tokio::io::Result as IoResult;
 
 async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> PrimaryResult<()> {
+    debug!("Pinging stream pool.");
     pool.ping().await?;
 
-    pool.ask().await?.sync(manager).await?;
+    debug!("Asking stream pool for indexes.");
+    let mut batch = pool.ask().await?;
+
+    debug!("Starting event slice sync.");
+    batch.sync(manager).await?;
+
+    debug!("Setting GC threshold.");
+    batch.set_gc(manager).await;
 
     Ok(())
 }
@@ -25,6 +33,8 @@ async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config:
 
     loop {
         delay_for(timer).await;
+
+        info!("Starting database replication.");
 
         match replicate_manager(manager, pool).await {
             Ok(_) => info!("Database replicated successfully!"),
