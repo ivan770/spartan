@@ -72,7 +72,7 @@ impl<'a> BatchAskIndex<'a> {
             .iter()
             .map(|index| index.indexes.iter())
             .flatten()
-            .sorted_by(|a, b| Ord::cmp(&a, &b))
+            .sorted_by(|a, b| Ord::cmp(a, b))
             .unique_by(|(name, _)| {
                 let mut hasher = DefaultHasher::new();
                 name.hash(&mut hasher);
