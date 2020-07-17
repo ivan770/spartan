@@ -22,10 +22,7 @@ pub trait ApplyEvent {
     fn apply_event(&mut self, event: Event);
 
     /// Apply slice of events to database
-    fn apply_events(
-        &mut self,
-        events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>,
-    ) -> Option<()>;
+    fn apply_events(&mut self, events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>);
 }
 
 impl ApplyEvent for DB {
@@ -52,11 +49,8 @@ impl ApplyEvent for DB {
         }
     }
 
-    fn apply_events(
-        &mut self,
-        events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>,
-    ) -> Option<()> {
-        let index = *events.last()?.0;
+    fn apply_events(&mut self, events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>) {
+        let index = events.last().map(|(index, _)| **index);
 
         // into_vec allows to use owned event
         events
@@ -67,12 +61,14 @@ impl ApplyEvent for DB {
                 MaybeOwned::Borrowed(_) => unreachable!(),
             });
 
-        self.get_storage()
-            .as_mut()
-            .expect("No storage provided")
-            .get_replica()
-            .confirm(index);
+        index.and_then(|index| {
+            self.get_storage()
+                .as_mut()
+                .expect("No storage provided")
+                .get_replica()
+                .confirm(index);
 
-        Some(())
+            Some(())
+        });
     }
 }

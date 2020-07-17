@@ -2,7 +2,10 @@ use crate::{
     config::replication::{Primary, Replication},
     node::{
         replication::{
-            primary::{error::{PrimaryError, PrimaryResult}, stream::StreamPool},
+            primary::{
+                error::{PrimaryError, PrimaryResult},
+                stream::StreamPool,
+            },
             storage::{primary::PrimaryStorage, ReplicationStorage},
         },
         Manager,
@@ -41,7 +44,7 @@ async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config:
             Err(PrimaryError::EmptySocket) => {
                 error!("Empty TCP socket");
                 return;
-            },
+            }
             Err(PrimaryError::SocketError(e)) => {
                 error!("TCP socket error: {}", e);
                 return;
@@ -66,7 +69,7 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
                     .await;
 
                 let timer = Duration::from_secs(config.try_timer);
-                
+
                 loop {
                     delay_for(timer).await;
 
