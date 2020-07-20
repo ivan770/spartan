@@ -1,5 +1,3 @@
-//! See replication module documentation for messages description
-
 use crate::node::replication::event::Event;
 use maybe_owned::MaybeOwned;
 use serde::{Deserialize, Serialize};
