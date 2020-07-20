@@ -100,40 +100,41 @@ where
 {
     fn parse_request(&self, req: &<S as Service>::Request) -> Result<(), AccessError> {
         if self.has_access_keys() {
-            if let Some(queue) = req.match_info().get("queue") {
-                req
-                    .headers()
-                    .get("Authorization")
-                    .ok_or_else(|| AccessError::AuthorizationHeaderNotFound)?
-                    .to_str()
-                    .map_err(|_| AccessError::IncorrectKeyHeader)?
-                    .strip_prefix("Bearer ")
-                    .map(|token| self.check_access(token, queue))
-                    .ok_or_else(|| AccessError::IncorrectKeyHeader)?
-            } else {
-                Ok(())
-            }
+            req.match_info()
+                .get("queue")
+                .map(|queue| {
+                    req.headers()
+                        .get("Authorization")
+                        .ok_or_else(|| AccessError::AuthorizationHeaderNotFound)?
+                        .to_str()
+                        .map_err(|_| AccessError::IncorrectKeyHeader)?
+                        .strip_prefix("Bearer ")
+                        .map(|token| self.check_access(token, queue))
+                        .ok_or_else(|| AccessError::IncorrectKeyHeader)?
+                })
+                .or_else(|| Some(Ok(())))
+                .unwrap()?;
+
+            Ok(())
         } else {
             Ok(())
         }
     }
 
     fn check_access(&self, key: &str, queue: &str) -> Result<(), AccessError> {
-        let keys = self
-            .config
+        self.config
             .access_keys
             .as_ref()
-            .expect("Config doesn't have access keys");
-
-        if let Some(key) = keys.get(key) {
-            if key.has_queue(queue) {
-                Ok(())
-            } else {
-                Err(AccessError::AccessDenied)
-            }
-        } else {
-            Err(AccessError::AccessDenied)
-        }
+            .expect("Config doesn't have access keys")
+            .get(key)
+            .map(|key| {
+                if key.has_queue(queue) {
+                    Ok(())
+                } else {
+                    Err(AccessError::AccessDenied)
+                }
+            })
+            .ok_or_else(|| AccessError::AccessDenied)?
     }
 
     fn has_access_keys(&self) -> bool {
