@@ -112,10 +112,7 @@ where
                         .map(|token| self.check_access(token, queue))
                         .ok_or_else(|| AccessError::IncorrectKeyHeader)?
                 })
-                .or_else(|| Some(Ok(())))
-                .unwrap()?;
-
-            Ok(())
+                .unwrap_or_else(|| Ok(()))
         } else {
             Ok(())
         }
