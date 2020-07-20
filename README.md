@@ -63,6 +63,7 @@ cargo build --release
 * `persistence_timer` - Amount of seconds between each database write to disk (default: `900`).
 * `gc_timer` - Amount of seconds between each GC job wake (GC cycle times vary, default: `300`).
 * `access_keys` - Table of queue access keys. Anonymous access to queues will not be permitted if this key has any value.
+* `replication` - Replication configuration for both primary and replica nodes.
 
 #### `access_keys`
 Spartan has authentication and authorization mechanism using access keys.
@@ -90,3 +91,31 @@ Example of valid HTTP Authorization header:
 ```
 Authorization: Bearer IHaveAccessToAllQueues
 ```
+
+#### `replication`
+Spartan also has support for queue replication.
+
+Replication process will be restarted in case of any minor error (protocol or queue config mismatch).
+
+If there is any problem with TCP socket, then connection will be dropped and re-opened with each replica.
+
+##### Primary
+
+The following config will start primary node that communicates with one replica every 180 seconds (default value):
+```toml
+replication = { Primary = { destination = ["127.0.0.1:12345"] } }
+```
+
+You may also use `replication_timer` key to change amount of seconds between each replication:
+```toml
+replication = { Primary = { destination = ["127.0.0.1:12345"], replication_timer = 30 } }
+```
+
+##### Replica
+
+Change your replication config to following example:
+```toml
+replication = { Replica = { host = "127.0.0.1:12345" } }
+```
+
+Then, start replica node with `startan replica` command.

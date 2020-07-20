@@ -1,9 +1,7 @@
-use super::Manager;
+use crate::node::{Manager, MutexDB};
 use actix_rt::time::delay_for;
 use bincode::{deserialize, serialize, Error as BincodeError};
-use futures_util::lock::Mutex;
 use futures_util::stream::{iter, StreamExt};
-use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::{io::Error, path::Path, time::Duration};
 use thiserror::Error as ThisError;
 use tokio::fs::{read, write};
@@ -22,11 +20,7 @@ pub enum PersistenceError {
 type PersistenceResult<T> = Result<T, PersistenceError>;
 
 /// Persist database to provided path
-async fn persist_db(
-    name: &str,
-    db: &Mutex<TreeDatabase<Message>>,
-    path: &Path,
-) -> Result<(), PersistenceError> {
+async fn persist_db(name: &str, db: &MutexDB, path: &Path) -> Result<(), PersistenceError> {
     let db = db.lock().await;
 
     info!("Saving database \"{}\"", name);
@@ -45,7 +39,7 @@ async fn persist_db(
 
 /// Persist all databases from manager
 pub async fn persist_manager(manager: &Manager<'_>) {
-    iter(manager.node.db.iter())
+    iter(manager.node.iter())
         .for_each_concurrent(None, |(name, db)| async move {
             match persist_db(name, db, &manager.config.path).await {
                 Err(PersistenceError::SerializationError(e)) => {
@@ -62,6 +56,8 @@ pub async fn persist_manager(manager: &Manager<'_>) {
 
 /// Persistence job handler, that persists all databases from manager
 pub async fn spawn_persistence(manager: &Manager<'_>) {
+    debug!("Spawning persistence job.");
+
     let timer = Duration::from_secs(manager.config.persistence_timer);
 
     loop {
@@ -77,7 +73,7 @@ pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
         match read(manager.config.path.join(&**queue)).await {
             Ok(file_buf) => {
                 let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
-                manager.node.db.insert(queue, Mutex::new(db));
+                manager.node.add_db(queue, db);
             }
             Err(e) => warn!("Unable to load database {}: {}", queue, e),
         }

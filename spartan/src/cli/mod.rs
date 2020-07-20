@@ -2,7 +2,7 @@
 mod commands;
 
 use crate::config::Config;
-use commands::{init::InitCommand, start::StartCommand};
+use commands::{init::InitCommand, replica::ReplicaCommand, start::StartCommand};
 use std::{
     io::Error,
     path::{Path, PathBuf},
@@ -11,14 +11,18 @@ use structopt::StructOpt;
 use tokio::fs::read;
 use toml::from_slice;
 
+/// Enum of all available CLI commands
 #[derive(StructOpt)]
 pub enum Command {
     #[structopt(about = "Start Spartan MQ server")]
     Start(StartCommand),
     #[structopt(about = "Initialize configuration file")]
     Init(InitCommand),
+    #[structopt(about = "Start replication server")]
+    Replica(ReplicaCommand),
 }
 
+/// Server with config and selected command
 #[derive(StructOpt)]
 pub struct Server {
     /// Server configuration path

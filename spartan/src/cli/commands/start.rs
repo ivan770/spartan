@@ -1,10 +1,13 @@
 use crate::{
     cli::Server,
     http::server::{start_http_server, ServerError},
-    node::{
-        gc::spawn_gc, load_from_fs, persistence::PersistenceError, spawn_ctrlc_handler,
-        spawn_persistence, Manager,
+    jobs::{
+        exit::spawn_ctrlc_handler,
+        gc::spawn_gc,
+        persistence::{load_from_fs, spawn_persistence, PersistenceError},
+        replication::spawn_replication,
     },
+    node::Manager,
 };
 use actix_rt::System;
 use actix_web::web::Data;
@@ -64,17 +67,14 @@ impl StartCommand {
 
         let manager = Data::new(manager);
 
-        debug!("Spawning GC handler.");
-
         let cloned_manager = manager.clone();
         spawn(async move { spawn_gc(&cloned_manager).await });
-
-        debug!("Spawning persistence job.");
 
         let cloned_manager = manager.clone();
         spawn(async move { spawn_persistence(&cloned_manager).await });
 
-        debug!("Spawning Ctrl-C handler");
+        let cloned_manager = manager.clone();
+        spawn(async move { spawn_replication(&cloned_manager).await });
 
         let cloned_manager = manager.clone();
         spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });

@@ -1,3 +1,5 @@
+#![feature(btree_drain_filter)]
+
 #[macro_use]
 extern crate derive_new;
 
@@ -21,6 +23,9 @@ mod routing;
 
 /// Configuration
 mod config;
+
+/// Background jobs
+mod jobs;
 
 /// Utilities for easier development
 pub mod utils;
@@ -46,6 +51,7 @@ async fn main() -> Result<(), Error> {
     match server.command() {
         Start(command) => command.dispatch(server).await?,
         Init(command) => command.dispatch(server).await?,
+        Replica(command) => command.dispatch(server).await?,
     };
 
     Ok(())

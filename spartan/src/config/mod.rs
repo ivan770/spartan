@@ -1,6 +1,11 @@
+/// Queue access key
 pub mod key;
 
+/// Replication config
+pub mod replication;
+
 use key::Key;
+use replication::Replication;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
@@ -45,6 +50,9 @@ pub struct Config {
 
     /// Queue access keys
     pub access_keys: Option<HashSet<Key>>,
+
+    /// Replication config
+    pub replication: Option<Replication>,
 }
 
 #[cfg(not(test))]
@@ -57,6 +65,7 @@ impl Default for Config {
             queues: Box::new([]),
             encryption_key: None,
             access_keys: None,
+            replication: None,
         }
     }
 }
@@ -71,6 +80,7 @@ impl Default for Config {
             queues: Box::new([String::from("test").into_boxed_str()]),
             encryption_key: None,
             access_keys: None,
+            replication: None,
         }
     }
 }
