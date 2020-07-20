@@ -101,23 +101,15 @@ where
     fn parse_request(&self, req: &<S as Service>::Request) -> Result<(), AccessError> {
         if self.has_access_keys() {
             if let Some(queue) = req.match_info().get("queue") {
-                let key = req
+                req
                     .headers()
                     .get("Authorization")
                     .ok_or_else(|| AccessError::AuthorizationHeaderNotFound)?
                     .to_str()
-                    .map_err(|_| AccessError::IncorrectKeyHeader)?;
-
-                if key.starts_with("Bearer") {
-                    self.check_access(
-                        key.split_ascii_whitespace()
-                            .nth(1)
-                            .ok_or_else(|| AccessError::IncorrectKeyHeader)?,
-                        queue,
-                    )
-                } else {
-                    Err(AccessError::IncorrectKeyHeader)
-                }
+                    .map_err(|_| AccessError::IncorrectKeyHeader)?
+                    .strip_prefix("Bearer ")
+                    .map(|token| self.check_access(token, queue))
+                    .ok_or_else(|| AccessError::IncorrectKeyHeader)?
             } else {
                 Ok(())
             }
