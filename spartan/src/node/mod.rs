@@ -12,7 +12,10 @@ use replication::{database::ReplicatedDatabase, storage::ReplicationStorage};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::collections::{hash_map::RandomState, HashMap};
 
+/// Conjucted type of replicated database based on tree database
 pub type DB = ReplicatedDatabase<TreeDatabase<Message>>;
+
+/// Mutexed database
 pub type MutexDB = Mutex<DB>;
 
 /// Key-value node implementation

@@ -13,7 +13,7 @@ impl Default for ReplicaStorage {
 
 impl ReplicaStorage {
     pub fn get_index(&self) -> u64 {
-        self.confirmed_index
+        self.confirmed_index + 1
     }
 
     pub fn confirm(&mut self, index: u64) {

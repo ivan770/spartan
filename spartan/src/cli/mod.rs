@@ -11,6 +11,7 @@ use structopt::StructOpt;
 use tokio::fs::read;
 use toml::from_slice;
 
+/// Enum of all available CLI commands
 #[derive(StructOpt)]
 pub enum Command {
     #[structopt(about = "Start Spartan MQ server")]
@@ -21,6 +22,7 @@ pub enum Command {
     Replica(ReplicaCommand),
 }
 
+/// Server with config and selected command
 #[derive(StructOpt)]
 pub struct Server {
     /// Server configuration path

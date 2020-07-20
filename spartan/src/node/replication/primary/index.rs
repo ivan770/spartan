@@ -66,6 +66,16 @@ impl<'a> BatchAskIndex<'a> {
         Ok(())
     }
 
+    /// Set GC threshold of each queue to minimal index of all replica's
+    ///
+    /// Example:
+    ///
+    /// ```no_run
+    /// First replica: [("TestQueue", 2), ("NextQueue", 3)]
+    /// Second replica: [("TestQueue", 1), ("AnotherQueue", 4)]
+    ///
+    /// Result: [("AnotherQueue", 4), ("NextQueue", 3), ("TestQueue", 1)]
+    /// ```
     pub async fn set_gc(&self, manager: &Manager<'_>) {
         let iter = self
             .batch

@@ -1,7 +1,7 @@
 /// Primary error
 pub mod error;
 
-/// Entry index exchange
+/// Queue index exchange
 pub mod index;
 
 /// Network stream

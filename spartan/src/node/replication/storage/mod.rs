@@ -28,4 +28,14 @@ impl ReplicationStorage {
             _ => panic!("Replication storage is in primary mode."),
         }
     }
+
+    pub fn map_primary<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut PrimaryStorage),
+    {
+        match self {
+            ReplicationStorage::Primary(storage) => f(storage),
+            ReplicationStorage::Replica(_) => (),
+        }
+    }
 }

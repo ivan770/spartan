@@ -13,7 +13,11 @@ use std::ops::{Deref, DerefMut};
 
 #[derive(Serialize, Deserialize)]
 pub struct ReplicatedDatabase<DB> {
+    /// Proxied database
     inner: DB,
+
+    /// Replication storage
+    /// None if replication is not enabled
     storage: Option<ReplicationStorage>,
 }
 
@@ -55,11 +59,11 @@ impl<DB> ReplicatedDatabase<DB> {
     where
         F: FnOnce() -> Event,
     {
-        self.call_storage(|storage| storage.get_primary().push(event()));
+        self.call_storage(|storage| storage.map_primary(|storage| storage.push(event())));
     }
 
     fn gc(&mut self) {
-        self.call_storage(|storage| storage.get_primary().gc());
+        self.call_storage(|storage| storage.map_primary(|storage| storage.gc()));
     }
 
     pub fn get_storage(&mut self) -> &mut Option<ReplicationStorage> {

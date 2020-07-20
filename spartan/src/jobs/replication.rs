@@ -80,7 +80,8 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
                 }
             }
             Replication::Replica(_) => {
-                panic!("Starting replication job while in replica mode is not allowed")
+                warn!("Primary node started with replica configuration!");
+                warn!("Event log will be disabled for this session.");
             }
         };
     }

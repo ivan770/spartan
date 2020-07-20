@@ -7,6 +7,8 @@ use spartan_lib::core::{
     payload::Identifiable,
 };
 
+/// Database event
+/// Only events that mutate database are present here
 #[derive(Serialize, Deserialize)]
 pub enum Event {
     Push(Message),
