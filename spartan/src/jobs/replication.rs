@@ -4,9 +4,10 @@ use crate::{
         replication::{
             primary::{
                 error::{PrimaryError, PrimaryResult},
+                storage::PrimaryStorage,
                 stream::StreamPool,
             },
-            storage::{primary::PrimaryStorage, ReplicationStorage},
+            storage::ReplicationStorage,
         },
         Manager,
     },

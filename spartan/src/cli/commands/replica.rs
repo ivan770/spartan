@@ -10,9 +10,10 @@ use crate::{
             replica::{
                 accept_connection,
                 error::{ReplicaError, ReplicaResult},
+                storage::ReplicaStorage,
                 ReplicaSocket,
             },
-            storage::{replica::ReplicaStorage, ReplicationStorage},
+            storage::ReplicationStorage,
         },
         Manager,
     },

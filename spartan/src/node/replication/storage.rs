@@ -1,11 +1,4 @@
-/// Storage for replication primary host
-pub mod primary;
-
-/// Storage for replica's
-pub mod replica;
-
-use primary::PrimaryStorage;
-use replica::ReplicaStorage;
+use super::{primary::storage::PrimaryStorage, replica::storage::ReplicaStorage};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]

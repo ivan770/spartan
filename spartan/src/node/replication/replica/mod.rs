@@ -1,6 +1,9 @@
 /// Replica error
 pub mod error;
 
+/// Replica node storage
+pub mod storage;
+
 use crate::{
     config::replication::Replica,
     node::{
