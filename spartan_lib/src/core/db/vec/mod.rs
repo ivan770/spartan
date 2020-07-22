@@ -137,7 +137,7 @@ mod tests {
     fn test_delete() {
         let mut db = create_database();
         let message = create_message();
-        db.push_raw(message.clone());
+        db.push_raw(message);
         db.delete_pos(0).unwrap();
         assert!(db.delete_pos(0).is_none());
     }

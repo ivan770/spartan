@@ -63,14 +63,12 @@ impl ApplyEvent for DB {
                 MaybeOwned::Borrowed(_) => unreachable!(),
             });
 
-        index.and_then(|index| {
+        if let Some(index) = index {
             self.get_storage()
                 .as_mut()
                 .expect("No storage provided")
                 .get_replica()
                 .confirm(index);
-
-            Some(())
-        });
+        }
     }
 }
