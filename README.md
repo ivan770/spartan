@@ -61,6 +61,7 @@ cargo build --release
 
 * `queues` - Array of queue names (required).
 * `path` - Database path (default: `./db`).
+* `body_size` - Max body size in bytes (default: 32 Kb)
 * `persistence_timer` - Amount of seconds between each database write to disk (default: `900`).
 * `gc_timer` - Amount of seconds between each GC job wake (GC cycle times vary, default: `300`).
 * `access_keys` - Table of queue access keys. Anonymous access to queues will not be permitted if this key has any value.

@@ -1,5 +1,5 @@
 use crate::{config::Config, node::Manager, routing::attach_routes};
-use actix_web::{web::Data, App, HttpServer};
+use actix_web::{web::{Data, JsonConfig}, App, HttpServer};
 use std::{io::Error as IoError, net::SocketAddr};
 use thiserror::Error;
 
@@ -17,11 +17,17 @@ pub async fn start_http_server(
     config: &'static Config,
 ) -> Result<(), ServerError> {
     HttpServer::new(move || {
-        App::new()
+        let mut app = App::new()
             .app_data(manager.clone())
             .configure(move |service_config| {
                 attach_routes(config, service_config);
-            })
+            });
+
+        if let Some(bytes) = config.body_size {
+            app = app.app_data(JsonConfig::default().limit(bytes));
+        }
+
+        app
     })
     .bind(host)
     .map_err(ServerError::AddressBinding)?
