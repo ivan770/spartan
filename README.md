@@ -22,6 +22,7 @@
 * SQS-like message dispatching
 * Rich messages, with support for timezone, timeout, delay, max tries, and states
 * Integrated time handling
+* Queue replication
 * Redis-like database persistence using timers
 * Background GC that helps you keep your queues tidy
 * Key-based queue authorization
