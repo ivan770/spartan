@@ -15,6 +15,8 @@ pub enum ReplicaError {
     EmptySocket,
     #[error("Packet serialization error: {0}")]
     SerializationError(Box<ErrorKind>),
+    #[error("Protocol mismatch")]
+    ProtocolMismatch,
 }
 
 pub type ReplicaResult<T> = Result<T, ReplicaError>;

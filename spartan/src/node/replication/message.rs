@@ -20,3 +20,25 @@ pub enum ReplicaRequest<'a> {
     RecvRange,
     QueueNotFound(Cow<'a, str>),
 }
+
+#[derive(Serialize, Deserialize)]
+pub enum Request<'a> {
+    Primary(PrimaryRequest<'a>),
+    Replica(ReplicaRequest<'a>),
+}
+
+impl<'a> Request<'a> {
+    pub fn get_primary(self) -> Option<PrimaryRequest<'a>> {
+        match self {
+            Request::Primary(r) => Some(r),
+            Request::Replica(_) => None,
+        }
+    }
+
+    pub fn get_replica(self) -> Option<ReplicaRequest<'a>> {
+        match self {
+            Request::Replica(r) => Some(r),
+            Request::Primary(_) => None,
+        }
+    }
+}
