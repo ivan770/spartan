@@ -65,7 +65,7 @@ impl<'a> ReplicaSocket<'a> {
         Fut: Future<Output = ReplicaRequest<'a>>,
     {
         let buf = match self.socket.next().await {
-            Some(r) => r.map_err(ReplicaError::SerializationError)?,
+            Some(r) => r.map_err(ReplicaError::CodecError)?,
             None => return Err(ReplicaError::EmptySocket),
         };
 
@@ -79,11 +79,11 @@ impl<'a> ReplicaSocket<'a> {
         self.socket
             .send(Request::Replica(request))
             .await
-            .map_err(ReplicaError::SerializationError)?;
+            .map_err(ReplicaError::CodecError)?;
 
         SinkExt::<Request>::flush(&mut self.socket)
             .await
-            .map_err(ReplicaError::SerializationError)?;
+            .map_err(ReplicaError::CodecError)?;
 
         Ok(())
     }

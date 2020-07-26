@@ -28,14 +28,14 @@ impl<'a> Stream {
         self.0
             .send(Request::Primary(message))
             .await
-            .map_err(PrimaryError::SerializationError)?;
+            .map_err(PrimaryError::CodecError)?;
 
         SinkExt::<Request>::flush(&mut self.0)
             .await
-            .map_err(PrimaryError::SerializationError)?;
+            .map_err(PrimaryError::CodecError)?;
 
         let buf = match self.0.next().await {
-            Some(r) => r.map_err(PrimaryError::SerializationError)?,
+            Some(r) => r.map_err(PrimaryError::CodecError)?,
             None => return Err(PrimaryError::EmptySocket),
         };
 
