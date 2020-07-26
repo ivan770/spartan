@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use uuid::Uuid;
+use spartan_lib::uuid::Uuid;
 
 #[derive(Deserialize)]
 #[cfg_attr(test, derive(serde::Serialize))]

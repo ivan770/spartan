@@ -33,7 +33,7 @@ mod tests {
         test::{init_service, read_response, read_response_json},
         web::Bytes,
     };
-    use uuid::Uuid;
+    use spartan_lib::uuid::Uuid;
 
     #[actix_rt::test]
     async fn test_empty_requeue() {
