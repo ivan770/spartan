@@ -120,4 +120,4 @@ Change your replication config to following example:
 replication = { Replica = { host = "127.0.0.1:12345" } }
 ```
 
-Then, start replica node with `startan replica` command.
+Then, start replica node with `spartan replica` command.
