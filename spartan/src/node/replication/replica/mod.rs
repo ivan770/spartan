@@ -4,6 +4,7 @@ pub mod error;
 /// Replica node storage
 pub mod storage;
 
+use super::message::Request;
 use crate::{
     config::replication::Replica,
     node::{
@@ -13,19 +14,19 @@ use crate::{
         },
         Manager,
     },
+    utils::codec::BincodeCodec,
 };
 use actix_rt::time::delay_for;
-use bincode::{deserialize, serialize};
 use error::{ReplicaError, ReplicaResult};
 use futures_util::{SinkExt, StreamExt};
 use std::{future::Future, time::Duration};
 use tokio::net::TcpStream;
-use tokio_util::codec::{BytesCodec, Decoder, Framed};
+use tokio_util::codec::{Decoder, Framed};
 
 pub struct ReplicaSocket<'a> {
     manager: &'a Manager<'a>,
     config: &'a Replica,
-    socket: Framed<TcpStream, BytesCodec>,
+    socket: Framed<TcpStream, BincodeCodec>,
 }
 
 impl<'a> ReplicaSocket<'a> {
@@ -33,7 +34,7 @@ impl<'a> ReplicaSocket<'a> {
         ReplicaSocket {
             manager,
             config,
-            socket: BytesCodec::new().framed(socket),
+            socket: BincodeCodec::default().framed(socket),
         }
     }
 
@@ -64,29 +65,25 @@ impl<'a> ReplicaSocket<'a> {
         Fut: Future<Output = ReplicaRequest<'a>>,
     {
         let buf = match self.socket.next().await {
-            Some(r) => r.map_err(ReplicaError::SocketError)?,
+            Some(r) => r.map_err(ReplicaError::CodecError)?,
             None => return Err(ReplicaError::EmptySocket),
         };
 
         let request = f(
-            deserialize(&buf).map_err(ReplicaError::SerializationError)?,
+            buf.get_primary()
+                .ok_or_else(|| ReplicaError::ProtocolMismatch)?,
             self.manager,
         )
         .await;
 
         self.socket
-            .send(
-                serialize(&request)
-                    .map_err(ReplicaError::SerializationError)?
-                    .into(),
-            )
+            .send(Request::Replica(request))
             .await
-            .map_err(ReplicaError::SocketError)?;
+            .map_err(ReplicaError::CodecError)?;
 
-        self.socket
-            .flush()
+        SinkExt::<Request>::flush(&mut self.socket)
             .await
-            .map_err(ReplicaError::SocketError)?;
+            .map_err(ReplicaError::CodecError)?;
 
         Ok(())
     }

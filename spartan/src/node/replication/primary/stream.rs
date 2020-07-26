@@ -6,53 +6,52 @@ use crate::{
     config::replication::Primary,
     node::replication::{
         event::Event,
-        message::{PrimaryRequest, ReplicaRequest},
+        message::{PrimaryRequest, ReplicaRequest, Request},
     },
+    utils::codec::BincodeCodec,
 };
-use bincode::{deserialize, serialize};
 use futures_util::{stream::iter, SinkExt, StreamExt, TryStreamExt};
 use maybe_owned::MaybeOwned;
 use std::borrow::Cow;
 use tokio::net::TcpStream;
-use tokio_util::codec::{BytesCodec, Decoder, Framed};
+use tokio_util::codec::{Decoder, Framed};
 
-pub struct Stream(Framed<TcpStream, BytesCodec>);
+pub struct Stream(Framed<TcpStream, BincodeCodec>);
 
 pub struct StreamPool(Box<[Stream]>);
 
 impl<'a> Stream {
-    fn serialize(message: &PrimaryRequest) -> PrimaryResult<Vec<u8>> {
-        serialize(&message).map_err(PrimaryError::SerializationError)
-    }
-
     pub async fn exchange(
         &mut self,
-        message: &PrimaryRequest<'_>,
+        message: PrimaryRequest<'_>,
     ) -> PrimaryResult<ReplicaRequest<'_>> {
         self.0
-            .send(Self::serialize(message)?.into())
+            .send(Request::Primary(message))
             .await
-            .map_err(PrimaryError::SocketError)?;
+            .map_err(PrimaryError::CodecError)?;
 
-        self.0.flush().await.map_err(PrimaryError::SocketError)?;
+        SinkExt::<Request>::flush(&mut self.0)
+            .await
+            .map_err(PrimaryError::CodecError)?;
 
         let buf = match self.0.next().await {
-            Some(r) => r.map_err(PrimaryError::SocketError)?,
+            Some(r) => r.map_err(PrimaryError::CodecError)?,
             None => return Err(PrimaryError::EmptySocket),
         };
 
-        Ok(deserialize(&buf).map_err(PrimaryError::SerializationError)?)
+        buf.get_replica()
+            .ok_or_else(|| PrimaryError::ProtocolMismatch)
     }
 
     async fn ping(&mut self) -> PrimaryResult<()> {
-        match self.exchange(&PrimaryRequest::Ping).await? {
+        match self.exchange(PrimaryRequest::Ping).await? {
             ReplicaRequest::Pong => Ok(()),
             _ => Err(PrimaryError::ProtocolMismatch),
         }
     }
 
     async fn ask(&'a mut self) -> PrimaryResult<RecvIndex<'a>> {
-        match self.exchange(&PrimaryRequest::AskIndex).await? {
+        match self.exchange(PrimaryRequest::AskIndex).await? {
             ReplicaRequest::RecvIndex(recv) => Ok(RecvIndex::new(self, recv)),
             _ => Err(PrimaryError::ProtocolMismatch),
         }
@@ -64,7 +63,7 @@ impl<'a> Stream {
         range: Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event>)]>,
     ) -> PrimaryResult<()> {
         match self
-            .exchange(&PrimaryRequest::SendRange(Cow::Borrowed(queue), range))
+            .exchange(PrimaryRequest::SendRange(Cow::Borrowed(queue), range))
             .await?
         {
             ReplicaRequest::RecvRange => Ok(()),
@@ -83,7 +82,7 @@ impl<'a> StreamPool {
 
         for host in &*config.destination {
             pool.push(Stream(
-                BytesCodec::new().framed(
+                BincodeCodec::default().framed(
                     TcpStream::connect(host)
                         .await
                         .map_err(PrimaryError::SocketError)?,

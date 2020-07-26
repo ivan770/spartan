@@ -4,10 +4,10 @@ use tokio::io::Error as IoError;
 
 #[derive(Error, Debug)]
 pub enum PrimaryError {
-    #[error("Unable to serialize stream message: {0}")]
-    SerializationError(Box<ErrorKind>),
-    #[error("TCP connection error: {0}")]
-    SocketError(IoError),
+    #[error("Socket codec error")]
+    CodecError(#[from] Box<ErrorKind>),
+    #[error("TCP connection error")]
+    SocketError(#[from] IoError),
     #[error("TCP socket is empty")]
     EmptySocket,
     #[error("Protocol mismatch")]
