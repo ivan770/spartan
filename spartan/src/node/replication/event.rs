@@ -20,6 +20,16 @@ pub enum Event {
     Clear,
 }
 
+#[cfg(test)]
+impl PartialEq for Event {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Event::Pop, Event::Pop) => true,
+            _ => false
+        }
+    }
+}
+
 pub trait ApplyEvent {
     /// Apply single event to database
     fn apply_event(&mut self, event: Event);

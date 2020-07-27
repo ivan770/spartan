@@ -59,9 +59,38 @@ mod tests {
             storage.push(Event::Pop);
         }
 
+        let slice = storage.slice(1);
+        let (index, _) = slice.first().unwrap();
+        assert_eq!(**index, 1);
+
         storage.gc_threshold = 4;
         storage.gc();
 
-        assert_eq!(storage.log.iter().map(|(k, _)| k).next(), Some(&5));
+        let slice = storage.slice(1);
+        let (index, _) = slice.first().unwrap();
+        assert_eq!(**index, 5);
+    }
+
+    #[test]
+    fn test_empty_slice() {
+        let storage = PrimaryStorage::default();
+
+        let slice = storage.slice(1);
+        assert!(slice.first().is_none());
+    }
+
+    #[test]
+    fn test_push_slice() {
+        let mut storage = PrimaryStorage::default();
+
+        for _ in 0..6 {
+            storage.push(Event::Pop);
+        }
+
+        let slice = storage.slice(1);
+        assert_eq!(slice.len(), 6);
+
+        let (index, event) = slice.first().unwrap();
+        assert_eq!((**index, &**event), (1, &Event::Pop));
     }
 }
