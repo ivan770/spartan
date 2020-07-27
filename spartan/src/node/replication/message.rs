@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(test, derive(Debug))]
 pub enum PrimaryRequest<'a> {
     Ping,
     AskIndex,
@@ -14,6 +15,7 @@ pub enum PrimaryRequest<'a> {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(test, derive(Debug))]
 pub enum ReplicaRequest<'a> {
     Pong,
     RecvIndex(Box<[(Box<str>, u64)]>),
@@ -22,9 +24,25 @@ pub enum ReplicaRequest<'a> {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(test, derive(Debug))]
 pub enum Request<'a> {
     Primary(PrimaryRequest<'a>),
     Replica(ReplicaRequest<'a>),
+}
+
+#[cfg(test)]
+impl PartialEq for Request<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Request::Primary(a), Request::Primary(b)) => {
+                match (a, b) {
+                    (PrimaryRequest::Ping, PrimaryRequest::Ping) => true,
+                    _ => false
+                }
+            }
+            _ => false
+        }
+    }
 }
 
 impl<'a> Request<'a> {
