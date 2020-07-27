@@ -8,9 +8,7 @@ pub struct PopResponse<'message> {
 
 impl<'message> PopResponse<'message> {
     pub fn new(message: &'message Message) -> Self {
-        PopResponse {
-            message
-        }
+        PopResponse { message }
     }
 }
 

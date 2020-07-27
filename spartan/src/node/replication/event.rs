@@ -23,10 +23,7 @@ pub enum Event {
 #[cfg(test)]
 impl PartialEq for Event {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Event::Pop, Event::Pop) => true,
-            _ => false
-        }
+        matches!((self, other), (Event::Pop, Event::Pop))
     }
 }
 

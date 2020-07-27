@@ -124,3 +124,111 @@ pub async fn accept_connection<'a>(
         },
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{accept_connection, storage::ReplicaStorage};
+    use crate::{
+        node::{
+            replication::{
+                event::Event,
+                message::{PrimaryRequest, ReplicaRequest},
+                storage::ReplicationStorage,
+            },
+            Manager,
+        },
+        utils::testing::CONFIG,
+    };
+    use maybe_owned::MaybeOwned;
+    use std::borrow::Cow;
+
+    #[tokio::test]
+    async fn test_accept_ping() {
+        let manager = Manager::new(&CONFIG);
+        let response = accept_connection(PrimaryRequest::Ping, &manager).await;
+        assert_eq!(response, ReplicaRequest::Pong);
+    }
+
+    #[tokio::test]
+    async fn test_accept_ask() {
+        let mut manager = Manager::new(&CONFIG);
+        prepare_manager(&mut manager).await;
+
+        let response = accept_connection(PrimaryRequest::AskIndex, &manager).await;
+
+        match response {
+            ReplicaRequest::RecvIndex(index) => {
+                let mut index = index.into_vec();
+                index.sort();
+                assert_eq!(
+                    index,
+                    Vec::from([
+                        (String::from("test").into_boxed_str(), 1),
+                        (String::from("test_2").into_boxed_str(), 1),
+                    ])
+                );
+            }
+            _ => panic!("Invalid response"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_accept_send() {
+        let mut manager = Manager::new(&CONFIG);
+        prepare_manager(&mut manager).await;
+
+        let request = PrimaryRequest::SendRange(
+            Cow::Borrowed("test"),
+            Vec::from([
+                (MaybeOwned::Owned(1), MaybeOwned::Owned(Event::Clear)),
+                (MaybeOwned::Owned(2), MaybeOwned::Owned(Event::Clear)),
+            ])
+            .into_boxed_slice(),
+        );
+
+        let response = accept_connection(request, &manager).await;
+        assert_eq!(response, ReplicaRequest::RecvRange);
+
+        let response = accept_connection(PrimaryRequest::AskIndex, &manager).await;
+        match response {
+            ReplicaRequest::RecvIndex(index) => {
+                let mut index = index.into_vec();
+                index.sort();
+                assert_eq!(
+                    index,
+                    Vec::from([
+                        (String::from("test").into_boxed_str(), 3),
+                        (String::from("test_2").into_boxed_str(), 1),
+                    ])
+                );
+            }
+            _ => panic!("Invalid response"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_accept_invalid_send() {
+        const QUEUE_NAME: &str = "this_queue_doesnt_exist";
+
+        let mut manager = Manager::new(&CONFIG);
+        prepare_manager(&mut manager).await;
+
+        let request = PrimaryRequest::SendRange(
+            Cow::Borrowed(QUEUE_NAME),
+            Vec::from([]).into_boxed_slice(),
+        );
+
+        let response = accept_connection(request, &manager).await;
+        assert_eq!(response, ReplicaRequest::QueueNotFound(Cow::Borrowed(QUEUE_NAME)));
+    }
+
+    async fn prepare_manager(manager: &mut Manager<'_>) {
+        manager
+            .node
+            .prepare_replication(
+                |storage| matches!(storage, ReplicationStorage::Replica(_)),
+                || ReplicationStorage::Replica(ReplicaStorage::default()),
+            )
+            .await;
+    }
+}

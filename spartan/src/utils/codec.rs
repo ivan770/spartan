@@ -37,9 +37,9 @@ impl Decoder for BincodeCodec {
 #[cfg(test)]
 mod tests {
     use super::BincodeCodec;
-    use tokio_util::codec::{Decoder, Encoder};
-    use actix_web::web::BytesMut;
     use crate::node::replication::message::{PrimaryRequest, Request};
+    use actix_web::web::BytesMut;
+    use tokio_util::codec::{Decoder, Encoder};
 
     #[test]
     fn test_encode_decode_valid_data() {

@@ -1,5 +1,8 @@
 use crate::{config::Config, node::Manager, routing::attach_routes};
-use actix_web::{web::{Data, JsonConfig}, App, HttpServer};
+use actix_web::{
+    web::{Data, JsonConfig},
+    App, HttpServer,
+};
 use std::{io::Error as IoError, net::SocketAddr};
 use thiserror::Error;
 

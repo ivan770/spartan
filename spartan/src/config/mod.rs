@@ -83,7 +83,10 @@ impl Default for Config {
             path: default_path(),
             persistence_timer: 30,
             gc_timer: 10,
-            queues: Box::new([String::from("test").into_boxed_str()]),
+            queues: Box::new([
+                String::from("test").into_boxed_str(),
+                String::from("test_2").into_boxed_str(),
+            ]),
             encryption_key: None,
             access_keys: None,
             replication: None,

@@ -8,8 +8,6 @@ pub struct SizeResponse {
 
 impl SizeResponse {
     pub fn new(size: usize) -> Self {
-        SizeResponse {
-            size
-        }
+        SizeResponse { size }
     }
 }
