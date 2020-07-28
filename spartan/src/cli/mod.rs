@@ -2,7 +2,7 @@
 mod commands;
 
 use crate::config::Config;
-use commands::{init::InitCommand, replica::ReplicaCommand, start::StartCommand};
+use commands::{init::InitCommand, start::StartCommand};
 use std::{
     io::Error,
     path::{Path, PathBuf},
@@ -11,6 +11,9 @@ use structopt::StructOpt;
 use tokio::fs::read;
 use toml::from_slice;
 
+#[cfg(feature = "replication")]
+use commands::replica::ReplicaCommand;
+
 /// Enum of all available CLI commands
 #[derive(StructOpt)]
 pub enum Command {
@@ -18,6 +21,7 @@ pub enum Command {
     Start(StartCommand),
     #[structopt(about = "Initialize configuration file")]
     Init(InitCommand),
+    #[cfg(feature = "replication")]
     #[structopt(about = "Start replication server")]
     Replica(ReplicaCommand),
 }

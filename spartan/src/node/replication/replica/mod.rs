@@ -213,13 +213,14 @@ mod tests {
         let mut manager = Manager::new(&CONFIG);
         prepare_manager(&mut manager).await;
 
-        let request = PrimaryRequest::SendRange(
-            Cow::Borrowed(QUEUE_NAME),
-            Vec::from([]).into_boxed_slice(),
-        );
+        let request =
+            PrimaryRequest::SendRange(Cow::Borrowed(QUEUE_NAME), Vec::from([]).into_boxed_slice());
 
         let response = accept_connection(request, &manager).await;
-        assert_eq!(response, ReplicaRequest::QueueNotFound(Cow::Borrowed(QUEUE_NAME)));
+        assert_eq!(
+            response,
+            ReplicaRequest::QueueNotFound(Cow::Borrowed(QUEUE_NAME))
+        );
     }
 
     async fn prepare_manager(manager: &mut Manager<'_>) {

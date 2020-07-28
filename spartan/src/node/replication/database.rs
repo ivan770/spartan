@@ -1,5 +1,5 @@
 use super::storage::ReplicationStorage;
-use crate::node::replication::event::Event;
+use crate::node::{Node, replication::event::Event};
 use serde::{Deserialize, Serialize};
 use spartan_lib::core::{
     dispatcher::{
@@ -139,5 +139,23 @@ where
         self.push_event(|| Event::Delete(id));
 
         PositionBasedDelete::delete(&mut self.inner, id)
+    }
+}
+
+impl Node<'_> {
+    pub async fn prepare_replication<F, R>(&self, filter: F, replace: R)
+    where
+        F: Fn(&&ReplicationStorage) -> bool + Copy,
+        R: Fn() -> ReplicationStorage,
+    {
+        for (_, db) in self.iter() {
+            let mut db = db.lock().await;
+
+            let storage = db.get_storage().as_ref().filter(filter);
+
+            if storage.is_none() {
+                db.get_storage().replace(replace());
+            }
+        }
     }
 }

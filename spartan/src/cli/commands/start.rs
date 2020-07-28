@@ -5,7 +5,6 @@ use crate::{
         exit::spawn_ctrlc_handler,
         gc::spawn_gc,
         persistence::{load_from_fs, spawn_persistence, PersistenceError},
-        replication::spawn_replication,
     },
     node::Manager,
 };
@@ -15,6 +14,9 @@ use std::{io::Error as IoError, net::SocketAddr};
 use structopt::StructOpt;
 use thiserror::Error;
 use tokio::{spawn, task::LocalSet};
+
+#[cfg(feature = "replication")]
+use crate::jobs::replication::spawn_replication;
 
 #[derive(Error, Debug)]
 pub enum StartCommandError {
@@ -73,8 +75,11 @@ impl StartCommand {
         let cloned_manager = manager.clone();
         spawn(async move { spawn_persistence(&cloned_manager).await });
 
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_replication(&cloned_manager).await });
+        #[cfg(feature = "replication")]
+        {
+            let cloned_manager = manager.clone();
+            spawn(async move { spawn_replication(&cloned_manager).await });
+        }
 
         let cloned_manager = manager.clone();
         spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });

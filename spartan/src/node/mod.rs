@@ -1,6 +1,7 @@
 /// Node manager
 pub mod manager;
 
+#[cfg(feature = "replication")]
 /// Database replication
 pub mod replication;
 
@@ -8,12 +9,17 @@ pub use manager::Manager;
 
 use crate::config::Config;
 use futures_util::lock::{Mutex, MutexGuard};
-use replication::{database::ReplicatedDatabase, storage::ReplicationStorage};
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::collections::{hash_map::RandomState, HashMap};
 
+#[cfg(feature = "replication")]
+use replication::database::ReplicatedDatabase;
+
 /// Conjucted type of replicated database based on tree database
+#[cfg(feature = "replication")]
 pub type DB = ReplicatedDatabase<TreeDatabase<Message>>;
+#[cfg(not(feature = "replication"))]
+pub type DB = TreeDatabase<Message>;
 
 /// Mutexed database
 pub type MutexDB = Mutex<DB>;
@@ -54,21 +60,5 @@ impl<'a> Node<'a> {
     /// Load queues from config
     pub fn load_from_config(&mut self, config: &'a Config) {
         config.queues.iter().for_each(|queue| self.add(queue));
-    }
-
-    pub async fn prepare_replication<F, R>(&self, filter: F, replace: R)
-    where
-        F: Fn(&&ReplicationStorage) -> bool + Copy,
-        R: Fn() -> ReplicationStorage,
-    {
-        for (_, db) in self.iter() {
-            let mut db = db.lock().await;
-
-            let storage = db.get_storage().as_ref().filter(filter);
-
-            if storage.is_none() {
-                db.get_storage().replace(replace());
-            }
-        }
     }
 }

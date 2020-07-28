@@ -1408,6 +1408,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "bincode",
+ "chrono",
  "futures-util",
  "itertools",
  "log",
@@ -1415,22 +1416,12 @@ dependencies = [
  "once_cell",
  "pretty_env_logger",
  "serde",
- "spartan_lib",
  "structopt",
  "tempfile",
  "thiserror",
  "tokio",
  "tokio-util 0.3.1",
  "toml",
-]
-
-[[package]]
-name = "spartan_lib"
-version = "0.6.0"
-dependencies = [
- "chrono",
- "serde",
- "thiserror",
  "uuid",
 ]
 
