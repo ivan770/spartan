@@ -1,6 +1,0 @@
-path = './db2'
-persistence_timer = 900
-gc_timer = 3
-queues = ["test"]
-
-replication = { Replica = { host = "127.0.0.1:12345" } }
