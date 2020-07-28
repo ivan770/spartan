@@ -22,6 +22,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all-features
   win:
     runs-on: windows-latest
     steps:
@@ -35,3 +36,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --all-features
