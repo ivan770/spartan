@@ -6,11 +6,11 @@ edition = "2018"
 
 [[bin]]
 name = "spartan"
-path = "spartan/src/main.rs"
+path = "spartan/main.rs"
 
 [lib]
 name = "spartan_lib"
-path = "spartan_lib/src/lib.rs"
+path = "spartan_lib/lib.rs"
 
 [profile.release]
 lto = true
