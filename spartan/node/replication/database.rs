@@ -145,13 +145,13 @@ where
 impl Node<'_> {
     pub async fn prepare_replication<F, R>(&self, filter: F, replace: R)
     where
-        F: Fn(&&ReplicationStorage) -> bool + Copy,
+        F: Fn(&ReplicationStorage) -> bool + Copy,
         R: Fn() -> ReplicationStorage,
     {
         for (_, db) in self.iter() {
             let mut db = db.lock().await;
 
-            let storage = db.get_storage().as_ref().filter(filter);
+            let storage = db.get_storage().as_ref().filter(|storage| filter(*storage));
 
             if storage.is_none() {
                 db.get_storage().replace(replace());

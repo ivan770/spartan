@@ -57,13 +57,26 @@ impl<'a> BatchAskIndex<'a> {
         self.batch.push(index);
     }
 
-    pub async fn sync(&mut self, manager: &Manager<'_>) -> PrimaryResult<()> {
+    pub async fn sync(mut self, manager: &Manager<'_>) -> PrimaryResult<Sync<'a>> {
         iter(self.batch.iter_mut())
             .map(Ok)
             .try_for_each_concurrent(None, |host| async move { host.sync(manager).await })
             .await?;
 
-        Ok(())
+        Ok(Sync::new(self))
+    }
+
+}
+
+pub struct Sync<'a> {
+    batch_ask_index: BatchAskIndex<'a>
+}
+
+impl<'a> Sync<'a> {
+    fn new(batch_ask_index: BatchAskIndex<'a>) -> Self {
+        Sync {
+            batch_ask_index
+        }
     }
 
     /// Set GC threshold of each queue to minimal index of all replica's
@@ -78,6 +91,7 @@ impl<'a> BatchAskIndex<'a> {
     /// ```
     pub async fn set_gc(&self, manager: &Manager<'_>) {
         let iter = self
+            .batch_ask_index
             .batch
             .iter()
             .map(|index| index.indexes.iter())
@@ -90,12 +104,12 @@ impl<'a> BatchAskIndex<'a> {
             });
 
         for (queue, index) in iter {
-            let mut m = manager
+            manager
                 .queue(&queue)
                 .await
-                .expect("set_gc called without sync before");
-
-            m.get_storage()
+                .as_mut()
+                .expect("set_gc called without sync before")
+                .get_storage()
                 .as_mut()
                 .unwrap()
                 .get_primary()

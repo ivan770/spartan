@@ -21,13 +21,13 @@ async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> Prim
     pool.ping().await?;
 
     debug!("Asking stream pool for indexes.");
-    let mut batch = pool.ask().await?;
+    let batch = pool.ask().await?;
 
     debug!("Starting event slice sync.");
-    batch.sync(manager).await?;
+    let sync = batch.sync(manager).await?;
 
     debug!("Setting GC threshold.");
-    batch.set_gc(manager).await;
+    sync.set_gc(manager).await;
 
     Ok(())
 }
