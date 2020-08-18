@@ -6,3 +6,6 @@ pub mod server;
 
 /// HTTP middlewares
 pub mod middleware;
+
+/// Actix routing
+pub mod routing;

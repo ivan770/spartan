@@ -15,9 +15,6 @@ mod node;
 /// HTTP server and query structs
 mod http;
 
-/// Actix routing
-mod routing;
-
 /// Configuration
 mod config;
 

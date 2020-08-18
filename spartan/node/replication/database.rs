@@ -1,5 +1,5 @@
 use super::storage::ReplicationStorage;
-use crate::node::{Node, replication::event::Event};
+use crate::node::{replication::event::Event, Node};
 use serde::{Deserialize, Serialize};
 use spartan_lib::core::{
     dispatcher::{

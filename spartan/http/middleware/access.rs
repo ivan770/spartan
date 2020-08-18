@@ -143,8 +143,8 @@ where
 mod tests {
     use crate::{
         config::{key::Key, Config},
+        http::routing::attach_routes,
         node::Manager,
-        routing::attach_routes,
         test_request,
     };
     use actix_service::Service;

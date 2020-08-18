@@ -1,4 +1,5 @@
-use crate::{config::Config, node::Manager, routing::attach_routes};
+use super::routing::attach_routes;
+use crate::{config::Config, node::Manager};
 use actix_web::{
     web::{Data, JsonConfig},
     App, HttpServer,

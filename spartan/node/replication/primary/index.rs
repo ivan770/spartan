@@ -65,18 +65,15 @@ impl<'a> BatchAskIndex<'a> {
 
         Ok(Sync::new(self))
     }
-
 }
 
 pub struct Sync<'a> {
-    batch_ask_index: BatchAskIndex<'a>
+    batch_ask_index: BatchAskIndex<'a>,
 }
 
 impl<'a> Sync<'a> {
     fn new(batch_ask_index: BatchAskIndex<'a>) -> Self {
-        Sync {
-            batch_ask_index
-        }
+        Sync { batch_ask_index }
     }
 
     /// Set GC threshold of each queue to minimal index of all replica's
