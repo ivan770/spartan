@@ -3,10 +3,7 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
 };
-use spartan_lib::core::{
-    dispatcher::SimpleDispatcher,
-    message::{builder::MessageBuilder, Message},
-};
+use spartan_lib::core::dispatcher::SimpleDispatcher;
 
 /// Push message to queue.
 ///
@@ -18,31 +15,8 @@ pub async fn push(
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
     let mut queue = manager.queue(&queue.0).await?;
-    queue.push(apply_builder(request.into_inner()));
+    queue.push(request.into_inner().into());
     Ok(HttpResponse::Ok().json(()))
-}
-
-/// Compose message from push request.
-pub fn apply_builder(request: PushRequest) -> Message {
-    let mut builder = MessageBuilder::default().body(request.body);
-
-    if let Some(offset) = request.offset {
-        builder = builder.offset(offset);
-    };
-
-    if let Some(max_tries) = request.max_tries {
-        builder = builder.max_tries(max_tries);
-    };
-
-    if let Some(timeout) = request.timeout {
-        builder = builder.timeout(timeout);
-    };
-
-    if let Some(delay) = request.delay {
-        builder = builder.delay(delay);
-    };
-
-    builder.compose().expect("No message body provided")
 }
 
 #[cfg(test)]
