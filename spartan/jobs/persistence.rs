@@ -37,24 +37,20 @@ async fn persist_db(name: &str, db: &DB, path: &Path) -> Result<(), PersistenceE
             .map_err(PersistenceError::FileWriteError)?;
     }
 
-    {
-        write(
-            path.join(QUEUE_SUFFIX),
-            serialize(&*db.database.lock().await).map_err(PersistenceError::SerializationError)?,
-        )
-        .await
-        .map_err(PersistenceError::FileWriteError)?;
-    }
+    write(
+        path.join(QUEUE_SUFFIX),
+        serialize(&*db.database.lock().await).map_err(PersistenceError::SerializationError)?,
+    )
+    .await
+    .map_err(PersistenceError::FileWriteError)?;
 
-    {
-        write(
-            path.join(REPLICATION_SUFFIX),
-            serialize(&*db.replication_storage.lock().await)
-                .map_err(PersistenceError::SerializationError)?,
-        )
-        .await
-        .map_err(PersistenceError::FileWriteError)?;
-    }
+    write(
+        path.join(REPLICATION_SUFFIX),
+        serialize(&*db.replication_storage.lock().await)
+            .map_err(PersistenceError::SerializationError)?,
+    )
+    .await
+    .map_err(PersistenceError::FileWriteError)?;
 
     info!("Saved \"{}\" successfully", name);
 
