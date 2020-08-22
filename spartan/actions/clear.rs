@@ -9,7 +9,8 @@ use spartan_lib::core::dispatcher::simple::SimpleDispatcher;
 ///
 /// Doesn't require any input, returns empty response.
 pub async fn clear(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0).await?;
+    let mut queue = manager.queue(&queue.0)?.database.lock().await;
+
     queue.clear();
     Ok(HttpResponse::Ok().json(()))
 }

@@ -12,7 +12,8 @@ use spartan_lib::core::dispatcher::StatusAwareDispatcher;
 /// After reserving message, you either need to return it to queue, or delete it.
 /// Messages that are not returned after timeout are deleted by GC.
 pub async fn pop(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0).await?;
+    let mut queue = manager.queue(&queue.0)?.database.lock().await;
+
     let message = queue.pop().ok_or_else(|| QueueError::NoMessageAvailable)?;
     Ok(HttpResponse::Ok().json(PopResponse::new(message)))
 }

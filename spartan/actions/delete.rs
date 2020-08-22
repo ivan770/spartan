@@ -17,7 +17,8 @@ pub async fn delete(
     manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0).await?;
+    let mut queue = manager.queue(&queue.0)?.database.lock().await;
+
     let message = queue
         .delete(request.id)
         .ok_or_else(|| QueueError::MessageNotFound)?;

@@ -8,10 +8,7 @@ use super::message::Request;
 use crate::{
     config::replication::Replica,
     node::{
-        replication::{
-            event::ApplyEvent,
-            message::{PrimaryRequest, ReplicaRequest},
-        },
+        replication::message::{PrimaryRequest, ReplicaRequest},
         Manager,
     },
     utils::codec::BincodeCodec,
@@ -101,9 +98,9 @@ pub async fn accept_connection<'a>(
 
             for (name, db) in manager.node.iter() {
                 let index = db
+                    .replication_storage
                     .lock()
                     .await
-                    .get_storage()
                     .as_mut()
                     .expect("No database present")
                     .get_replica()
@@ -114,10 +111,10 @@ pub async fn accept_connection<'a>(
 
             ReplicaRequest::RecvIndex(indexes.into_boxed_slice())
         }
-        PrimaryRequest::SendRange(queue, range) => match manager.queue(&queue).await {
-            Ok(mut db) => {
+        PrimaryRequest::SendRange(queue, range) => match manager.queue(&queue) {
+            Ok(db) => {
                 debug!("Applying event slice.");
-                db.apply_events(range);
+                db.apply_events(range).await;
                 ReplicaRequest::RecvRange
             }
             Err(_) => ReplicaRequest::QueueNotFound(queue),

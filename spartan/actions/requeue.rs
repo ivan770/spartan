@@ -15,7 +15,8 @@ pub async fn requeue(
     manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0).await?;
+    let mut queue = manager.queue(&queue.0)?.database.lock().await;
+
     queue
         .requeue(request.id)
         .ok_or_else(|| QueueError::MessageNotFound)?;

@@ -14,7 +14,8 @@ pub async fn push(
     manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0).await?;
+    let mut queue = manager.queue(&queue.0)?.database.lock().await;
+
     queue.push(request.into_inner().into());
     Ok(HttpResponse::Ok().json(()))
 }
