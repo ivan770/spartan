@@ -27,7 +27,6 @@ impl PartialEq for Event {
     }
 }
 
-#[cfg(feature = "replication")]
 impl<DB> Queue<DB>
 where
     DB: SimpleDispatcher<Message> + StatusAwareDispatcher<Message> + PositionBasedDelete<Message>,
