@@ -1,6 +1,7 @@
-use super::Node;
-use crate::node::replication::storage::ReplicationStorage;
 use tokio::sync::Mutex;
+
+#[cfg(feature = "replication")]
+use crate::node::replication::storage::ReplicationStorage;
 
 pub struct Queue<DB> {
     /// Proxied database
@@ -21,6 +22,15 @@ where
             database: Mutex::new(DB::default()),
             #[cfg(feature = "replication")]
             replication_storage: Mutex::new(None),
+        }
+    }
+}
+
+#[cfg(not(feature = "replication"))]
+impl<DB> Queue<DB> {
+    pub fn new(database: DB) -> Queue<DB> {
+        Queue {
+            database: Mutex::new(database),
         }
     }
 }
@@ -52,7 +62,7 @@ impl<DB> Queue<DB> {
 }
 
 #[cfg(feature = "replication")]
-impl Node<'_> {
+impl super::Node<'_> {
     pub async fn prepare_replication<F, R>(&self, filter: F, replace: R)
     where
         F: Fn(&ReplicationStorage) -> bool + Copy,

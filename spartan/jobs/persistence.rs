@@ -1,14 +1,16 @@
 use crate::node::{Manager, Queue, DB};
 use actix_rt::time::delay_for;
 use bincode::{deserialize, serialize, Error as BincodeError};
+use cfg_if::cfg_if;
 use futures_util::stream::{iter, StreamExt};
 use serde::de::DeserializeOwned;
 use std::{io::Error, path::Path, time::Duration};
 use thiserror::Error as ThisError;
 use tokio::fs::{create_dir, read, write};
 
-const QUEUE_SUFFIX: &str = "queue";
-const REPLICATION_SUFFIX: &str = "replication";
+const QUEUE_FILE: &str = "queue";
+#[cfg(feature = "replication")]
+const REPLICATION_FILE: &str = "replication";
 
 /// Enum of errors, that may occur during persistence jobs
 #[derive(ThisError, Debug)]
@@ -38,19 +40,22 @@ async fn persist_db(name: &str, db: &DB, path: &Path) -> Result<(), PersistenceE
     }
 
     write(
-        path.join(QUEUE_SUFFIX),
+        path.join(QUEUE_FILE),
         serialize(&*db.database.lock().await).map_err(PersistenceError::SerializationError)?,
     )
     .await
     .map_err(PersistenceError::FileWriteError)?;
 
-    write(
-        path.join(REPLICATION_SUFFIX),
-        serialize(&*db.replication_storage.lock().await)
-            .map_err(PersistenceError::SerializationError)?,
-    )
-    .await
-    .map_err(PersistenceError::FileWriteError)?;
+    #[cfg(feature = "replication")]
+    {
+        write(
+            path.join(REPLICATION_FILE),
+            serialize(&*db.replication_storage.lock().await)
+                .map_err(PersistenceError::SerializationError)?,
+        )
+        .await
+        .map_err(PersistenceError::FileWriteError)?;
+    }
 
     info!("Saved \"{}\" successfully", name);
 
@@ -96,9 +101,15 @@ where
 
 async fn load<'a>(manager: &mut Manager<'a>, name: &'a str) -> PersistenceResult<()> {
     let path = manager.config.path.join(name);
-    let database = read_struct(&path.join(QUEUE_SUFFIX)).await?;
-    let replication_storage = read_struct(&path.join(REPLICATION_SUFFIX)).await?;
-    let queue = Queue::new(database, replication_storage);
+    let database = read_struct(&path.join(QUEUE_FILE)).await?;
+    cfg_if! {
+        if #[cfg(feature = "replication")] {
+            let replication_storage = read_struct(&path.join(REPLICATION_FILE)).await?;
+            let queue = Queue::new(database, replication_storage);
+        } else {
+            let queue = Queue::new(database);
+        }
+    }
     manager.node.add_db(name, queue);
     Ok(())
 }
@@ -106,8 +117,12 @@ async fn load<'a>(manager: &mut Manager<'a>, name: &'a str) -> PersistenceResult
 /// Load manager from FS
 pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
     for queue in manager.config.queues.iter() {
-        if let Err(PersistenceError::FileReadError(e)) = load(manager, queue).await {
-            warn!("Unable to load database {}: {}", queue, e);
+        match load(manager, queue).await {
+            Err(PersistenceError::FileReadError(e)) => {
+                warn!("Unable to load database {}: {}", queue, e)
+            }
+            Err(e) => return Err(e),
+            _ => (),
         }
     }
 
