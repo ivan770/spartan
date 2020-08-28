@@ -32,9 +32,7 @@ impl<DB> Queue<DB>
 where
     DB: SimpleDispatcher<Message> + StatusAwareDispatcher<Message> + PositionBasedDelete<Message>,
 {
-    async fn apply_event(&self, event: Event) {
-        let mut queue = self.database.lock().await;
-
+    async fn apply_event(&self, event: Event, queue: &mut DB) {
         match event {
             Event::Push(message) => queue.push(message),
             Event::Pop => {
@@ -58,12 +56,16 @@ where
     pub async fn apply_events(&self, events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>) {
         let index = events.last().map(|(index, _)| **index);
 
-        // into_vec allows to use owned event
-        for (_, event) in events.into_vec().into_iter() {
-            match event {
-                MaybeOwned::Owned(event) => self.apply_event(event).await,
-                MaybeOwned::Borrowed(_) => unreachable!(),
-            };
+        {
+            let mut queue = self.database.lock().await;
+
+            // into_vec allows to use owned event
+            for (_, event) in events.into_vec().into_iter() {
+                match event {
+                    MaybeOwned::Owned(event) => self.apply_event(event, &mut *queue).await,
+                    MaybeOwned::Borrowed(_) => unreachable!(),
+                };
+            }
         }
 
         if let Some(index) = index {
