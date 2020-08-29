@@ -6,6 +6,9 @@ use actix_web::{
 };
 use spartan_lib::core::dispatcher::StatusAwareDispatcher;
 
+#[cfg(feature = "replication")]
+use crate::node::replication::event::Event;
+
 /// Requeues message back to queue.
 ///
 /// Requires ID of message being requeued, returns empty response.
@@ -15,11 +18,17 @@ pub async fn requeue(
     manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0)?.database.lock().await;
+    let queue = manager.queue(&queue.0)?;
+
+    #[cfg(feature = "replication")]
+    queue.log_event(|| Event::Requeue(request.id)).await;
 
     queue
+        .database()
+        .await
         .requeue(request.id)
         .ok_or_else(|| QueueError::MessageNotFound)?;
+
     Ok(HttpResponse::Ok().json(()))
 }
 

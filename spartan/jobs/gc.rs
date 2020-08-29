@@ -8,7 +8,7 @@ use std::time::Duration;
 async fn execute_gc(manager: &Manager<'_>) {
     iter(manager.node.iter())
         .for_each_concurrent(None, |(name, db)| async move {
-            let mut queue = db.database.lock().await;
+            let mut queue = db.database().await;
 
             info!("Started GC cycle on database \"{}\"", name);
 
@@ -59,21 +59,14 @@ mod tests {
         manager
             .queue("first")
             .unwrap()
-            .database
-            .lock()
+            .database()
             .await
             .push(message);
 
-        assert_eq!(
-            manager.queue("first").unwrap().database.lock().await.size(),
-            1
-        );
+        assert_eq!(manager.queue("first").unwrap().database().await.size(), 1);
 
         execute_gc(&manager).await;
 
-        assert_eq!(
-            manager.queue("first").unwrap().database.lock().await.size(),
-            0
-        );
+        assert_eq!(manager.queue("first").unwrap().database().await.size(), 0);
     }
 }

@@ -5,13 +5,19 @@ use actix_web::{
 };
 use spartan_lib::core::dispatcher::simple::SimpleDispatcher;
 
+#[cfg(feature = "replication")]
+use crate::node::replication::event::Event;
+
 /// Clear queue.
 ///
 /// Doesn't require any input, returns empty response.
 pub async fn clear(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0)?.database.lock().await;
+    let queue = manager.queue(&queue.0)?;
 
-    queue.clear();
+    #[cfg(feature = "replication")]
+    queue.log_event(|| Event::Clear).await;
+
+    queue.database().await.clear();
     Ok(HttpResponse::Ok().json(()))
 }
 

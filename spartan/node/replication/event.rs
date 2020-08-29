@@ -56,7 +56,7 @@ where
         let index = events.last().map(|(index, _)| **index);
 
         {
-            let mut queue = self.database.lock().await;
+            let mut queue = self.database().await;
 
             // into_vec allows to use owned event
             for (_, event) in events.into_vec().into_iter() {
@@ -68,13 +68,21 @@ where
         }
 
         if let Some(index) = index {
-            self.replication_storage
-                .lock()
+            self.replication_storage()
                 .await
                 .as_mut()
                 .expect("No storage provided")
                 .get_replica()
                 .confirm(index);
+        }
+    }
+
+    pub async fn log_event<F>(&self, f: F)
+    where
+        F: FnOnce() -> Event,
+    {
+        if let Some(storage) = self.replication_storage().await.as_mut() {
+            storage.map_primary(|storage| storage.push(f()));
         }
     }
 }

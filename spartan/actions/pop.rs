@@ -6,15 +6,25 @@ use actix_web::{
 };
 use spartan_lib::core::dispatcher::StatusAwareDispatcher;
 
+#[cfg(feature = "replication")]
+use crate::node::replication::event::Event;
+
 /// Pop message from queue.
 ///
 /// Doesn't require any input, returns reserved message.
 /// After reserving message, you either need to return it to queue, or delete it.
 /// Messages that are not returned after timeout are deleted by GC.
 pub async fn pop(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0)?.database.lock().await;
+    let queue = manager.queue(&queue.0)?;
 
-    let message = queue.pop().ok_or_else(|| QueueError::NoMessageAvailable)?;
+    #[cfg(feature = "replication")]
+    queue.log_event(|| Event::Pop).await;
+
+    let mut database = queue.database().await;
+    let message = database
+        .pop()
+        .ok_or_else(|| QueueError::NoMessageAvailable)?;
+
     Ok(HttpResponse::Ok().json(PopResponse::new(message)))
 }
 

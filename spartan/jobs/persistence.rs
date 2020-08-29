@@ -41,7 +41,7 @@ async fn persist_db(name: &str, db: &DB, path: &Path) -> Result<(), PersistenceE
 
     write(
         path.join(QUEUE_FILE),
-        serialize(&*db.database.lock().await).map_err(PersistenceError::SerializationError)?,
+        serialize(&*db.database().await).map_err(PersistenceError::SerializationError)?,
     )
     .await
     .map_err(PersistenceError::FileWriteError)?;
@@ -50,7 +50,7 @@ async fn persist_db(name: &str, db: &DB, path: &Path) -> Result<(), PersistenceE
     {
         write(
             path.join(REPLICATION_FILE),
-            serialize(&*db.replication_storage.lock().await)
+            serialize(&*db.replication_storage().await)
                 .map_err(PersistenceError::SerializationError)?,
         )
         .await
@@ -163,8 +163,7 @@ mod tests {
             manager
                 .queue("test")
                 .unwrap()
-                .database
-                .lock()
+                .database()
                 .await
                 .push(message);
 
@@ -179,8 +178,7 @@ mod tests {
             manager
                 .queue("test")
                 .unwrap()
-                .database
-                .lock()
+                .database()
                 .await
                 .pop()
                 .unwrap()

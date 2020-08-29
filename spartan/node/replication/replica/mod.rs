@@ -98,8 +98,7 @@ pub async fn accept_connection<'a>(
 
             for (name, db) in manager.node.iter() {
                 let index = db
-                    .replication_storage
-                    .lock()
+                    .replication_storage()
                     .await
                     .as_mut()
                     .expect("No database present")

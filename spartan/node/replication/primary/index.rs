@@ -28,8 +28,7 @@ impl<'a> RecvIndex<'a> {
                     manager
                         .queue(name)
                         .map_err(|_| PrimaryError::QueueConfigMismatch)?
-                        .replication_storage
-                        .lock()
+                        .replication_storage()
                         .await
                         .as_mut()
                         .expect("Replication storage is uninitialized")
@@ -106,8 +105,7 @@ impl<'a> Sync<'a> {
                 .queue(&queue)
                 .as_mut()
                 .expect("set_gc called without sync before")
-                .replication_storage
-                .lock()
+                .replication_storage()
                 .await
                 .as_mut()
                 .unwrap()

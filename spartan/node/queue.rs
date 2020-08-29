@@ -1,16 +1,22 @@
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
 
 #[cfg(feature = "replication")]
 use crate::node::replication::storage::ReplicationStorage;
 
 pub struct Queue<DB> {
     /// Proxied database
-    pub database: Mutex<DB>,
+    database: Mutex<DB>,
 
     #[cfg(feature = "replication")]
     /// Replication storage
     /// None if replication is not enabled
-    pub replication_storage: Mutex<Option<ReplicationStorage>>,
+    replication_storage: Mutex<Option<ReplicationStorage>>,
+}
+
+impl<DB> Queue<DB> {
+    pub async fn database(&self) -> MutexGuard<'_, DB> {
+        self.database.lock().await
+    }
 }
 
 impl<DB> Default for Queue<DB>
@@ -42,6 +48,10 @@ impl<DB> Queue<DB> {
             database: Mutex::new(database),
             replication_storage: Mutex::new(replication_storage),
         }
+    }
+
+    pub async fn replication_storage(&self) -> MutexGuard<'_, Option<ReplicationStorage>> {
+        self.replication_storage.lock().await
     }
 
     pub async fn prepare_replication<F, R>(&self, filter: F, replace: R)
