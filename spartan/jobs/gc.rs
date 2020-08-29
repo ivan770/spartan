@@ -7,12 +7,15 @@ use std::time::Duration;
 /// Concurrently iterates over all databases in node, and executes GC on them.
 async fn execute_gc(manager: &Manager<'_>) {
     iter(manager.node.iter())
-        .for_each_concurrent(None, |(name, db)| async move {
-            let mut db = db.lock().await;
-
+        .for_each_concurrent(None, |(name, queue)| async move {
             info!("Started GC cycle on database \"{}\"", name);
 
-            db.gc();
+            queue.database().await.gc();
+
+            #[cfg(feature = "replication")]
+            if let Some(storage) = queue.replication_storage().await.as_mut() {
+                storage.map_primary(|storage| storage.gc());
+            }
 
             info!("GC cycle on \"{}\" completed successfully", name);
         })
@@ -56,12 +59,17 @@ mod tests {
 
         message.reserve();
         message.requeue();
-        manager.queue("first").await.unwrap().push(message);
+        manager
+            .queue("first")
+            .unwrap()
+            .database()
+            .await
+            .push(message);
 
-        assert_eq!(manager.queue("first").await.unwrap().size(), 1);
+        assert_eq!(manager.queue("first").unwrap().database().await.size(), 1);
 
         execute_gc(&manager).await;
 
-        assert_eq!(manager.queue("first").await.unwrap().size(), 0);
+        assert_eq!(manager.queue("first").unwrap().database().await.size(), 0);
     }
 }

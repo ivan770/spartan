@@ -44,9 +44,6 @@ pub mod storage;
 /// Database event
 pub mod event;
 
-/// Replication proxy database
-pub mod database;
-
 /// Replication TCP messages
 pub mod message;
 

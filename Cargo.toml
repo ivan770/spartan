@@ -37,13 +37,14 @@ futures-util = { version = "0.3" }
 once_cell = { version = "1.4" } 
 tokio-util = { version = "0.3", optional = true }
 itertools = { version = "0.9", optional = true }
+cfg-if = { version = "0.1" }
 
 [dev-dependencies]
 tempfile = { version = "3.1" }
 
 [dependencies.tokio]
 version = "0.2"
-features = ["macros", "rt-threaded", "fs", "tcp"]
+features = ["macros", "rt-threaded", "fs", "tcp", "sync"]
 
 [dependencies.maybe-owned]
 version = "0.3"

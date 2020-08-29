@@ -1,4 +1,4 @@
-use crate::node::DB;
+use crate::node::Queue;
 use maybe_owned::MaybeOwned;
 use serde::{Deserialize, Serialize};
 use spartan_lib::core::{
@@ -27,18 +27,11 @@ impl PartialEq for Event {
     }
 }
 
-pub trait ApplyEvent {
-    /// Apply single event to database
-    fn apply_event(&mut self, event: Event);
-
-    /// Apply slice of events to database
-    fn apply_events(&mut self, events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>);
-}
-
-impl ApplyEvent for DB {
-    fn apply_event(&mut self, event: Event) {
-        let queue = &mut **self;
-
+impl<DB> Queue<DB>
+where
+    DB: SimpleDispatcher<Message> + StatusAwareDispatcher<Message> + PositionBasedDelete<Message>,
+{
+    async fn apply_event(&self, event: Event, queue: &mut DB) {
         match event {
             Event::Push(message) => queue.push(message),
             Event::Pop => {
@@ -59,24 +52,37 @@ impl ApplyEvent for DB {
         }
     }
 
-    fn apply_events(&mut self, events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>) {
+    pub async fn apply_events(&self, events: Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]>) {
         let index = events.last().map(|(index, _)| **index);
 
-        // into_vec allows to use owned event
-        events
-            .into_vec()
-            .into_iter()
-            .for_each(|(_, event)| match event {
-                MaybeOwned::Owned(event) => self.apply_event(event),
-                MaybeOwned::Borrowed(_) => unreachable!(),
-            });
+        {
+            let mut queue = self.database().await;
+
+            // into_vec allows to use owned event
+            for (_, event) in events.into_vec().into_iter() {
+                match event {
+                    MaybeOwned::Owned(event) => self.apply_event(event, &mut *queue).await,
+                    MaybeOwned::Borrowed(_) => unreachable!(),
+                };
+            }
+        }
 
         if let Some(index) = index {
-            self.get_storage()
+            self.replication_storage()
+                .await
                 .as_mut()
                 .expect("No storage provided")
                 .get_replica()
                 .confirm(index);
+        }
+    }
+
+    pub async fn log_event<F>(&self, f: F)
+    where
+        F: FnOnce() -> Event,
+    {
+        if let Some(storage) = self.replication_storage().await.as_mut() {
+            storage.map_primary(|storage| storage.push(f()));
         }
     }
 }

@@ -3,7 +3,10 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
 };
-use spartan_lib::core::dispatcher::SimpleDispatcher;
+use spartan_lib::core::{dispatcher::SimpleDispatcher, message::Message};
+
+#[cfg(feature = "replication")]
+use crate::node::replication::event::Event;
 
 /// Push message to queue.
 ///
@@ -14,8 +17,13 @@ pub async fn push(
     manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0).await?;
-    queue.push(request.into_inner().into());
+    let queue = manager.queue(&queue.0)?;
+    let message: Message = request.into_inner().into();
+
+    #[cfg(feature = "replication")]
+    queue.log_event(|| Event::Push(message.clone())).await;
+
+    queue.database().await.push(message);
     Ok(HttpResponse::Ok().json(()))
 }
 

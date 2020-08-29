@@ -1406,6 +1406,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "bincode",
+ "cfg-if",
  "chrono",
  "futures-util",
  "itertools",
@@ -1569,6 +1570,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d34ca54d84bf2b5b4d7d31e901a8464f7b60ac145a284fba25ceb801f2ddccd"
 dependencies = [
  "bytes",
+ "fnv",
  "futures-core",
  "iovec",
  "lazy_static",

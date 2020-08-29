@@ -9,6 +9,9 @@ use actix_web::{
 };
 use spartan_lib::core::dispatcher::simple::PositionBasedDelete;
 
+#[cfg(feature = "replication")]
+use crate::node::replication::event::Event;
+
 /// Delete message from queue.
 ///
 /// Requires ID of message being deleted, returns deleted message.
@@ -17,10 +20,17 @@ pub async fn delete(
     manager: Data<Manager<'_>>,
     queue: Path<(String,)>,
 ) -> Result<HttpResponse> {
-    let mut queue = manager.queue(&queue.0).await?;
+    let queue = manager.queue(&queue.0)?;
+
+    #[cfg(feature = "replication")]
+    queue.log_event(|| Event::Delete(request.id)).await;
+
     let message = queue
+        .database()
+        .await
         .delete(request.id)
         .ok_or_else(|| QueueError::MessageNotFound)?;
+
     Ok(HttpResponse::Ok().json(DeleteResponse::new(message)))
 }
 

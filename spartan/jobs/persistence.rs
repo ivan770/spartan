@@ -1,10 +1,16 @@
-use crate::node::{Manager, MutexDB};
+use crate::node::{Manager, Queue, DB};
 use actix_rt::time::delay_for;
 use bincode::{deserialize, serialize, Error as BincodeError};
+use cfg_if::cfg_if;
 use futures_util::stream::{iter, StreamExt};
+use serde::de::DeserializeOwned;
 use std::{io::Error, path::Path, time::Duration};
 use thiserror::Error as ThisError;
-use tokio::fs::{read, write};
+use tokio::fs::{create_dir, read, write};
+
+const QUEUE_FILE: &str = "queue";
+#[cfg(feature = "replication")]
+const REPLICATION_FILE: &str = "replication";
 
 /// Enum of errors, that may occur during persistence jobs
 #[derive(ThisError, Debug)]
@@ -15,22 +21,41 @@ pub enum PersistenceError {
     SerializationError(BincodeError),
     #[error("Unable to write serialized database to file: {0}")]
     FileWriteError(Error),
+    #[error("Unable to read serialized database from file: {0}")]
+    FileReadError(Error),
 }
 
 type PersistenceResult<T> = Result<T, PersistenceError>;
 
 /// Persist database to provided path
-async fn persist_db(name: &str, db: &MutexDB, path: &Path) -> Result<(), PersistenceError> {
-    let db = db.lock().await;
-
+async fn persist_db(name: &str, db: &DB, path: &Path) -> Result<(), PersistenceError> {
     info!("Saving database \"{}\"", name);
 
+    // Save queue and replication storage separatly
+    let path = path.join(name);
+    if !path.is_dir() {
+        create_dir(&path)
+            .await
+            .map_err(PersistenceError::FileWriteError)?;
+    }
+
     write(
-        path.join(name),
-        serialize(&*db).map_err(PersistenceError::SerializationError)?,
+        path.join(QUEUE_FILE),
+        serialize(&*db.database().await).map_err(PersistenceError::SerializationError)?,
     )
     .await
     .map_err(PersistenceError::FileWriteError)?;
+
+    #[cfg(feature = "replication")]
+    {
+        write(
+            path.join(REPLICATION_FILE),
+            serialize(&*db.replication_storage().await)
+                .map_err(PersistenceError::SerializationError)?,
+        )
+        .await
+        .map_err(PersistenceError::FileWriteError)?;
+    }
 
     info!("Saved \"{}\" successfully", name);
 
@@ -62,20 +87,42 @@ pub async fn spawn_persistence(manager: &Manager<'_>) {
 
     loop {
         delay_for(timer).await;
-
         persist_manager(manager).await;
     }
+}
+
+async fn read_struct<T>(path: &Path) -> PersistenceResult<T>
+where
+    T: DeserializeOwned,
+{
+    let buf = read(path).await.map_err(PersistenceError::FileReadError)?;
+    deserialize(&buf).map_err(PersistenceError::InvalidFileFormat)
+}
+
+async fn load<'a>(manager: &mut Manager<'a>, name: &'a str) -> PersistenceResult<()> {
+    let path = manager.config.path.join(name);
+    let database = read_struct(&path.join(QUEUE_FILE)).await?;
+    cfg_if! {
+        if #[cfg(feature = "replication")] {
+            let replication_storage = read_struct(&path.join(REPLICATION_FILE)).await?;
+            let queue = Queue::new(database, replication_storage);
+        } else {
+            let queue = Queue::new(database);
+        }
+    }
+    manager.node.add_db(name, queue);
+    Ok(())
 }
 
 /// Load manager from FS
 pub async fn load_from_fs(manager: &mut Manager<'_>) -> PersistenceResult<()> {
     for queue in manager.config.queues.iter() {
-        match read(manager.config.path.join(&**queue)).await {
-            Ok(file_buf) => {
-                let db = deserialize(&file_buf).map_err(PersistenceError::InvalidFileFormat)?;
-                manager.node.add_db(queue, db);
+        match load(manager, queue).await {
+            Err(PersistenceError::FileReadError(e)) => {
+                warn!("Unable to load database {}: {}", queue, e)
             }
-            Err(e) => warn!("Unable to load database {}: {}", queue, e),
+            Err(e) => return Err(e),
+            _ => (),
         }
     }
 
@@ -113,7 +160,12 @@ mod tests {
                 .body("Hello, world")
                 .compose()
                 .unwrap();
-            manager.queue("test").await.unwrap().push(message);
+            manager
+                .queue("test")
+                .unwrap()
+                .database()
+                .await
+                .push(message);
 
             persist_manager(&manager).await;
         }
@@ -121,9 +173,16 @@ mod tests {
         let mut manager = Manager::new(&config);
         load_from_fs(&mut manager).await.unwrap();
 
-        manager.queue("test2").await.unwrap();
+        manager.queue("test2").unwrap();
         assert_eq!(
-            manager.queue("test").await.unwrap().pop().unwrap().body(),
+            manager
+                .queue("test")
+                .unwrap()
+                .database()
+                .await
+                .pop()
+                .unwrap()
+                .body(),
             "Hello, world"
         );
     }

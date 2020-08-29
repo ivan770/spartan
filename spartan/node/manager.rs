@@ -1,7 +1,6 @@
 use super::{Node, DB};
 use crate::config::Config;
 use actix_web::{http::StatusCode, ResponseError};
-use futures_util::lock::MutexGuard;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -34,10 +33,9 @@ impl<'a> Manager<'a> {
     }
 
     /// Obtain queue from local node
-    pub async fn queue(&self, name: &str) -> Result<MutexGuard<'_, DB>, ManagerError> {
+    pub fn queue(&self, name: &str) -> Result<&DB, ManagerError> {
         self.node
-            .get(name)
-            .await
+            .queue(name)
             .ok_or_else(|| ManagerError::QueueNotFound)
     }
 }
