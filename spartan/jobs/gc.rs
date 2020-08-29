@@ -7,12 +7,15 @@ use std::time::Duration;
 /// Concurrently iterates over all databases in node, and executes GC on them.
 async fn execute_gc(manager: &Manager<'_>) {
     iter(manager.node.iter())
-        .for_each_concurrent(None, |(name, db)| async move {
-            let mut queue = db.database().await;
-
+        .for_each_concurrent(None, |(name, queue)| async move {
             info!("Started GC cycle on database \"{}\"", name);
 
-            queue.gc();
+            queue.database().await.gc();
+
+            #[cfg(feature = "replication")]
+            if let Some(storage) = queue.replication_storage().await.as_mut() {
+                storage.map_primary(|storage| storage.gc());
+            }
 
             info!("GC cycle on \"{}\" completed successfully", name);
         })
