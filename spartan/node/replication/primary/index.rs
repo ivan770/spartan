@@ -9,14 +9,18 @@ use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
 };
+use tokio::io::{AsyncRead, AsyncWrite};
 
-pub struct RecvIndex<'a> {
-    stream: &'a mut Stream,
+pub struct RecvIndex<'a, T> {
+    stream: &'a mut Stream<T>,
     indexes: Box<[(Box<str>, u64)]>,
 }
 
-impl<'a> RecvIndex<'a> {
-    pub fn new(stream: &'a mut Stream, indexes: Box<[(Box<str>, u64)]>) -> Self {
+impl<'a, T> RecvIndex<'a, T>
+where
+    T: AsyncRead + AsyncWrite + Unpin,
+{
+    pub fn new(stream: &'a mut Stream<T>, indexes: Box<[(Box<str>, u64)]>) -> Self {
         RecvIndex { stream, indexes }
     }
 
@@ -42,22 +46,25 @@ impl<'a> RecvIndex<'a> {
     }
 }
 
-pub struct BatchAskIndex<'a> {
-    batch: Vec<RecvIndex<'a>>,
+pub struct BatchAskIndex<'a, T> {
+    batch: Vec<RecvIndex<'a, T>>,
 }
 
-impl<'a> BatchAskIndex<'a> {
+impl<'a, T> BatchAskIndex<'a, T>
+where
+    T: AsyncRead + AsyncWrite + Unpin,
+{
     pub fn with_capacity(capacity: usize) -> Self {
         BatchAskIndex {
             batch: Vec::with_capacity(capacity),
         }
     }
 
-    pub fn push(&mut self, index: RecvIndex<'a>) {
+    pub fn push(&mut self, index: RecvIndex<'a, T>) {
         self.batch.push(index);
     }
 
-    pub async fn sync(mut self, manager: &Manager<'_>) -> PrimaryResult<Sync<'a>> {
+    pub async fn sync(mut self, manager: &Manager<'_>) -> PrimaryResult<Sync<'a, T>> {
         iter(self.batch.iter_mut())
             .map(Ok)
             .try_for_each_concurrent(None, |host| async move { host.sync(manager).await })
@@ -67,12 +74,12 @@ impl<'a> BatchAskIndex<'a> {
     }
 }
 
-pub struct Sync<'a> {
-    batch_ask_index: BatchAskIndex<'a>,
+pub struct Sync<'a, T> {
+    batch_ask_index: BatchAskIndex<'a, T>,
 }
 
-impl<'a> Sync<'a> {
-    fn new(batch_ask_index: BatchAskIndex<'a>) -> Self {
+impl<'a, T> Sync<'a, T> {
+    fn new(batch_ask_index: BatchAskIndex<'a, T>) -> Self {
         Sync { batch_ask_index }
     }
 

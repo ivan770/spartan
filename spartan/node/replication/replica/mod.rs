@@ -17,17 +17,20 @@ use actix_rt::time::delay_for;
 use error::{ReplicaError, ReplicaResult};
 use futures_util::{SinkExt, StreamExt};
 use std::{future::Future, time::Duration};
-use tokio::net::TcpStream;
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::{Decoder, Framed};
 
-pub struct ReplicaSocket<'a> {
+pub struct ReplicaSocket<'a, T> {
     manager: &'a Manager<'a>,
     config: &'a Replica,
-    socket: Framed<TcpStream, BincodeCodec>,
+    socket: Framed<T, BincodeCodec>,
 }
 
-impl<'a> ReplicaSocket<'a> {
-    pub fn new(manager: &'a Manager<'a>, config: &'a Replica, socket: TcpStream) -> Self {
+impl<'a, T> ReplicaSocket<'a, T>
+where
+    T: AsyncRead + AsyncWrite + Unpin,
+{
+    pub fn new(manager: &'a Manager<'a>, config: &'a Replica, socket: T) -> Self {
         ReplicaSocket {
             manager,
             config,

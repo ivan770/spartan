@@ -14,9 +14,12 @@ use crate::{
 };
 use actix_rt::time::delay_for;
 use std::time::Duration;
-use tokio::io::Result as IoResult;
+use tokio::{io::Result as IoResult, net::TcpStream};
 
-async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> PrimaryResult<()> {
+async fn replicate_manager(
+    manager: &Manager<'_>,
+    pool: &mut StreamPool<TcpStream>,
+) -> PrimaryResult<()> {
     debug!("Pinging stream pool.");
     pool.ping().await?;
 
@@ -32,7 +35,11 @@ async fn replicate_manager(manager: &Manager<'_>, pool: &mut StreamPool) -> Prim
     Ok(())
 }
 
-async fn start_replication(manager: &Manager<'_>, pool: &mut StreamPool, config: &Primary) {
+async fn start_replication(
+    manager: &Manager<'_>,
+    pool: &mut StreamPool<TcpStream>,
+    config: &Primary,
+) {
     let timer = Duration::from_secs(config.replication_timer);
 
     loop {

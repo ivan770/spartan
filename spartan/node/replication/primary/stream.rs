@@ -13,14 +13,20 @@ use crate::{
 use futures_util::{stream::iter, SinkExt, StreamExt, TryStreamExt};
 use maybe_owned::MaybeOwned;
 use std::borrow::Cow;
-use tokio::net::TcpStream;
+use tokio::{
+    io::{AsyncRead, AsyncWrite},
+    net::TcpStream,
+};
 use tokio_util::codec::{Decoder, Framed};
 
-pub struct Stream(Framed<TcpStream, BincodeCodec>);
+pub struct Stream<T>(Framed<T, BincodeCodec>);
 
-pub struct StreamPool(Box<[Stream]>);
+pub struct StreamPool<T>(Box<[Stream<T>]>);
 
-impl<'a> Stream {
+impl<'a, T> Stream<T>
+where
+    T: AsyncRead + AsyncWrite + Unpin,
+{
     pub async fn exchange(
         &mut self,
         message: PrimaryRequest<'_>,
@@ -50,7 +56,7 @@ impl<'a> Stream {
         }
     }
 
-    async fn ask(&'a mut self) -> PrimaryResult<RecvIndex<'a>> {
+    async fn ask(&'a mut self) -> PrimaryResult<RecvIndex<'a, T>> {
         match self.exchange(PrimaryRequest::AskIndex).await? {
             ReplicaRequest::RecvIndex(recv) => Ok(RecvIndex::new(self, recv)),
             _ => Err(PrimaryError::ProtocolMismatch),
@@ -76,21 +82,36 @@ impl<'a> Stream {
     }
 }
 
-impl<'a> StreamPool {
-    pub async fn from_config(config: &Primary) -> PrimaryResult<StreamPool> {
+impl<'a> StreamPool<TcpStream> {
+    pub async fn from_config(config: &Primary) -> PrimaryResult<Self> {
         let mut pool = Vec::with_capacity(config.destination.len());
 
         for host in &*config.destination {
-            pool.push(Stream(
-                BincodeCodec::default().framed(
-                    TcpStream::connect(host)
-                        .await
-                        .map_err(PrimaryError::SocketError)?,
-                ),
-            ));
+            pool.push(
+                TcpStream::connect(host)
+                    .await
+                    .map_err(PrimaryError::SocketError)?,
+            );
         }
 
-        Ok(StreamPool(pool.into_boxed_slice()))
+        Ok(StreamPool::new(pool).await)
+    }
+}
+
+impl<'a, T> StreamPool<T>
+where
+    T: AsyncRead + AsyncWrite + Unpin,
+{
+    pub async fn new<P>(pool: P) -> Self
+    where
+        P: IntoIterator<Item = T>,
+    {
+        let pool = pool
+            .into_iter()
+            .map(|stream| Stream(BincodeCodec::default().framed(stream)))
+            .collect::<Vec<_>>();
+
+        StreamPool(pool.into_boxed_slice())
     }
 
     pub async fn ping(&mut self) -> PrimaryResult<()> {
@@ -102,7 +123,7 @@ impl<'a> StreamPool {
         Ok(())
     }
 
-    pub async fn ask(&'a mut self) -> PrimaryResult<BatchAskIndex<'a>> {
+    pub async fn ask(&'a mut self) -> PrimaryResult<BatchAskIndex<'a, T>> {
         let mut batch = BatchAskIndex::with_capacity(self.0.len());
 
         for host in &mut *self.0 {
