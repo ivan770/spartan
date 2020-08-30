@@ -15,6 +15,9 @@ use crate::config::Config;
 use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
 use std::collections::{hash_map::RandomState, HashMap};
 
+#[cfg(feature = "replication")]
+use crate::node::replication::storage::ReplicationStorage;
+
 pub type DB = Queue<TreeDatabase<Message>>;
 
 /// Key-value node implementation
@@ -49,5 +52,17 @@ impl<'a> Node<'a> {
     /// Load queues from config
     pub fn load_from_config(&mut self, config: &'a Config) {
         config.queues.iter().for_each(|queue| self.add(queue));
+    }
+
+    #[cfg(feature = "replication")]
+    pub async fn prepare_replication<F, R>(&self, filter: F, replace: R)
+    where
+        F: Fn(&ReplicationStorage) -> bool + Copy,
+        R: Fn() -> ReplicationStorage + Copy,
+    {
+        //TODO: Concurrency
+        for (_, queue) in self.iter() {
+            queue.prepare_replication(filter, replace).await;
+        }
     }
 }

@@ -13,12 +13,6 @@ pub struct Queue<DB> {
     replication_storage: Mutex<Option<ReplicationStorage>>,
 }
 
-impl<DB> Queue<DB> {
-    pub async fn database(&self) -> MutexGuard<'_, DB> {
-        self.database.lock().await
-    }
-}
-
 impl<DB> Default for Queue<DB>
 where
     DB: Default,
@@ -32,17 +26,8 @@ where
     }
 }
 
-#[cfg(not(feature = "replication"))]
 impl<DB> Queue<DB> {
-    pub fn new(database: DB) -> Queue<DB> {
-        Queue {
-            database: Mutex::new(database),
-        }
-    }
-}
-
-#[cfg(feature = "replication")]
-impl<DB> Queue<DB> {
+    #[cfg(feature = "replication")]
     pub fn new(database: DB, replication_storage: Option<ReplicationStorage>) -> Queue<DB> {
         Queue {
             database: Mutex::new(database),
@@ -50,10 +35,23 @@ impl<DB> Queue<DB> {
         }
     }
 
+    #[cfg(not(feature = "replication"))]
+    pub fn new(database: DB) -> Queue<DB> {
+        Queue {
+            database: Mutex::new(database),
+        }
+    }
+
+    pub async fn database(&self) -> MutexGuard<'_, DB> {
+        self.database.lock().await
+    }
+
+    #[cfg(feature = "replication")]
     pub async fn replication_storage(&self) -> MutexGuard<'_, Option<ReplicationStorage>> {
         self.replication_storage.lock().await
     }
 
+    #[cfg(feature = "replication")]
     pub async fn prepare_replication<F, R>(&self, filter: F, replace: R)
     where
         F: Fn(&ReplicationStorage) -> bool + Copy,
@@ -67,20 +65,6 @@ impl<DB> Queue<DB> {
             .is_none()
         {
             replication_storage.replace(replace());
-        }
-    }
-}
-
-#[cfg(feature = "replication")]
-impl super::Node<'_> {
-    pub async fn prepare_replication<F, R>(&self, filter: F, replace: R)
-    where
-        F: Fn(&ReplicationStorage) -> bool + Copy,
-        R: Fn() -> ReplicationStorage + Copy,
-    {
-        //TODO: Concurrency
-        for (_, queue) in self.iter() {
-            queue.prepare_replication(filter, replace).await;
         }
     }
 }
