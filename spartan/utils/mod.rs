@@ -4,5 +4,5 @@ pub mod testing;
 #[cfg(feature = "replication")]
 pub mod codec;
 
-#[cfg(feature = "replication")]
+#[cfg(all(feature = "replication", test))]
 pub mod stream;
