@@ -5,10 +5,7 @@ use super::{
 use crate::node::Manager;
 use futures_util::{stream::iter, StreamExt, TryStreamExt};
 use itertools::Itertools;
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
+use std::hash::{Hash, Hasher};
 use tokio::io::{AsyncRead, AsyncWrite};
 
 pub struct RecvIndex<'a, T> {
@@ -93,7 +90,10 @@ impl<'a, T> Sync<'a, T> {
     ///
     /// Result: [("AnotherQueue", 4), ("NextQueue", 3), ("TestQueue", 1)]
     /// ```
-    pub async fn set_gc(&self, manager: &Manager<'_>) {
+    pub async fn set_gc<H>(&self, manager: &Manager<'_>)
+    where
+        H: Hasher + Default,
+    {
         let iter = self
             .batch_ask_index
             .batch
@@ -102,7 +102,7 @@ impl<'a, T> Sync<'a, T> {
             .flatten()
             .sorted_by(|a, b| Ord::cmp(a, b))
             .unique_by(|(name, _)| {
-                let mut hasher = DefaultHasher::new();
+                let mut hasher = H::default();
                 name.hash(&mut hasher);
                 hasher.finish()
             });

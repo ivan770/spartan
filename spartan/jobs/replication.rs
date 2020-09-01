@@ -13,7 +13,7 @@ use crate::{
     },
 };
 use actix_rt::time::delay_for;
-use std::time::Duration;
+use std::{collections::hash_map::DefaultHasher, time::Duration};
 use tokio::{io::Result as IoResult, net::TcpStream};
 
 async fn replicate_manager(
@@ -30,7 +30,7 @@ async fn replicate_manager(
     let sync = batch.sync(manager).await?;
 
     debug!("Setting GC threshold.");
-    sync.set_gc(manager).await;
+    sync.set_gc::<DefaultHasher>(manager).await;
 
     Ok(())
 }
