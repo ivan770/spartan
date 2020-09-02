@@ -133,3 +133,32 @@ where
         Ok(batch)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::StreamPool;
+    use crate::{
+        node::replication::message::{PrimaryRequest, ReplicaRequest, Request},
+        utils::{codec::BincodeCodec, stream::TestStream},
+    };
+    use actix_web::web::BytesMut;
+    use bincode::deserialize;
+
+    #[tokio::test]
+    async fn test_ping() {
+        let mut buf = BytesMut::default();
+        let stream = vec![TestStream::from_output(
+            Request::Replica(ReplicaRequest::Pong),
+            &mut BincodeCodec,
+        )
+        .unwrap()
+        .input(&mut buf)];
+
+        let mut pool = StreamPool::new(stream).await;
+        pool.ping().await.unwrap();
+        assert_eq!(
+            deserialize::<Request>(&*buf).unwrap(),
+            Request::Primary(PrimaryRequest::Ping)
+        );
+    }
+}
