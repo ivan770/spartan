@@ -43,23 +43,20 @@ mod tests {
 
     #[test]
     fn test_encode_decode_valid_data() {
-        let mut codec = BincodeCodec::default();
         let mut buf = BytesMut::default();
 
         let item = Request::Primary(PrimaryRequest::Ping);
 
-        codec.encode(&item, &mut buf).unwrap();
+        BincodeCodec.encode(&item, &mut buf).unwrap();
 
-        assert_eq!(item, codec.decode(&mut buf).unwrap().unwrap());
+        assert_eq!(item, BincodeCodec.decode(&mut buf).unwrap().unwrap());
     }
 
     #[test]
     fn test_decode_invalid_data() {
-        let mut codec = BincodeCodec::default();
-
         let mut buf = BytesMut::default();
         buf.extend_from_slice(b"test");
 
-        codec.decode(&mut buf).unwrap_err();
+        BincodeCodec.decode(&mut buf).unwrap_err();
     }
 }
