@@ -1,5 +1,5 @@
 use super::StatusAwareDatabase;
-use crate::core::db::Database;
+use crate::core::{db::Database, payload::Identifiable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -64,8 +64,11 @@ impl<M> Database<M> for VecDatabase<M> {
     }
 }
 
-impl<M> StatusAwareDatabase<M> for VecDatabase<M> {
-    type RequeueKey = usize;
+impl<M> StatusAwareDatabase<M> for VecDatabase<M>
+where
+    M: Identifiable,
+{
+    type RequeueKey = <M as Identifiable>::Id;
 
     fn reserve(&mut self, position: Self::PositionKey) -> Option<&mut M> {
         self.db.get_mut(position)
@@ -75,7 +78,7 @@ impl<M> StatusAwareDatabase<M> for VecDatabase<M> {
     where
         F: Fn(&M) -> bool,
     {
-        let message = self.reserve(position)?;
+        let message = self.reserve(self.position(|message| message.id() == position)?)?;
 
         if predicate(message) {
             Some(message)
@@ -179,4 +182,5 @@ mod dispatcher_tests {
     use crate::core::dispatcher::simple::Delete;
 
     crate::test_dispatcher!(VecDatabase);
+    crate::test_status_dispatcher!(VecDatabase);
 }
