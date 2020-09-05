@@ -154,11 +154,63 @@ mod tests {
         .unwrap()
         .input(&mut buf)];
 
-        let mut pool = StreamPool::new(stream).await;
-        pool.ping().await.unwrap();
+        StreamPool::new(stream).await.ping().await.unwrap();
         assert_eq!(
             deserialize::<Request>(&*buf).unwrap(),
             Request::Primary(PrimaryRequest::Ping)
         );
     }
+
+    #[tokio::test]
+    async fn test_ask() {
+        let mut buf = BytesMut::default();
+        let stream = vec![TestStream::from_output(
+            Request::Replica(ReplicaRequest::RecvIndex(
+                vec![(String::from("test").into_boxed_str(), 123)].into_boxed_slice(),
+            )),
+            &mut BincodeCodec,
+        )
+        .unwrap()
+        .input(&mut buf)];
+
+        StreamPool::new(stream).await.ask().await.unwrap();
+        assert_eq!(
+            deserialize::<Request>(&*buf).unwrap(),
+            Request::Primary(PrimaryRequest::AskIndex)
+        );
+    }
+
+    // TODO: TestStream with multiple input and output buffers
+    // #[tokio::test]
+    // async fn test_send_range() {
+    //     let mut buf = BytesMut::default();
+    //     let stream = vec![TestStream::from_output(
+    //         Request::Replica(ReplicaRequest::RecvIndex(
+    //             vec![(String::from("test").into_boxed_str(), 0)].into_boxed_slice(),
+    //         )),
+    //         &mut BincodeCodec,
+    //     )
+    //     .unwrap()
+    //     .input(&mut buf)];
+
+    //     let manager = Manager::new(&CONFIG);
+    //     manager
+    //         .queue("test")
+    //         .unwrap()
+    //         .prepare_replication(
+    //             |_| false,
+    //             || ReplicationStorage::Primary(PrimaryStorage::default()),
+    //         )
+    //         .await;
+    //     manager.queue("test").unwrap().database().await.gc();
+
+    //     StreamPool::new(stream)
+    //         .await
+    //         .ask()
+    //         .await
+    //         .unwrap()
+    //         .sync(&manager)
+    //         .await
+    //         .unwrap();
+    // }
 }
