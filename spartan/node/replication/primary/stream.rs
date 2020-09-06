@@ -115,6 +115,8 @@ where
     }
 
     pub async fn ping(&mut self) -> PrimaryResult<()> {
+        debug!("Pinging stream pool.");
+
         iter(self.0.iter_mut())
             .map(Ok)
             .try_for_each_concurrent(None, |stream| async move { stream.ping().await })
@@ -124,6 +126,8 @@ where
     }
 
     pub async fn ask(&'a mut self) -> PrimaryResult<BatchAskIndex<'a, T>> {
+        debug!("Asking stream pool for indexes.");
+
         let mut batch = BatchAskIndex::with_capacity(self.0.len());
 
         for host in &mut *self.0 {

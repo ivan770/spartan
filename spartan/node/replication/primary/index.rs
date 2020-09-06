@@ -62,6 +62,8 @@ where
     }
 
     pub async fn sync(mut self, manager: &Manager<'_>) -> PrimaryResult<Sync<'a, T>> {
+        debug!("Starting event slice sync.");
+
         iter(self.batch.iter_mut())
             .map(Ok)
             .try_for_each_concurrent(None, |host| async move { host.sync(manager).await })
@@ -94,6 +96,8 @@ impl<'a, T> Sync<'a, T> {
     where
         H: Hasher + Default,
     {
+        debug!("Setting GC threshold.");
+
         let iter = self
             .batch_ask_index
             .batch

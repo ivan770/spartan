@@ -20,17 +20,14 @@ async fn replicate_manager(
     manager: &Manager<'_>,
     pool: &mut StreamPool<TcpStream>,
 ) -> PrimaryResult<()> {
-    debug!("Pinging stream pool.");
     pool.ping().await?;
 
-    debug!("Asking stream pool for indexes.");
-    let batch = pool.ask().await?;
-
-    debug!("Starting event slice sync.");
-    let sync = batch.sync(manager).await?;
-
-    debug!("Setting GC threshold.");
-    sync.set_gc::<DefaultHasher>(manager).await;
+    pool.ask()
+        .await?
+        .sync(manager)
+        .await?
+        .set_gc::<DefaultHasher>(manager)
+        .await;
 
     Ok(())
 }
