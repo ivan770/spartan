@@ -126,8 +126,10 @@ pub async fn accept_connection<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::{accept_connection, storage::ReplicaStorage};
+    use super::{accept_connection, error::ReplicaError, storage::ReplicaStorage, ReplicaSocket};
     use crate::{
+        config::replication::Replica,
+        node::replication::message::Request,
         node::{
             replication::{
                 event::Event,
@@ -136,10 +138,15 @@ mod tests {
             },
             Manager,
         },
-        utils::testing::CONFIG,
+        utils::{codec::BincodeCodec, stream::TestStream, testing::CONFIG},
     };
+    use actix_web::web::BytesMut;
+    use bincode::deserialize;
     use maybe_owned::MaybeOwned;
-    use std::borrow::Cow;
+    use std::{
+        borrow::Cow,
+        net::{IpAddr, Ipv4Addr, SocketAddr},
+    };
 
     #[tokio::test]
     async fn test_accept_ping() {
@@ -220,6 +227,57 @@ mod tests {
             response,
             ReplicaRequest::QueueNotFound(Cow::Borrowed(QUEUE_NAME))
         );
+    }
+
+    #[tokio::test]
+    async fn test_socket() {
+        let manager = Manager::new(&CONFIG);
+        let config = Replica {
+            host: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 12345),
+            try_timer: 1,
+        };
+
+        let mut buf = BytesMut::default();
+        let stream =
+            TestStream::from_output(Request::Primary(PrimaryRequest::Ping), &mut BincodeCodec)
+                .unwrap()
+                .input(&mut buf);
+
+        {
+            let mut socket = ReplicaSocket::new(&manager, &config, stream);
+            socket.process(process).await.unwrap();
+        }
+
+        assert_eq!(
+            deserialize::<Request>(&*buf).unwrap(),
+            Request::Replica(ReplicaRequest::Pong)
+        );
+    }
+
+    #[tokio::test]
+    async fn test_invalid_socket() {
+        let manager = Manager::new(&CONFIG);
+        let config = Replica {
+            host: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 12345),
+            try_timer: 1,
+        };
+
+        let mut buf = BytesMut::default();
+        let stream =
+            TestStream::from_output(Request::Replica(ReplicaRequest::Pong), &mut BincodeCodec)
+                .unwrap()
+                .input(&mut buf);
+
+        let mut socket = ReplicaSocket::new(&manager, &config, stream);
+        assert_eq!(
+            socket.process(process).await.unwrap_err(),
+            ReplicaError::ProtocolMismatch
+        );
+    }
+
+    async fn process<'a>(req: PrimaryRequest<'static>, _: &Manager<'a>) -> ReplicaRequest<'a> {
+        assert_eq!(req, PrimaryRequest::Ping);
+        ReplicaRequest::Pong
     }
 
     async fn prepare_manager(manager: &mut Manager<'_>) {

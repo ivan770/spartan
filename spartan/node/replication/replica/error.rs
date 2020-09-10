@@ -19,4 +19,14 @@ pub enum ReplicaError {
     ProtocolMismatch,
 }
 
+#[cfg(test)]
+impl PartialEq for ReplicaError {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (ReplicaError::ProtocolMismatch, ReplicaError::ProtocolMismatch) => true,
+            _ => false,
+        }
+    }
+}
+
 pub type ReplicaResult<T> = Result<T, ReplicaError>;
