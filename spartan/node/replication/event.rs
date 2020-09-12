@@ -86,3 +86,79 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Event;
+    use crate::node::{
+        replication::{
+            primary::storage::PrimaryStorage, replica::storage::ReplicaStorage,
+            storage::ReplicationStorage,
+        },
+        DB,
+    };
+    use maybe_owned::MaybeOwned;
+
+    #[tokio::test]
+    async fn test_apply_events() {
+        let queue = DB::default();
+
+        let events = vec![
+            (MaybeOwned::Owned(1), MaybeOwned::Owned(Event::Gc)),
+            (MaybeOwned::Owned(2), MaybeOwned::Owned(Event::Clear)),
+        ]
+        .into_boxed_slice();
+
+        queue
+            .prepare_replication(
+                |_| false,
+                || ReplicationStorage::Replica(ReplicaStorage::default()),
+            )
+            .await;
+
+        assert_eq!(
+            queue
+                .replication_storage()
+                .await
+                .as_mut()
+                .unwrap()
+                .get_replica()
+                .get_index(),
+            1
+        );
+
+        queue.apply_events(events).await;
+
+        assert_eq!(
+            queue
+                .replication_storage()
+                .await
+                .as_mut()
+                .unwrap()
+                .get_replica()
+                .get_index(),
+            3
+        );
+    }
+
+    #[tokio::test]
+    #[should_panic(expected = "Replication storage is in primary mode.")]
+    async fn test_apply_events_with_invalid_storage() {
+        let queue = DB::default();
+
+        let events = vec![
+            (MaybeOwned::Owned(1), MaybeOwned::Owned(Event::Gc)),
+            (MaybeOwned::Owned(2), MaybeOwned::Owned(Event::Clear)),
+        ]
+        .into_boxed_slice();
+
+        queue
+            .prepare_replication(
+                |_| false,
+                || ReplicationStorage::Primary(PrimaryStorage::default()),
+            )
+            .await;
+
+        queue.apply_events(events).await;
+    }
+}
