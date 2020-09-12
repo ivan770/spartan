@@ -68,3 +68,60 @@ impl<DB> Queue<DB> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::node::replication::{
+        primary::storage::PrimaryStorage, replica::storage::ReplicaStorage,
+        storage::ReplicationStorage,
+    };
+    use crate::node::DB;
+
+    #[tokio::test]
+    async fn test_prepare_replication_empty() {
+        let queue = DB::default();
+
+        assert!(queue.replication_storage.lock().await.is_none());
+
+        queue
+            .prepare_replication(
+                |_| false,
+                || ReplicationStorage::Primary(PrimaryStorage::default()),
+            )
+            .await;
+
+        assert!(matches!(
+            queue.replication_storage.lock().await.as_ref().unwrap(),
+            &ReplicationStorage::Primary(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn test_prepare_replication() {
+        let queue = DB::default();
+
+        queue
+            .prepare_replication(
+                |_| false,
+                || ReplicationStorage::Primary(PrimaryStorage::default()),
+            )
+            .await;
+
+        assert!(matches!(
+            queue.replication_storage.lock().await.as_ref().unwrap(),
+            &ReplicationStorage::Primary(_)
+        ));
+
+        queue
+            .prepare_replication(
+                |storage| matches!(storage, ReplicationStorage::Replica(_)),
+                || ReplicationStorage::Replica(ReplicaStorage::default()),
+            )
+            .await;
+
+        assert!(matches!(
+            queue.replication_storage.lock().await.as_ref().unwrap(),
+            &ReplicationStorage::Replica(_)
+        ));
+    }
+}
