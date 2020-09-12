@@ -22,7 +22,7 @@ default = ["replication"]
 replication = ["tokio-util", "itertools"]
 
 [dependencies]
-actix-web = { version = "2.0" }
+actix-web = { version = "3.0" }
 actix-rt = { version = "1.1" }
 actix-service = { version = "1.0" }
 structopt = { version = "0.3" }

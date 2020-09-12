@@ -15,9 +15,9 @@ use crate::node::replication::event::Event;
 pub async fn push(
     request: Json<PushRequest>,
     manager: Data<Manager<'_>>,
-    queue: Path<(String,)>,
+    Path((name,)): Path<(String,)>,
 ) -> Result<HttpResponse> {
-    let queue = manager.queue(&queue.0)?;
+    let queue = manager.queue(&name)?;
     let message: Message = request.into_inner().into();
 
     #[cfg(feature = "replication")]

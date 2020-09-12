@@ -14,8 +14,11 @@ use crate::node::replication::event::Event;
 /// Doesn't require any input, returns reserved message.
 /// After reserving message, you either need to return it to queue, or delete it.
 /// Messages that are not returned after timeout are deleted by GC.
-pub async fn pop(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<HttpResponse> {
-    let queue = manager.queue(&queue.0)?;
+pub async fn pop(
+    manager: Data<Manager<'_>>,
+    Path((name,)): Path<(String,)>,
+) -> Result<HttpResponse> {
+    let queue = manager.queue(&name)?;
 
     #[cfg(feature = "replication")]
     queue.log_event(|| Event::Pop).await;

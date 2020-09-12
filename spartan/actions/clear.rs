@@ -11,8 +11,11 @@ use crate::node::replication::event::Event;
 /// Clear queue.
 ///
 /// Doesn't require any input, returns empty response.
-pub async fn clear(manager: Data<Manager<'_>>, queue: Path<(String,)>) -> Result<HttpResponse> {
-    let queue = manager.queue(&queue.0)?;
+pub async fn clear(
+    manager: Data<Manager<'_>>,
+    Path((name,)): Path<(String,)>,
+) -> Result<HttpResponse> {
+    let queue = manager.queue(&name)?;
 
     #[cfg(feature = "replication")]
     queue.log_event(|| Event::Clear).await;

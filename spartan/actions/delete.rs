@@ -18,9 +18,9 @@ use crate::node::replication::event::Event;
 pub async fn delete(
     request: Json<DeleteRequest>,
     manager: Data<Manager<'_>>,
-    queue: Path<(String,)>,
+    Path((name,)): Path<(String,)>,
 ) -> Result<HttpResponse> {
-    let queue = manager.queue(&queue.0)?;
+    let queue = manager.queue(&name)?;
 
     #[cfg(feature = "replication")]
     queue.log_event(|| Event::Delete(request.id)).await;
