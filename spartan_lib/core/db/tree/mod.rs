@@ -66,9 +66,7 @@ where
     }
 
     fn get(&self, position: Self::PositionKey) -> Option<&M> {
-        self.objects
-            .get(&position)
-            .map(|message| &message.1)
+        self.objects.get(&position).map(|message| &message.1)
     }
 
     fn get_mut(&mut self, position: Self::PositionKey) -> Option<&mut M> {
@@ -123,9 +121,16 @@ where
     type RequeueKey = <M as Identifiable>::Id;
 
     fn reserve(&mut self, position: Self::PositionKey) -> Option<&mut M> {
-        let message = self.objects.get_mut(&position)?;
-        self.queue_tree.remove(&(message.1.sort(), message.0));
-        Some(&mut message.1)
+        let objects = &mut self.objects;
+        let queue_tree = &mut self.queue_tree;
+
+        objects
+            .get_mut(&position)
+            .map(|message| {
+                queue_tree.remove(&(message.1.sort(), message.0));
+                message
+            })
+            .map(|message| &mut message.1)
     }
 
     fn requeue<F>(&mut self, position: Self::RequeueKey, predicate: F) -> Option<&mut M>
