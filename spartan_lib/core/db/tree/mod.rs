@@ -57,14 +57,12 @@ where
     where
         F: Fn(&M) -> bool,
     {
-        Some(self.queue_tree.values().find_map(|key| {
-            let (_, message) = self.objects.get(key).unwrap();
-            if predicate(&message) {
-                Some(message.id())
-            } else {
-                None
-            }
-        })?)
+        self.queue_tree
+            .values()
+            .map(|key| &self.objects.get(key).unwrap().1)
+            .filter(|message| predicate(message))
+            .map(|message| message.id())
+            .next()
     }
 
     fn get(&self, position: Self::PositionKey) -> Option<&M> {
