@@ -66,11 +66,15 @@ where
     }
 
     fn get(&self, position: Self::PositionKey) -> Option<&M> {
-        Some(&self.objects.get(&position)?.1)
+        self.objects
+            .get(&position)
+            .map(|message| &message.1)
     }
 
     fn get_mut(&mut self, position: Self::PositionKey) -> Option<&mut M> {
-        Some(&mut self.objects.get_mut(&position)?.1)
+        self.objects
+            .get_mut(&position)
+            .map(|message| &mut message.1)
     }
 
     fn delete_pos(&mut self, position: Self::PositionKey) -> Option<M> {
@@ -128,15 +132,17 @@ where
     where
         F: Fn(&M) -> bool,
     {
-        let message = self.objects.get_mut(&position)?;
+        let objects = &mut self.objects;
+        let queue_tree = &mut self.queue_tree;
 
-        if predicate(&message.1) {
-            self.queue_tree
-                .insert((message.1.sort(), message.0), position);
-            Some(&mut message.1)
-        } else {
-            None
-        }
+        objects
+            .get_mut(&position)
+            .filter(|message| predicate(&message.1))
+            .map(|message| {
+                queue_tree.insert((message.1.sort(), message.0), position);
+                message
+            })
+            .map(|message| &mut message.1)
     }
 }
 
