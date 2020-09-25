@@ -45,8 +45,7 @@ where
             None => return Err(PrimaryError::EmptySocket),
         };
 
-        buf.get_replica()
-            .ok_or_else(|| PrimaryError::ProtocolMismatch)
+        buf.get_replica().ok_or(PrimaryError::ProtocolMismatch)
     }
 
     async fn ping(&mut self) -> PrimaryResult<()> {

@@ -24,9 +24,7 @@ pub async fn pop(
     queue.log_event(|| Event::Pop).await;
 
     let mut database = queue.database().await;
-    let message = database
-        .pop()
-        .ok_or_else(|| QueueError::NoMessageAvailable)?;
+    let message = database.pop().ok_or(QueueError::NoMessageAvailable)?;
 
     Ok(HttpResponse::Ok().json(PopResponse::new(message)))
 }

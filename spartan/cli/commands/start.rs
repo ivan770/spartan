@@ -52,9 +52,7 @@ impl StartCommand {
 
         info!("Initializing node.");
 
-        let config = server
-            .config()
-            .ok_or_else(|| StartCommandError::ConfigFileError)?;
+        let config = server.config().ok_or(StartCommandError::ConfigFileError)?;
         let mut manager = Manager::new(config);
 
         info!("Node initialized.");

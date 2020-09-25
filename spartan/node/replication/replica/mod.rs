@@ -70,8 +70,7 @@ where
         };
 
         let request = f(
-            buf.get_primary()
-                .ok_or_else(|| ReplicaError::ProtocolMismatch)?,
+            buf.get_primary().ok_or(ReplicaError::ProtocolMismatch)?,
             self.manager,
         )
         .await;

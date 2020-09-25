@@ -34,8 +34,6 @@ impl<'a> Manager<'a> {
 
     /// Obtain queue from local node
     pub fn queue(&self, name: &str) -> Result<&DB, ManagerError> {
-        self.node
-            .queue(name)
-            .ok_or_else(|| ManagerError::QueueNotFound)
+        self.node.queue(name).ok_or(ManagerError::QueueNotFound)
     }
 }

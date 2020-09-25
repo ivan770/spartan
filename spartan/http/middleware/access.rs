@@ -105,12 +105,12 @@ where
                 .map(|queue| {
                     req.headers()
                         .get("Authorization")
-                        .ok_or_else(|| AccessError::AuthorizationHeaderNotFound)?
+                        .ok_or(AccessError::AuthorizationHeaderNotFound)?
                         .to_str()
                         .map_err(|_| AccessError::IncorrectKeyHeader)?
                         .strip_prefix("Bearer ")
                         .map(|token| self.check_access(token, queue))
-                        .ok_or_else(|| AccessError::IncorrectKeyHeader)?
+                        .ok_or(AccessError::IncorrectKeyHeader)?
                 })
                 .unwrap_or_else(|| Ok(()))
         } else {
@@ -131,7 +131,7 @@ where
                     Err(AccessError::AccessDenied)
                 }
             })
-            .ok_or_else(|| AccessError::AccessDenied)?
+            .ok_or(AccessError::AccessDenied)?
     }
 
     fn has_access_keys(&self) -> bool {

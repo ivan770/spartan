@@ -29,7 +29,7 @@ pub async fn delete(
         .database()
         .await
         .delete(request.id)
-        .ok_or_else(|| QueueError::MessageNotFound)?;
+        .ok_or(QueueError::MessageNotFound)?;
 
     Ok(HttpResponse::Ok().json(DeleteResponse::new(message)))
 }

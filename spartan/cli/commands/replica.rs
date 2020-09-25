@@ -53,7 +53,7 @@ impl ReplicaCommand {
         let config = match config
             .replication
             .as_ref()
-            .ok_or_else(|| ReplicaError::ReplicaConfigNotFound)?
+            .ok_or(ReplicaError::ReplicaConfigNotFound)?
         {
             Replication::Replica(config) => Ok(config),
             _ => Err(ReplicaError::ReplicaConfigNotFound),

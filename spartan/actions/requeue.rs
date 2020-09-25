@@ -27,7 +27,7 @@ pub async fn requeue(
         .database()
         .await
         .requeue(request.id)
-        .ok_or_else(|| QueueError::MessageNotFound)?;
+        .ok_or(QueueError::MessageNotFound)?;
 
     Ok(HttpResponse::Ok().json(()))
 }
