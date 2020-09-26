@@ -82,7 +82,7 @@ impl StartCommand {
         let cloned_manager = manager.clone();
         spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
 
-        start_http_server(self.host(), manager, config)
+        start_http_server(self.host(), manager)
             .await
             .map_err(StartCommandError::HttpServerError)?;
 

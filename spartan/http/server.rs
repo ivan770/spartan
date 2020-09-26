@@ -1,5 +1,5 @@
 use super::routing::attach_routes;
-use crate::{config::Config, node::Manager};
+use crate::node::Manager;
 use actix_web::{
     web::{Data, JsonConfig},
     App, HttpServer,
@@ -18,9 +18,10 @@ pub enum ServerError {
 pub async fn start_http_server(
     host: SocketAddr,
     manager: Data<Manager<'static>>,
-    config: &'static Config,
 ) -> Result<(), ServerError> {
     HttpServer::new(move || {
+        let config = manager.clone().config;
+
         let mut app = App::new()
             .app_data(manager.clone())
             .configure(move |service_config| {
