@@ -16,10 +16,13 @@ path = "spartan_lib/lib.rs"
 lto = true
 
 [features]
-default = ["replication"]
+default = ["replication", "init"]
 
 # Queue replication support
 replication = ["tokio-util", "itertools"]
+
+# Init command
+init = ["dialoguer"]
 
 [dependencies]
 actix-web = { version = "3.0" }
@@ -38,6 +41,7 @@ once_cell = { version = "1.4" }
 tokio-util = { version = "0.3", optional = true }
 itertools = { version = "0.9", optional = true }
 cfg-if = { version = "0.1" }
+dialoguer = { version = "0.6", optional = true }
 
 [dev-dependencies]
 tempfile = { version = "3.1" }

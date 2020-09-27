@@ -44,6 +44,7 @@ async fn main() -> Result<(), Error> {
 
     match server.command() {
         Start(command) => command.dispatch(server).await?,
+        #[cfg(feature = "init")]
         Init(command) => command.dispatch(server).await?,
         #[cfg(feature = "replication")]
         Replica(command) => command.dispatch(server).await?,

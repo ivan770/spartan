@@ -1,5 +1,6 @@
 use crate::{cli::Server, config::Config};
-use std::io::Error as IoError;
+use std::{ffi::OsString, io::Error as IoError};
+use dialoguer::Editor;
 use structopt::StructOpt;
 use thiserror::Error;
 use tokio::fs::write;
@@ -11,21 +12,37 @@ pub enum InitCommandError {
     ConfigSerializationError,
     #[error("Unable to write serialized config to file: {0}")]
     ConfigWriteError(IoError),
+    #[error("Missing config text. Probably file was not saved properly")]
+    MissingConfigText
 }
 
 #[derive(StructOpt)]
-pub struct InitCommand {}
+pub struct InitCommand {
+    // Path to editor executable
+    #[structopt(long)]
+    editor: Option<OsString>
+}
 
 impl InitCommand {
     pub async fn dispatch(&self, server: &Server) -> Result<(), InitCommandError> {
         let config = Config::default();
+        let mut editor = Editor::default();
 
-        write(
-            server.config_path(),
-            to_string_pretty(&config).map_err(|_| InitCommandError::ConfigSerializationError)?,
-        )
-        .await
-        .map_err(InitCommandError::ConfigWriteError)?;
+        self.editor
+            .as_ref()
+            .map(|name| editor.executable(name));
+
+        editor
+            .require_save(true)
+            .edit(&to_string_pretty(&config).map_err(|_| InitCommandError::ConfigSerializationError)?)
+            .map_err(InitCommandError::ConfigWriteError)?
+            .map(|text| async move {
+                write(server.config_path(), text)
+                    .await
+                    .map_err(InitCommandError::ConfigWriteError)
+            })
+            .ok_or(InitCommandError::MissingConfigText)?
+            .await?;
 
         Ok(())
     }

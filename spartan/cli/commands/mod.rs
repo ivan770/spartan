@@ -1,6 +1,7 @@
 /// `start` command
 pub mod start;
 
+#[cfg(feature = "init")]
 /// `init` command
 pub mod init;
 
