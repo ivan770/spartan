@@ -173,4 +173,17 @@ mod tests {
         assert_eq!(parsed.len(), 1);
         assert_eq!(&*parsed.first().unwrap(), &[1, 2, 3]);
     }
+
+    #[tokio::test]
+    async fn test_multiple_log_entries() {
+        let mut entries = Vec::new();
+        entries.append(&mut Log::make_log_entry(&vec![1u32, 2, 3]).unwrap());
+        entries.append(&mut Log::make_log_entry(&vec![4, 5, 6]).unwrap());
+        entries.append(&mut Log::make_log_entry(&vec![7, 8, 9]).unwrap());
+        let parsed = Log::parse_log::<Vec<u32>, _>(&mut Cursor::new(entries))
+            .await
+            .unwrap();
+        assert_eq!(parsed.len(), 3);
+        assert_eq!(parsed, vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]]);
+    }
 }
