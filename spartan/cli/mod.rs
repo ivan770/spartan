@@ -3,10 +3,7 @@ mod commands;
 
 use crate::config::Config;
 use commands::start::StartCommand;
-use std::{
-    io::Error,
-    path::PathBuf,
-};
+use std::{io::Error, path::PathBuf};
 use structopt::StructOpt;
 use tokio::fs::read;
 use toml::from_slice;
