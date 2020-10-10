@@ -33,9 +33,8 @@
 ### Download binary from GitHub
 
 1. Download latest release from [GitHub](https://github.com/ivan770/spartan/releases/latest).
-2. Create Spartan.toml configuration file using `./spartan init`, add queues to it.
-3. Create empty directory with name `db` (you may change directory name using `Spartan.toml`).
-4. Start server with `./spartan start`.
+2. Create configuration file using `./spartan init`.
+3. Start server with `./spartan start`.
 
 ### Build from source
 
