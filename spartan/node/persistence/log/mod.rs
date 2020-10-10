@@ -55,7 +55,7 @@ impl<'a> Log<'a> {
         Ok(buf)
     }
 
-    async fn parse_log_entry<T, S>(source: &mut S) -> Result<Vec<T>, Error>
+    async fn parse_log<T, S>(source: &mut S) -> Result<Vec<T>, Error>
     where
         S: AsyncSeek + AsyncRead + Unpin,
         T: DeserializeOwned,
@@ -123,13 +123,15 @@ impl<'a> Log<'a> {
             .await
             .map_err(|e| Error::DriverError(LogError::FileOpenError(e)))?;
 
-        Self::parse_log_entry(&mut file).await
+        Self::parse_log(&mut file).await
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    
+    use std::io::Cursor;
 
     use tempfile::NamedTempFile;
 
@@ -146,7 +148,7 @@ mod tests {
             .unwrap();
 
         let entries = log.load::<String>(file.path()).await.unwrap();
-        assert!(entries.len() == 1);
+        assert_eq!(entries.len(), 1);
         assert_eq!(entries.first().unwrap(), &String::from("Hello, world"));
     }
 
@@ -160,5 +162,13 @@ mod tests {
 
         let entries = log.load::<String>(file.path()).await.unwrap();
         assert!(entries.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_serialize_log_entry() {
+        let entry = Log::make_log_entry(&vec![1u32, 2, 3]).unwrap();
+        let parsed = Log::parse_log::<Vec<u32>, _>(&mut Cursor::new(entry)).await.unwrap();
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(&*parsed.first().unwrap(), &[1, 2, 3]);
     }
 }
