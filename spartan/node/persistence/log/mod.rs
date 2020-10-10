@@ -130,7 +130,7 @@ impl<'a> Log<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     use std::io::Cursor;
 
     use tempfile::NamedTempFile;
@@ -167,7 +167,9 @@ mod tests {
     #[tokio::test]
     async fn test_serialize_log_entry() {
         let entry = Log::make_log_entry(&vec![1u32, 2, 3]).unwrap();
-        let parsed = Log::parse_log::<Vec<u32>, _>(&mut Cursor::new(entry)).await.unwrap();
+        let parsed = Log::parse_log::<Vec<u32>, _>(&mut Cursor::new(entry))
+            .await
+            .unwrap();
         assert_eq!(parsed.len(), 1);
         assert_eq!(&*parsed.first().unwrap(), &[1, 2, 3]);
     }
