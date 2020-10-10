@@ -4,6 +4,9 @@ pub mod manager;
 /// Queue
 pub mod queue;
 
+/// Log-based and snapshot persistence
+pub mod persistence;
+
 #[cfg(feature = "replication")]
 /// Database replication
 pub mod replication;

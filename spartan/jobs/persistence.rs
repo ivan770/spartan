@@ -105,9 +105,9 @@ async fn load<'a>(manager: &mut Manager<'a>, name: &'a str) -> PersistenceResult
     cfg_if! {
         if #[cfg(feature = "replication")] {
             let replication_storage = read_struct(&path.join(REPLICATION_FILE)).await?;
-            let queue = Queue::new(database, replication_storage);
+            let queue = Queue::new(database, replication_storage, None);
         } else {
-            let queue = Queue::new(database);
+            let queue = Queue::new(database, None);
         }
     }
     manager.node.add_db(name, queue);
