@@ -22,6 +22,15 @@ pub enum Persistence {
     Snapshot(SnapshotConfig),
 }
 
+impl Persistence {
+    pub fn path(&self) -> &Path {
+        match self {
+            Persistence::Log(config) => &config.path,
+            Persistence::Snapshot(config) => &config.path
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct SnapshotConfig {
     /// Database path

@@ -48,10 +48,12 @@ impl InitCommand {
 
         let config: Config = from_str(&text).map_err(InitCommandError::IncorrectConfig)?;
 
-        if !config.path.is_dir() {
-            create_dir(&config.path)
-                .await
-                .map_err(InitCommandError::DirectoryCreateError)?;
+        if let Some(persistence) = config.persistence {
+            if !persistence.path().is_dir() {
+                create_dir(persistence.path())
+                    .await
+                    .map_err(InitCommandError::DirectoryCreateError)?;
+            }
         }
 
         write(server.config_path(), text)
