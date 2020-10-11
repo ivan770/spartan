@@ -1,7 +1,6 @@
 <h1 align="center">Spartan MQ</h1>
 
 <h4 align="center">
-  <a href="https://ivan770.me/spartan">Website</a> |
   Documentation (<a href="https://ivan770.github.io/spartan/spartan/">Server</a> | <a href="https://ivan770.github.io/spartan/spartan_lib/">Library</a>) |
   <a href="https://github.com/ivan770/spartan/wiki/REST-API">REST API</a>
 </h4>
@@ -33,9 +32,8 @@
 ### Download binary from GitHub
 
 1. Download latest release from [GitHub](https://github.com/ivan770/spartan/releases/latest).
-2. Create Spartan.toml configuration file using `./spartan init`, add queues to it.
-3. Create empty directory with name `db` (you may change directory name using `Spartan.toml`).
-4. Start server with `./spartan start`.
+2. Create configuration file using `./spartan init`.
+3. Start server with `./spartan start`.
 
 ### Build from source
 

@@ -3,8 +3,11 @@ use dialoguer::Editor;
 use std::{ffi::OsString, io::Error as IoError};
 use structopt::StructOpt;
 use thiserror::Error;
-use tokio::fs::write;
-use toml::to_string_pretty;
+use tokio::fs::{create_dir, write};
+use toml::{
+    de::{from_str, Error},
+    to_string_pretty,
+};
 
 #[derive(Error, Debug)]
 pub enum InitCommandError {
@@ -14,6 +17,10 @@ pub enum InitCommandError {
     ConfigWriteError(IoError),
     #[error("Missing config text. Probably file was not saved properly")]
     MissingConfigText,
+    #[error("Provided config is incorrect. Check config key rules in README file: {0}")]
+    IncorrectConfig(Error),
+    #[error("Unable to create directory by path, provided in database path: {0}")]
+    DirectoryCreateError(IoError),
 }
 
 #[derive(StructOpt)]
@@ -30,20 +37,26 @@ impl InitCommand {
 
         self.editor.as_ref().map(|name| editor.executable(name));
 
-        editor
+        let text = editor
             .require_save(true)
             .edit(
                 &to_string_pretty(&config)
                     .map_err(|_| InitCommandError::ConfigSerializationError)?,
             )
             .map_err(InitCommandError::ConfigWriteError)?
-            .map(|text| async move {
-                write(server.config_path(), text)
-                    .await
-                    .map_err(InitCommandError::ConfigWriteError)
-            })
-            .ok_or(InitCommandError::MissingConfigText)?
-            .await?;
+            .ok_or(InitCommandError::MissingConfigText)?;
+
+        let config: Config = from_str(&text).map_err(InitCommandError::IncorrectConfig)?;
+
+        if !config.path.is_dir() {
+            create_dir(&config.path)
+                .await
+                .map_err(InitCommandError::DirectoryCreateError)?;
+        }
+
+        write(server.config_path(), text)
+            .await
+            .map_err(InitCommandError::ConfigWriteError)?;
 
         Ok(())
     }
