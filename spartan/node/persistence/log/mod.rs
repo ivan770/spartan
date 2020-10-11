@@ -1,12 +1,14 @@
 use std::{io::Error as IoError, io::SeekFrom, mem::size_of, path::Path};
 
-use bincode::{deserialize, serialize, serialize_into, serialized_size};
+use bincode::{deserialize, serialize_into, serialized_size};
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error as ThisError;
 use tokio::{
-    fs::OpenOptions, io::AsyncBufReadExt, io::AsyncRead, io::AsyncReadExt, io::AsyncSeek,
-    io::AsyncSeekExt, io::AsyncWrite, io::AsyncWriteExt, io::BufReader, stream::StreamExt,
+    fs::OpenOptions, io::AsyncRead, io::AsyncReadExt, io::AsyncSeek, io::AsyncSeekExt,
+    io::AsyncWriteExt,
 };
+
+use crate::config::persistence::LogConfig;
 
 use super::PersistenceError;
 
@@ -22,18 +24,12 @@ pub enum LogError {
     LineReadError(IoError),
 }
 
-pub struct LogConfig<'a> {
-    path: &'a Path,
-}
-
 pub struct Log<'a> {
-    config: LogConfig<'a>,
+    config: &'a LogConfig,
 }
-
-pub struct Test(u32);
 
 impl<'a> Log<'a> {
-    pub fn new(config: LogConfig<'a>) -> Self {
+    pub fn new(config: &'a LogConfig) -> Self {
         Log { config }
     }
 
@@ -131,17 +127,18 @@ impl<'a> Log<'a> {
 mod tests {
     use super::*;
 
-    use std::io::Cursor;
+    use std::{io::Cursor, path::PathBuf};
 
     use tempfile::NamedTempFile;
 
     #[tokio::test]
     async fn test_append_read() {
         let file = NamedTempFile::new().unwrap();
+        let config = LogConfig {
+            path: PathBuf::from("./").into_boxed_path(),
+        };
 
-        let log = Log::new(LogConfig {
-            path: Path::new("./"),
-        });
+        let log = Log::new(&config);
 
         log.append(&String::from("Hello, world"), file.path())
             .await
@@ -155,10 +152,11 @@ mod tests {
     #[tokio::test]
     async fn test_empty_file_load() {
         let file = NamedTempFile::new().unwrap();
+        let config = LogConfig {
+            path: PathBuf::from("./").into_boxed_path(),
+        };
 
-        let log = Log::new(LogConfig {
-            path: Path::new("./"),
-        });
+        let log = Log::new(&config);
 
         let entries = log.load::<String>(file.path()).await.unwrap();
         assert!(entries.is_empty());

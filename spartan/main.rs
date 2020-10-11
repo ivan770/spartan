@@ -34,6 +34,8 @@ use cli::{Command::*, Server};
 use once_cell::sync::OnceCell;
 use structopt::StructOpt;
 
+pub use config::persistence as persistence_config;
+
 static SERVER: OnceCell<Server> = OnceCell::new();
 
 #[tokio::main]

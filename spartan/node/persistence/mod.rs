@@ -31,6 +31,6 @@ where
     InvalidFileFormat(BincodeError),
     #[error("Unable to serialize database: {0}")]
     SerializationError(BincodeError),
-    #[error("Persistence driver error")]
-    DriverError(#[from] DE),
+    #[error("Persistence driver error: {0}")]
+    DriverError(DE),
 }

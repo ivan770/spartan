@@ -1,7 +1,9 @@
-use super::{Node, DB};
-use crate::config::Config;
+use super::{DB, Node, persistence::snapshot::Snapshot};
+use crate::{config::Config, persistence_config::Persistence};
 use actix_web::{http::StatusCode, ResponseError};
+use futures_util::StreamExt;
 use thiserror::Error;
+use tokio::stream::iter;
 
 #[derive(Error, Debug)]
 pub enum ManagerError {
@@ -35,5 +37,47 @@ impl<'a> Manager<'a> {
     /// Obtain queue from local node
     pub fn queue(&self, name: &str) -> Result<&DB, ManagerError> {
         self.node.queue(name).ok_or(ManagerError::QueueNotFound)
+    }
+
+    pub async fn load_from_fs(&mut self) {
+        if let Some(persistence) = self.config.persistence.as_ref() {
+            match persistence {
+                Persistence::Log(log) => {
+
+                }
+                Persistence::Snapshot(config) => {
+                    let driver = Snapshot::new(config);
+
+                    for name in self.config.queues.iter() {
+                        match driver.load_queue(&**name).await {
+                            Ok(queue) => {
+                                self.node.add_db(name, queue);
+                            },
+                            Err(e) => error!("{}", e),
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pub async fn snapshot(&self) {
+        if let Some(persistence) = self.config.persistence.as_ref() {
+            match persistence {
+                Persistence::Snapshot(config) => {
+                    let driver = &Snapshot::new(config);
+
+                    iter(self.node.iter())
+                        .for_each_concurrent(None, |(name, db)| async move {
+                            match driver.persist_queue(name, db).await {
+                                Err(e) => error!("{}", e),
+                                _ => (),
+                            }
+                        })
+                        .await;
+                },
+                _ => ()
+            }
+        }
     }
 }

@@ -3,7 +3,7 @@ use crate::{
     config::replication::Replication,
     jobs::{
         exit::spawn_ctrlc_handler,
-        persistence::{load_from_fs, spawn_persistence},
+        persistence::spawn_persistence,
     },
     node::{
         replication::{
@@ -30,9 +30,9 @@ impl ReplicaCommand {
         let config = server.config().expect("Config not loaded");
         let mut manager = Manager::new(config);
 
-        load_from_fs(&mut manager)
-            .await
-            .map_err(ReplicaError::PersistenceError)?;
+        manager
+            .load_from_fs()
+            .await;
 
         let manager = Arc::new(manager);
 

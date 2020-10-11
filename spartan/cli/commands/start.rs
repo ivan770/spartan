@@ -4,7 +4,7 @@ use crate::{
     jobs::{
         exit::spawn_ctrlc_handler,
         gc::spawn_gc,
-        persistence::{load_from_fs, spawn_persistence, PersistenceError},
+        persistence::spawn_persistence,
     },
     node::Manager,
 };
@@ -20,8 +20,6 @@ use crate::jobs::replication::spawn_replication;
 
 #[derive(Error, Debug)]
 pub enum StartCommandError {
-    #[error("Unable to restore DB from FS: {0}")]
-    RestoreDB(PersistenceError),
     #[error("Unable to load configuration file")]
     ConfigFileError,
     #[error("Internal runtime error")]
@@ -59,11 +57,9 @@ impl StartCommand {
 
         info!("Loading queues from FS.");
 
-        load_from_fs(&mut manager)
-            .await
-            .map_err(StartCommandError::RestoreDB)?;
-
-        info!("Queues loaded successfully.");
+        manager
+            .load_from_fs()
+            .await;
 
         let manager = Data::new(manager);
 
