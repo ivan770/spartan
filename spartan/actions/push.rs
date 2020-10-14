@@ -3,10 +3,11 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
 };
+use maybe_owned::MaybeOwned;
 use spartan_lib::core::{dispatcher::SimpleDispatcher, message::Message};
 
 #[cfg(feature = "replication")]
-use crate::node::replication::event::Event;
+use crate::node::event::Event;
 
 /// Push message to queue.
 ///
@@ -21,7 +22,9 @@ pub async fn push(
     let message: Message = request.into_inner().into();
 
     #[cfg(feature = "replication")]
-    queue.log_event(|| Event::Push(message.clone())).await;
+    queue
+        .log_event(|| Event::Push(MaybeOwned::Owned(message.clone())))
+        .await;
 
     queue.database().await.push(message);
     Ok(HttpResponse::Ok().json(()))

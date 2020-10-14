@@ -1,4 +1,4 @@
-use crate::node::replication::event::Event;
+use crate::node::event::Event;
 use maybe_owned::MaybeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 pub struct PrimaryStorage {
     next_index: u64,
     gc_threshold: u64,
-    log: BTreeMap<u64, Event>,
+    log: BTreeMap<u64, Event<'static>>,
 }
 
 impl Default for PrimaryStorage {
@@ -21,7 +21,7 @@ impl Default for PrimaryStorage {
 }
 
 impl PrimaryStorage {
-    pub fn push(&mut self, event: Event) {
+    pub fn push(&mut self, event: Event<'static>) {
         self.log.insert(self.next_index, event);
         self.next_index += 1;
     }
@@ -34,7 +34,10 @@ impl PrimaryStorage {
             .for_each(drop);
     }
 
-    pub fn slice(&self, start: u64) -> Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event>)]> {
+    pub fn slice(
+        &self,
+        start: u64,
+    ) -> Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event<'static>>)]> {
         self.log
             .range(start..)
             .map(|(k, v)| (MaybeOwned::Borrowed(k), MaybeOwned::Borrowed(v)))
@@ -48,8 +51,7 @@ impl PrimaryStorage {
 
 #[cfg(test)]
 mod tests {
-    use super::PrimaryStorage;
-    use crate::node::replication::event::Event;
+    use super::{Event, PrimaryStorage};
 
     #[test]
     fn test_gc() {

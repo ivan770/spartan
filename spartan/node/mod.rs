@@ -7,6 +7,9 @@ pub mod queue;
 /// Log-based and snapshot persistence
 pub mod persistence;
 
+/// Database event
+pub mod event;
+
 #[cfg(feature = "replication")]
 /// Database replication
 pub mod replication;

@@ -8,7 +8,7 @@ use tokio::{
     io::AsyncWriteExt,
 };
 
-use crate::config::persistence::LogConfig;
+use crate::{config::persistence::LogConfig, node::Queue};
 
 use super::PersistenceError;
 
@@ -94,8 +94,9 @@ impl<'a> Log<'a> {
         Ok(entries)
     }
 
-    pub async fn append<S>(&self, source: &S, destination: &Path) -> Result<(), Error>
+    pub async fn append<P, S>(&self, source: &S, destination: P) -> Result<(), Error>
     where
+        P: AsRef<Path>,
         S: Serialize,
     {
         OpenOptions::new()
@@ -109,9 +110,10 @@ impl<'a> Log<'a> {
             .map_err(|e| Error::DriverError(LogError::FileAppendError(e)))
     }
 
-    pub async fn load<S>(&self, source: &Path) -> Result<Vec<S>, Error>
+    pub async fn load<S, P>(&self, source: P) -> Result<Vec<S>, Error>
     where
         S: DeserializeOwned,
+        P: AsRef<Path>,
     {
         let mut file = OpenOptions::new()
             .read(true)
@@ -120,6 +122,13 @@ impl<'a> Log<'a> {
             .map_err(|e| Error::DriverError(LogError::FileOpenError(e)))?;
 
         Self::parse_log(&mut file).await
+    }
+
+    pub async fn load_queue<P, DB>(&self, source: P) -> Result<Queue<DB>, Error>
+    where
+        P: AsRef<Path>,
+    {
+        todo!();
     }
 }
 
@@ -144,7 +153,7 @@ mod tests {
             .await
             .unwrap();
 
-        let entries = log.load::<String>(file.path()).await.unwrap();
+        let entries = log.load::<String, _>(file.path()).await.unwrap();
         assert_eq!(entries.len(), 1);
         assert_eq!(entries.first().unwrap(), &String::from("Hello, world"));
     }
@@ -158,7 +167,7 @@ mod tests {
 
         let log = Log::new(&config);
 
-        let entries = log.load::<String>(file.path()).await.unwrap();
+        let entries = log.load::<String, _>(file.path()).await.unwrap();
         assert!(entries.is_empty());
     }
 

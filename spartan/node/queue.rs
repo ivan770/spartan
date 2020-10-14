@@ -28,10 +28,7 @@ where
 
 impl<DB> Queue<DB> {
     #[cfg(feature = "replication")]
-    pub fn new(
-        database: DB,
-        replication_storage: Option<ReplicationStorage>,
-    ) -> Queue<DB> {
+    pub fn new(database: DB, replication_storage: Option<ReplicationStorage>) -> Queue<DB> {
         Queue {
             database: Mutex::new(database),
             replication_storage: Mutex::new(replication_storage),

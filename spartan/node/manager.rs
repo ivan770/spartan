@@ -1,4 +1,4 @@
-use super::{persistence::snapshot::Snapshot, Node, DB};
+use super::{persistence::log::Log, persistence::snapshot::Snapshot, Node, DB};
 use crate::{config::Config, persistence_config::Persistence};
 use actix_web::{http::StatusCode, ResponseError};
 use futures_util::StreamExt;
@@ -42,7 +42,9 @@ impl<'a> Manager<'a> {
     pub async fn load_from_fs(&mut self) {
         if let Some(persistence) = self.config.persistence.as_ref() {
             match persistence {
-                Persistence::Log(log) => {}
+                Persistence::Log(config) => {
+                    let driver = Log::new(config);
+                }
                 Persistence::Snapshot(config) => {
                     let driver = Snapshot::new(config);
 

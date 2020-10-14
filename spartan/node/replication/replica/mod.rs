@@ -115,7 +115,21 @@ pub async fn accept_connection<'a>(
         PrimaryRequest::SendRange(queue, range) => match manager.queue(&queue) {
             Ok(db) => {
                 debug!("Applying event slice.");
-                db.apply_events(range).await;
+                let range = range.into_vec();
+
+                let index = range.last().map(|(index, _)| **index);
+                db.apply_events(range.into_iter().map(|(_, event)| event))
+                    .await;
+
+                if let Some(index) = index {
+                    db.replication_storage()
+                        .await
+                        .as_mut()
+                        .expect("No storage provided")
+                        .get_replica()
+                        .confirm(index);
+                }
+
                 ReplicaRequest::RecvRange
             }
             Err(_) => ReplicaRequest::QueueNotFound(queue),
@@ -130,8 +144,8 @@ mod tests {
         config::replication::Replica,
         node::replication::message::Request,
         node::{
+            event::Event,
             replication::{
-                event::Event,
                 message::{PrimaryRequest, ReplicaRequest},
                 storage::ReplicationStorage,
             },
