@@ -39,7 +39,7 @@ pub struct Server {
 
     /// Loaded server configuration
     #[structopt(skip = None)]
-    loaded_config: Option<Config>,
+    loaded_config: Option<Config<'static>>,
 
     #[structopt(subcommand)]
     command: Command,

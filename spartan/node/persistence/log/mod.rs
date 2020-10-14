@@ -25,7 +25,7 @@ pub enum LogError {
 }
 
 pub struct Log<'a> {
-    config: &'a LogConfig,
+    config: &'a LogConfig<'a>,
 }
 
 impl<'a> Log<'a> {
@@ -127,7 +127,7 @@ impl<'a> Log<'a> {
 mod tests {
     use super::*;
 
-    use std::{io::Cursor, path::PathBuf};
+    use std::{borrow::Cow, io::Cursor};
 
     use tempfile::NamedTempFile;
 
@@ -135,7 +135,7 @@ mod tests {
     async fn test_append_read() {
         let file = NamedTempFile::new().unwrap();
         let config = LogConfig {
-            path: PathBuf::from("./").into_boxed_path(),
+            path: Cow::Borrowed(file.path().parent().unwrap()),
         };
 
         let log = Log::new(&config);
@@ -153,7 +153,7 @@ mod tests {
     async fn test_empty_file_load() {
         let file = NamedTempFile::new().unwrap();
         let config = LogConfig {
-            path: PathBuf::from("./").into_boxed_path(),
+            path: Cow::Borrowed(file.path().parent().unwrap()),
         };
 
         let log = Log::new(&config);

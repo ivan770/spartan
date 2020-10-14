@@ -1,7 +1,7 @@
 use std::{io::Error as IoError, path::Path};
 
-use cfg_if::cfg_if;
 use bincode::{deserialize, serialize};
+use cfg_if::cfg_if;
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error as ThisError;
 use tokio::fs::{create_dir, read, write};
@@ -26,7 +26,7 @@ pub enum SnapshotError {
 }
 
 pub struct Snapshot<'a> {
-    config: &'a SnapshotConfig,
+    config: &'a SnapshotConfig<'a>,
 }
 
 impl<'a> Snapshot<'a> {
@@ -62,7 +62,7 @@ impl<'a> Snapshot<'a> {
     pub async fn persist_queue<P, DB>(&self, name: P, queue: &Queue<DB>) -> Result<(), Error>
     where
         P: AsRef<Path>,
-        DB: Serialize
+        DB: Serialize,
     {
         let path = self.config.path.join(&name);
         if !path.is_dir() {
@@ -71,11 +71,16 @@ impl<'a> Snapshot<'a> {
                 .map_err(|e| PersistenceError::DriverError(SnapshotError::FileWriteError(e)))?;
         }
 
-        self.persist(&*queue.database().await, name.as_ref().join(QUEUE_FILE)).await?;
+        self.persist(&*queue.database().await, name.as_ref().join(QUEUE_FILE))
+            .await?;
 
         #[cfg(feature = "replication")]
         {
-            self.persist(&*queue.replication_storage().await, name.as_ref().join(REPLICATION_FILE)).await?;
+            self.persist(
+                &*queue.replication_storage().await,
+                name.as_ref().join(REPLICATION_FILE),
+            )
+            .await?;
         }
 
         Ok(())
@@ -84,7 +89,7 @@ impl<'a> Snapshot<'a> {
     pub async fn load_queue<P, DB>(&self, name: P) -> Result<Queue<DB>, Error>
     where
         P: AsRef<Path>,
-        DB: DeserializeOwned
+        DB: DeserializeOwned,
     {
         let database = self.load(name.as_ref().join(QUEUE_FILE)).await?;
 

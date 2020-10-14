@@ -1,9 +1,6 @@
 // Replication GC
 // https://github.com/rust-lang/rust/issues/70530
 #![feature(btree_drain_filter)]
-// Log-based persistence line reader
-// https://github.com/rust-lang/rust/issues/70142
-#![feature(result_flattening)]
 
 #[macro_use]
 extern crate log;

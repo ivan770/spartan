@@ -1,9 +1,4 @@
-use crate::{
-    node::{
-        Manager,
-    },
-    persistence_config::Persistence,
-};
+use crate::{node::Manager, persistence_config::Persistence};
 use actix_rt::time::delay_for;
 use std::time::Duration;
 
@@ -28,7 +23,12 @@ pub async fn spawn_persistence(manager: &Manager<'_>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{config::Config, node::Manager, node::persistence::snapshot::Snapshot, persistence_config::Persistence, persistence_config::SnapshotConfig};
+    use std::borrow::Cow;
+
+    use crate::{
+        config::Config, node::Manager, persistence_config::Persistence,
+        persistence_config::SnapshotConfig,
+    };
     use spartan_lib::core::{
         dispatcher::{SimpleDispatcher, StatusAwareDispatcher},
         message::builder::MessageBuilder,
@@ -46,8 +46,8 @@ mod tests {
                 String::from("test2").into_boxed_str(),
             ]),
             persistence: Some(Persistence::Snapshot(SnapshotConfig {
-                path: tempdir.path().to_path_buf().into_boxed_path(),
-                timer: 10
+                path: Cow::Borrowed(tempdir.path()),
+                timer: 10,
             })),
             ..Default::default()
         };
@@ -67,16 +67,12 @@ mod tests {
                 .await
                 .push(message);
 
-            manager
-                .snapshot()
-                .await;
+            manager.snapshot().await;
         }
 
         let mut manager = Manager::new(&config);
 
-        manager
-            .load_from_fs()
-            .await;
+        manager.load_from_fs().await;
 
         manager.queue("test2").unwrap();
         assert_eq!(

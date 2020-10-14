@@ -1,11 +1,7 @@
 use crate::{
     cli::Server,
     http::server::{start_http_server, ServerError},
-    jobs::{
-        exit::spawn_ctrlc_handler,
-        gc::spawn_gc,
-        persistence::spawn_persistence,
-    },
+    jobs::{exit::spawn_ctrlc_handler, gc::spawn_gc, persistence::spawn_persistence},
     node::Manager,
 };
 use actix_rt::System;
@@ -57,9 +53,7 @@ impl StartCommand {
 
         info!("Loading queues from FS.");
 
-        manager
-            .load_from_fs()
-            .await;
+        manager.load_from_fs().await;
 
         let manager = Data::new(manager);
 

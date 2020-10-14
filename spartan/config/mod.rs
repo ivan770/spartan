@@ -21,7 +21,7 @@ const fn default_gc_timer() -> u64 {
 
 /// Server configuration
 #[derive(Serialize, Deserialize)]
-pub struct Config {
+pub struct Config<'a> {
     /// Max body size in bytes
     /// Default value is defined in Actix source code
     pub body_size: Option<usize>,
@@ -46,12 +46,12 @@ pub struct Config {
     /// Persistence config
     #[serde(default = "default_persistence")]
     #[serde(skip_serializing)]
-    pub persistence: Option<Persistence>,
+    pub persistence: Option<Persistence<'a>>,
 }
 
 #[cfg(not(test))]
-impl Default for Config {
-    fn default() -> Config {
+impl Default for Config<'_> {
+    fn default() -> Self {
         Config {
             body_size: None,
             gc_timer: default_gc_timer(),
@@ -65,8 +65,8 @@ impl Default for Config {
 }
 
 #[cfg(test)]
-impl Default for Config {
-    fn default() -> Config {
+impl Default for Config<'_> {
+    fn default() -> Self {
         Config {
             body_size: None,
             gc_timer: 10,

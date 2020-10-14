@@ -1,4 +1,4 @@
-use super::{DB, Node, persistence::snapshot::Snapshot};
+use super::{persistence::snapshot::Snapshot, Node, DB};
 use crate::{config::Config, persistence_config::Persistence};
 use actix_web::{http::StatusCode, ResponseError};
 use futures_util::StreamExt;
@@ -20,7 +20,7 @@ impl ResponseError for ManagerError {
 /// Node manager
 pub struct Manager<'a> {
     /// Server config
-    pub config: &'a Config,
+    pub config: &'a Config<'a>,
 
     /// Node
     pub node: Node<'a>,
@@ -42,9 +42,7 @@ impl<'a> Manager<'a> {
     pub async fn load_from_fs(&mut self) {
         if let Some(persistence) = self.config.persistence.as_ref() {
             match persistence {
-                Persistence::Log(log) => {
-
-                }
+                Persistence::Log(log) => {}
                 Persistence::Snapshot(config) => {
                     let driver = Snapshot::new(config);
 
@@ -52,7 +50,7 @@ impl<'a> Manager<'a> {
                         match driver.load_queue(&**name).await {
                             Ok(queue) => {
                                 self.node.add_db(name, queue);
-                            },
+                            }
                             Err(e) => error!("{}", e),
                         }
                     }
@@ -75,8 +73,8 @@ impl<'a> Manager<'a> {
                             }
                         })
                         .await;
-                },
-                _ => ()
+                }
+                _ => (),
             }
         }
     }
