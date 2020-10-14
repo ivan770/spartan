@@ -3,8 +3,6 @@ use tokio::sync::{Mutex, MutexGuard};
 #[cfg(feature = "replication")]
 use crate::node::replication::storage::ReplicationStorage;
 
-use super::persistence::PersistenceDriver;
-
 pub struct Queue<DB> {
     /// Inner database
     database: Mutex<DB>,
@@ -13,10 +11,6 @@ pub struct Queue<DB> {
     /// Replication storage
     /// None if replication is not enabled
     replication_storage: Mutex<Option<ReplicationStorage>>,
-
-    // Queue persistence driver
-    // None if persistence is disabled
-    persistence: Option<PersistenceDriver>,
 }
 
 impl<DB> Default for Queue<DB>
@@ -28,7 +22,6 @@ where
             database: Mutex::new(DB::default()),
             #[cfg(feature = "replication")]
             replication_storage: Mutex::new(None),
-            persistence: None,
         }
     }
 }
@@ -38,20 +31,17 @@ impl<DB> Queue<DB> {
     pub fn new(
         database: DB,
         replication_storage: Option<ReplicationStorage>,
-        persistence: Option<PersistenceDriver>,
     ) -> Queue<DB> {
         Queue {
             database: Mutex::new(database),
             replication_storage: Mutex::new(replication_storage),
-            persistence,
         }
     }
 
     #[cfg(not(feature = "replication"))]
-    pub fn new(database: DB, persistence: Option<PersistenceDriver>) -> Queue<DB> {
+    pub fn new(database: DB) -> Queue<DB> {
         Queue {
             database: Mutex::new(database),
-            persistence,
         }
     }
 

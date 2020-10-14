@@ -96,9 +96,9 @@ impl<'a> Snapshot<'a> {
         cfg_if! {
             if #[cfg(feature = "replication")] {
                 let replication_storage = self.load(name.as_ref().join(REPLICATION_FILE)).await?;
-                let queue = Queue::new(database, replication_storage, None);
+                let queue = Queue::new(database, replication_storage);
             } else {
-                let queue = Queue::new(database, None);
+                let queue = Queue::new(database);
             }
         }
 

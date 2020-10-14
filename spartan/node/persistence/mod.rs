@@ -16,11 +16,6 @@ use std::error::Error;
 use bincode::Error as BincodeError;
 use thiserror::Error as ThisError;
 
-pub enum PersistenceDriver {
-    Log,
-    Snapshot,
-}
-
 /// Errors, that may occur during persistence process
 #[derive(ThisError, Debug)]
 pub enum PersistenceError<DE>
