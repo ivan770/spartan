@@ -1,28 +1,21 @@
-use std::{io::Error as IoError, io::SeekFrom, mem::size_of, path::Path};
+use std::{borrow::Cow, io::SeekFrom, mem::size_of, path::Path};
 
 use bincode::{deserialize, serialize_into, serialized_size};
+use cfg_if::cfg_if;
 use serde::{de::DeserializeOwned, Serialize};
-use thiserror::Error as ThisError;
 use tokio::{
     fs::OpenOptions, io::AsyncRead, io::AsyncReadExt, io::AsyncSeek, io::AsyncSeekExt,
     io::AsyncWriteExt,
 };
 
-use crate::{config::persistence::LogConfig, node::Queue};
+use crate::{config::persistence::LogConfig, persistence_config::SnapshotConfig, node::{Queue, event::{Event, EventLog}}};
 
-use super::PersistenceError;
+use super::{PersistenceError, snapshot::Snapshot};
 
-type Error = PersistenceError<LogError>;
+const QUEUE_FILE: &str = "queue_log";
 
-#[derive(ThisError, Debug)]
-pub enum LogError {
-    #[error("Unable to open file: {0}")]
-    FileOpenError(IoError),
-    #[error("Unable to append serialized entry to file: {0}")]
-    FileAppendError(IoError),
-    #[error("Unable to read entry line from file: {0}")]
-    LineReadError(IoError),
-}
+#[cfg(feature = "replication")]
+const REPLICATION_FILE: &str = "replication_log";
 
 pub struct Log<'a> {
     config: &'a LogConfig<'a>,
@@ -33,11 +26,11 @@ impl<'a> Log<'a> {
         Log { config }
     }
 
-    fn make_log_entry<S>(source: &S) -> Result<Vec<u8>, Error>
+    fn make_log_entry<S>(source: &S) -> Result<Vec<u8>, PersistenceError>
     where
         S: Serialize,
     {
-        let size = serialized_size(source).map_err(Error::SerializationError)?;
+        let size = serialized_size(source).map_err(PersistenceError::SerializationError)?;
         let capacity = size_of::<u64>() + size as usize;
 
         let mut buf = Vec::with_capacity(capacity);
@@ -46,12 +39,12 @@ impl<'a> Log<'a> {
 
         buf.resize(capacity, 0);
 
-        serialize_into(&mut buf[size_of::<u64>()..], source).map_err(Error::SerializationError)?;
+        serialize_into(&mut buf[size_of::<u64>()..], source).map_err(PersistenceError::SerializationError)?;
 
         Ok(buf)
     }
 
-    async fn parse_log<T, S>(source: &mut S) -> Result<Vec<T>, Error>
+    async fn parse_log<T, S>(source: &mut S) -> Result<Vec<T>, PersistenceError>
     where
         S: AsyncSeek + AsyncRead + Unpin,
         T: DeserializeOwned,
@@ -61,23 +54,23 @@ impl<'a> Log<'a> {
         let source_size = source
             .seek(SeekFrom::End(0))
             .await
-            .map_err(|e| Error::DriverError(LogError::LineReadError(e)))?;
+            .map_err(PersistenceError::LineReadError)?;
 
         source
             .seek(SeekFrom::Start(0))
             .await
-            .map_err(|e| Error::DriverError(LogError::LineReadError(e)))?;
+            .map_err(PersistenceError::LineReadError)?;
 
         while source
             .seek(SeekFrom::Current(0))
             .await
-            .map_err(|e| Error::DriverError(LogError::LineReadError(e)))?
+            .map_err(PersistenceError::LineReadError)?
             < source_size
         {
             let size = source
                 .read_u64_le()
                 .await
-                .map_err(|e| Error::DriverError(LogError::LineReadError(e)))?;
+                .map_err(PersistenceError::LineReadError)?;
 
             // Might need to re-use allocations here
             let mut buf = Vec::with_capacity(size as usize);
@@ -86,15 +79,15 @@ impl<'a> Log<'a> {
                 .take(size)
                 .read_buf(&mut buf)
                 .await
-                .map_err(|e| Error::DriverError(LogError::LineReadError(e)))?;
+                .map_err(PersistenceError::LineReadError)?;
 
-            entries.push(deserialize(&buf).map_err(Error::SerializationError)?);
+            entries.push(deserialize(&buf).map_err(PersistenceError::SerializationError)?);
         }
 
         Ok(entries)
     }
 
-    pub async fn append<P, S>(&self, source: &S, destination: P) -> Result<(), Error>
+    pub async fn append<P, S>(&self, source: &S, destination: P) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
         S: Serialize,
@@ -104,13 +97,13 @@ impl<'a> Log<'a> {
             .append(true)
             .open(self.config.path.join(destination))
             .await
-            .map_err(|e| Error::DriverError(LogError::FileOpenError(e)))?
+            .map_err(PersistenceError::FileReadError)?
             .write_all(&Self::make_log_entry(source)?)
             .await
-            .map_err(|e| Error::DriverError(LogError::FileAppendError(e)))
+            .map_err(PersistenceError::FileWriteError)
     }
 
-    pub async fn load<S, P>(&self, source: P) -> Result<Vec<S>, Error>
+    pub async fn load<S, P>(&self, source: P) -> Result<Vec<S>, PersistenceError>
     where
         S: DeserializeOwned,
         P: AsRef<Path>,
@@ -119,16 +112,44 @@ impl<'a> Log<'a> {
             .read(true)
             .open(self.config.path.join(source))
             .await
-            .map_err(|e| Error::DriverError(LogError::FileOpenError(e)))?;
+            .map_err(PersistenceError::FileReadError)?;
 
         Self::parse_log(&mut file).await
     }
 
-    pub async fn load_queue<P, DB>(&self, source: P) -> Result<Queue<DB>, Error>
+    pub async fn load_queue<P, DB>(&self, source: P) -> Result<Queue<DB>, PersistenceError>
     where
         P: AsRef<Path>,
+        DB: EventLog<Vec<Event<'static>>>
     {
-        todo!();
+        // TODO: Log compaction by saving snapshot right after loading log
+        let events = self
+            .load::<Event, _>(source.as_ref().join(QUEUE_FILE))
+            .await?;
+
+        let database = DB::from_log(events);
+
+        cfg_if! {
+            if #[cfg(feature = "replication")] {
+                // Thanks to GC threshold, it's currently impossible to use log driver
+                // for persisting PrimaryStorage, so for now we'll use snapshot driver
+
+                // TODO: Uhh... there should be a better way to do this
+                let config = SnapshotConfig {
+                    path: Cow::Borrowed(&self.config.path),
+                    timer: 0
+                };
+
+                let snapshot = Snapshot::new(&config);
+
+                let replication_storage = snapshot.load(source).await?;
+                let queue = Queue::new(database, replication_storage);
+            } else {
+                let queue = Queue::new(database);
+            }
+        }
+
+        Ok(queue)
     }
 }
 

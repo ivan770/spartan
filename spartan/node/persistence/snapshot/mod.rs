@@ -1,9 +1,8 @@
-use std::{io::Error as IoError, path::Path};
+use std::path::Path;
 
 use bincode::{deserialize, serialize};
 use cfg_if::cfg_if;
 use serde::{de::DeserializeOwned, Serialize};
-use thiserror::Error as ThisError;
 use tokio::fs::{create_dir, read, write};
 
 use crate::{config::persistence::SnapshotConfig, node::Queue};
@@ -13,17 +12,7 @@ use super::PersistenceError;
 const QUEUE_FILE: &str = "queue";
 
 #[cfg(feature = "replication")]
-const REPLICATION_FILE: &str = "replication";
-
-type Error = PersistenceError<SnapshotError>;
-
-#[derive(ThisError, Debug)]
-pub enum SnapshotError {
-    #[error("Unable to write serialized database to file: {0}")]
-    FileWriteError(IoError),
-    #[error("Unable to read serialized database from file: {0}")]
-    FileReadError(IoError),
-}
+pub const REPLICATION_FILE: &str = "replication";
 
 pub struct Snapshot<'a> {
     config: &'a SnapshotConfig<'a>,
@@ -34,18 +23,18 @@ impl<'a> Snapshot<'a> {
         Snapshot { config }
     }
 
-    pub async fn persist<S, P>(&self, source: &S, destination: P) -> Result<(), Error>
+    pub async fn persist<S, P>(&self, source: &S, destination: P) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
         S: Serialize,
     {
         let path = self.config.path.join(destination);
-        write(path, serialize(source).map_err(Error::SerializationError)?)
+        write(path, serialize(source).map_err(PersistenceError::SerializationError)?)
             .await
-            .map_err(|e| Error::DriverError(SnapshotError::FileWriteError(e)))
+            .map_err(PersistenceError::FileWriteError)
     }
 
-    pub async fn load<S, P>(&self, source: P) -> Result<S, Error>
+    pub async fn load<S, P>(&self, source: P) -> Result<S, PersistenceError>
     where
         P: AsRef<Path>,
         S: DeserializeOwned,
@@ -54,12 +43,12 @@ impl<'a> Snapshot<'a> {
         deserialize(
             &read(path)
                 .await
-                .map_err(|e| Error::DriverError(SnapshotError::FileReadError(e)))?,
+                .map_err(PersistenceError::FileReadError)?,
         )
-        .map_err(Error::InvalidFileFormat)
+        .map_err(PersistenceError::InvalidFileFormat)
     }
 
-    pub async fn persist_queue<P, DB>(&self, name: P, queue: &Queue<DB>) -> Result<(), Error>
+    pub async fn persist_queue<P, DB>(&self, name: P, queue: &Queue<DB>) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
         DB: Serialize,
@@ -68,7 +57,7 @@ impl<'a> Snapshot<'a> {
         if !path.is_dir() {
             create_dir(&path)
                 .await
-                .map_err(|e| PersistenceError::DriverError(SnapshotError::FileWriteError(e)))?;
+                .map_err(PersistenceError::FileWriteError)?;
         }
 
         self.persist(&*queue.database().await, name.as_ref().join(QUEUE_FILE))
@@ -86,7 +75,7 @@ impl<'a> Snapshot<'a> {
         Ok(())
     }
 
-    pub async fn load_queue<P, DB>(&self, name: P) -> Result<Queue<DB>, Error>
+    pub async fn load_queue<P, DB>(&self, name: P) -> Result<Queue<DB>, PersistenceError>
     where
         P: AsRef<Path>,
         DB: DeserializeOwned,

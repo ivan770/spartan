@@ -11,21 +11,22 @@ pub mod log;
 /// Best performance, yet worse reliability.
 pub mod snapshot;
 
-use std::error::Error;
+use std::io::Error as IoError;
 
 use bincode::Error as BincodeError;
 use thiserror::Error as ThisError;
 
 /// Errors, that may occur during persistence process
 #[derive(ThisError, Debug)]
-pub enum PersistenceError<DE>
-where
-    DE: Error + 'static,
-{
+pub enum PersistenceError {
     #[error("File in database directory has invalid format: {0}")]
     InvalidFileFormat(BincodeError),
     #[error("Unable to serialize database: {0}")]
     SerializationError(BincodeError),
-    #[error("Persistence driver error: {0}")]
-    DriverError(DE),
+    #[error("Unable to read entry line from file: {0}")]
+    LineReadError(IoError),
+    #[error("Unable to write to file: {0}")]
+    FileWriteError(IoError),
+    #[error("Unable to read from file: {0}")]
+    FileReadError(IoError),
 }

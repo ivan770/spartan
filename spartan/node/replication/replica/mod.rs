@@ -5,14 +5,10 @@ pub mod error;
 pub mod storage;
 
 use super::message::Request;
-use crate::{
-    config::replication::Replica,
-    node::{
+use crate::{config::replication::Replica, node::{
         replication::message::{PrimaryRequest, ReplicaRequest},
         Manager,
-    },
-    utils::codec::BincodeCodec,
-};
+    }, utils::codec::BincodeCodec, node::event::EventLog};
 use actix_rt::time::delay_for;
 use error::{ReplicaError, ReplicaResult};
 use futures_util::{SinkExt, StreamExt};
@@ -118,8 +114,10 @@ pub async fn accept_connection<'a>(
                 let range = range.into_vec();
 
                 let index = range.last().map(|(index, _)| **index);
-                db.apply_events(range.into_iter().map(|(_, event)| event))
-                    .await;
+
+                db.database()
+                    .await
+                    .apply_log(range.into_iter().map(|(_, event)| event));
 
                 if let Some(index) = index {
                     db.replication_storage()

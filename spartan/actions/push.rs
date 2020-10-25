@@ -23,7 +23,7 @@ pub async fn push(
 
     #[cfg(feature = "replication")]
     queue
-        .log_event(|| Event::Push(MaybeOwned::Owned(message.clone())))
+        .log_event(|| Event::Push(MaybeOwned::Borrowed(&message)))
         .await;
 
     queue.database().await.push(message);
