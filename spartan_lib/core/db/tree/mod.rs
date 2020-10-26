@@ -59,10 +59,10 @@ where
     {
         self.queue_tree
             .values()
+            .next()
             .map(|key| &self.objects.get(key).unwrap().1)
             .filter(|message| predicate(message))
             .map(|message| message.id())
-            .next()
     }
 
     fn get(&self, position: Self::PositionKey) -> Option<&M> {
