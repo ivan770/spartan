@@ -5,13 +5,19 @@ pub mod error;
 pub mod storage;
 
 use super::message::Request;
-use crate::{config::replication::Replica, node::{
+use crate::{
+    config::replication::Replica,
+    node::event::EventLog,
+    node::{
         replication::message::{PrimaryRequest, ReplicaRequest},
         Manager,
-    }, utils::codec::BincodeCodec, node::event::EventLog};
+    },
+    utils::codec::BincodeCodec,
+};
 use actix_rt::time::delay_for;
 use error::{ReplicaError, ReplicaResult};
 use futures_util::{SinkExt, StreamExt};
+use maybe_owned::MaybeOwned;
 use std::{future::Future, time::Duration};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::{Decoder, Framed};
@@ -117,7 +123,10 @@ pub async fn accept_connection<'a>(
 
                 db.database()
                     .await
-                    .apply_log(range.into_iter().map(|(_, event)| event));
+                    .apply_log(range.into_iter().map(|(_, event)| match event {
+                        MaybeOwned::Owned(event) => event,
+                        MaybeOwned::Borrowed(_) => unreachable!(),
+                    }));
 
                 if let Some(index) = index {
                     db.replication_storage()

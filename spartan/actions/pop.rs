@@ -20,8 +20,7 @@ pub async fn pop(
 ) -> Result<HttpResponse> {
     let queue = manager.queue(&name)?;
 
-    #[cfg(feature = "replication")]
-    queue.log_event(|| Event::Pop).await;
+    queue.log_event(&name, &manager, || Event::Pop).await?;
 
     let mut database = queue.database().await;
     let message = database.pop().ok_or(QueueError::NoMessageAvailable)?;

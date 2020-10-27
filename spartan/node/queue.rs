@@ -3,6 +3,8 @@ use tokio::sync::{Mutex, MutexGuard};
 #[cfg(feature = "replication")]
 use crate::node::replication::storage::ReplicationStorage;
 
+use super::{event::Event, persistence::PersistenceError, Manager};
+
 pub struct Queue<DB> {
     /// Inner database
     database: Mutex<DB>,
@@ -66,6 +68,27 @@ impl<DB> Queue<DB> {
         {
             replication_storage.replace(replace());
         }
+    }
+
+    pub async fn log_event<'a, F>(
+        &self,
+        name: &str,
+        manager: &Manager<'_>,
+        f: F,
+    ) -> Result<(), PersistenceError>
+    where
+        F: FnOnce() -> Event<'a>,
+    {
+        let event = f();
+
+        manager.log::<DB>(name, &event).await?;
+
+        #[cfg(feature = "replication")]
+        if let Some(storage) = self.replication_storage().await.as_mut() {
+            storage.map_primary(|storage| storage.push(event.into_owned()));
+        }
+
+        Ok(())
     }
 }
 

@@ -2,6 +2,7 @@ use crate::{
     cli::Server,
     http::server::{start_http_server, ServerError},
     jobs::{exit::spawn_ctrlc_handler, gc::spawn_gc, persistence::spawn_persistence},
+    node::persistence::PersistenceError,
     node::Manager,
 };
 use actix_rt::System;
@@ -22,6 +23,8 @@ pub enum StartCommandError {
     RuntimeError(IoError),
     #[error("HTTP server error: {0}")]
     HttpServerError(ServerError),
+    #[error("Persistence error: {0}")]
+    PersistenceError(PersistenceError),
 }
 
 #[derive(StructOpt)]
@@ -53,7 +56,11 @@ impl StartCommand {
 
         info!("Loading queues from FS.");
 
-        manager.load_from_fs().await;
+        match manager.load_from_fs().await {
+            Err(PersistenceError::FileReadError(e)) => error!("Unable to load database: {}", e),
+            Err(e) => Err(e).map_err(StartCommandError::PersistenceError)?,
+            _ => (),
+        };
 
         let manager = Data::new(manager);
 

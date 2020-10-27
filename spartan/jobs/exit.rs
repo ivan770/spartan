@@ -10,7 +10,9 @@ pub async fn spawn_ctrlc_handler(manager: &Manager<'_>) {
 
     ctrl_c().await.expect("Unable to listen to Ctrl-C signal.");
 
-    manager.snapshot().await;
+    if let Err(e) = manager.snapshot().await {
+        error!("Error happened during shutdown: {}", e)
+    }
 
     exit(0);
 }

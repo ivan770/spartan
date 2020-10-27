@@ -8,14 +8,21 @@ use tokio::{
     io::AsyncWriteExt,
 };
 
-use crate::{config::persistence::LogConfig, persistence_config::SnapshotConfig, node::{Queue, event::{Event, EventLog}}};
+use crate::{
+    config::persistence::LogConfig,
+    node::{
+        event::{Event, EventLog},
+        Queue,
+    },
+    persistence_config::SnapshotConfig,
+};
 
-use super::{PersistenceError, snapshot::Snapshot};
+use super::{
+    snapshot::{Snapshot, REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE},
+    PersistenceError,
+};
 
 const QUEUE_FILE: &str = "queue_log";
-
-#[cfg(feature = "replication")]
-const REPLICATION_FILE: &str = "replication_log";
 
 pub struct Log<'a> {
     config: &'a LogConfig<'a>,
@@ -39,7 +46,8 @@ impl<'a> Log<'a> {
 
         buf.resize(capacity, 0);
 
-        serialize_into(&mut buf[size_of::<u64>()..], source).map_err(PersistenceError::SerializationError)?;
+        serialize_into(&mut buf[size_of::<u64>()..], source)
+            .map_err(PersistenceError::SerializationError)?;
 
         Ok(buf)
     }
@@ -117,10 +125,21 @@ impl<'a> Log<'a> {
         Self::parse_log(&mut file).await
     }
 
+    pub async fn persist_event<P>(
+        &self,
+        event: &Event<'_>,
+        source: P,
+    ) -> Result<(), PersistenceError>
+    where
+        P: AsRef<Path>,
+    {
+        self.append(event, source.as_ref().join(QUEUE_FILE)).await
+    }
+
     pub async fn load_queue<P, DB>(&self, source: P) -> Result<Queue<DB>, PersistenceError>
     where
         P: AsRef<Path>,
-        DB: EventLog<Vec<Event<'static>>>
+        DB: EventLog<Vec<Event<'static>>>,
     {
         // TODO: Log compaction by saving snapshot right after loading log
         let events = self
@@ -134,15 +153,15 @@ impl<'a> Log<'a> {
                 // Thanks to GC threshold, it's currently impossible to use log driver
                 // for persisting PrimaryStorage, so for now we'll use snapshot driver
 
-                // TODO: Uhh... there should be a better way to do this
                 let config = SnapshotConfig {
                     path: Cow::Borrowed(&self.config.path),
+                    // Timer is useless in this context, so it's just random number
                     timer: 0
                 };
 
                 let snapshot = Snapshot::new(&config);
 
-                let replication_storage = snapshot.load(source).await?;
+                let replication_storage = snapshot.load(source.as_ref().join(SNAPSHOT_REPLICATION_FILE)).await?;
                 let queue = Queue::new(database, replication_storage);
             } else {
                 let queue = Queue::new(database);

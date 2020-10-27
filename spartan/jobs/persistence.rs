@@ -6,17 +6,14 @@ use std::time::Duration;
 pub async fn spawn_persistence(manager: &Manager<'_>) {
     debug!("Spawning persistence job.");
 
-    if let Some(config) = manager.config.persistence.as_ref() {
-        match config {
-            Persistence::Snapshot(config) => {
-                let timer = Duration::from_secs(config.timer);
+    if let Some(Persistence::Snapshot(config)) = manager.config.persistence.as_ref() {
+        let timer = Duration::from_secs(config.timer);
 
-                loop {
-                    delay_for(timer).await;
-                    manager.snapshot().await;
-                }
+        loop {
+            delay_for(timer).await;
+            if let Err(e) = manager.snapshot().await {
+                error!("{}", e)
             }
-            _ => (),
         }
     }
 }
@@ -67,12 +64,12 @@ mod tests {
                 .await
                 .push(message);
 
-            manager.snapshot().await;
+            manager.snapshot().await.unwrap();
         }
 
         let mut manager = Manager::new(&config);
 
-        manager.load_from_fs().await;
+        manager.load_from_fs().await.unwrap();
 
         manager.queue("test2").unwrap();
         assert_eq!(

@@ -21,10 +21,11 @@ pub async fn push(
     let queue = manager.queue(&name)?;
     let message: Message = request.into_inner().into();
 
-    #[cfg(feature = "replication")]
     queue
-        .log_event(|| Event::Push(MaybeOwned::Borrowed(&message)))
-        .await;
+        .log_event(&name, &manager, || {
+            Event::Push(MaybeOwned::Borrowed(&message))
+        })
+        .await?;
 
     queue.database().await.push(message);
     Ok(HttpResponse::Ok().json(()))

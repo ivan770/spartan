@@ -13,6 +13,7 @@ pub mod snapshot;
 
 use std::io::Error as IoError;
 
+use actix_web::ResponseError;
 use bincode::Error as BincodeError;
 use thiserror::Error as ThisError;
 
@@ -30,3 +31,5 @@ pub enum PersistenceError {
     #[error("Unable to read from file: {0}")]
     FileReadError(IoError),
 }
+
+impl ResponseError for PersistenceError {}

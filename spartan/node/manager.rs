@@ -1,9 +1,13 @@
-use super::{persistence::log::Log, persistence::snapshot::Snapshot, Node, DB};
+use super::{
+    event::Event,
+    persistence::log::Log,
+    persistence::{snapshot::Snapshot, PersistenceError},
+    Node, DB,
+};
 use crate::{config::Config, persistence_config::Persistence};
 use actix_web::{http::StatusCode, ResponseError};
-use futures_util::StreamExt;
+use futures_util::{stream::iter, StreamExt, TryStreamExt};
 use thiserror::Error;
-use tokio::stream::iter;
 
 #[derive(Error, Debug)]
 pub enum ManagerError {
@@ -39,45 +43,51 @@ impl<'a> Manager<'a> {
         self.node.queue(name).ok_or(ManagerError::QueueNotFound)
     }
 
-    pub async fn load_from_fs(&mut self) {
+    pub async fn load_from_fs(&mut self) -> Result<(), PersistenceError> {
         if let Some(persistence) = self.config.persistence.as_ref() {
             match persistence {
                 Persistence::Log(config) => {
                     let driver = Log::new(config);
+
+                    for name in self.config.queues.iter() {
+                        let queue = driver.load_queue(&**name).await?;
+                        self.node.add_db(name, queue);
+                    }
                 }
                 Persistence::Snapshot(config) => {
                     let driver = Snapshot::new(config);
 
                     for name in self.config.queues.iter() {
-                        match driver.load_queue(&**name).await {
-                            Ok(queue) => {
-                                self.node.add_db(name, queue);
-                            }
-                            Err(e) => error!("{}", e),
-                        }
+                        let queue = driver.load_queue(&**name).await?;
+                        self.node.add_db(name, queue);
                     }
                 }
             }
         }
+
+        Ok(())
     }
 
-    pub async fn snapshot(&self) {
-        if let Some(persistence) = self.config.persistence.as_ref() {
-            match persistence {
-                Persistence::Snapshot(config) => {
-                    let driver = &Snapshot::new(config);
+    pub async fn snapshot(&self) -> Result<(), PersistenceError> {
+        if let Some(Persistence::Snapshot(config)) = self.config.persistence.as_ref() {
+            let driver = &Snapshot::new(config);
 
-                    iter(self.node.iter())
-                        .for_each_concurrent(None, |(name, db)| async move {
-                            match driver.persist_queue(name, db).await {
-                                Err(e) => error!("{}", e),
-                                _ => (),
-                            }
-                        })
-                        .await;
-                }
-                _ => (),
-            }
+            iter(self.node.iter())
+                .map(Ok)
+                .try_for_each_concurrent(None, |(name, db)| async move {
+                    driver.persist_queue(name, db).await
+                })
+                .await
+        } else {
+            Ok(())
+        }
+    }
+
+    pub async fn log<DB>(&self, queue: &str, event: &Event<'_>) -> Result<(), PersistenceError> {
+        if let Some(Persistence::Log(config)) = self.config.persistence.as_ref() {
+            Log::new(config).persist_event(event, queue).await
+        } else {
+            Ok(())
         }
     }
 }

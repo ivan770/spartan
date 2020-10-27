@@ -2,6 +2,8 @@ use bincode::ErrorKind;
 use thiserror::Error;
 use tokio::io::Error as IoError;
 
+use crate::node::persistence::PersistenceError;
+
 #[derive(Error, Debug)]
 pub enum ReplicaError {
     #[error("Unable to find replica node config")]
@@ -14,6 +16,8 @@ pub enum ReplicaError {
     CodecError(#[from] Box<ErrorKind>),
     #[error("Protocol mismatch")]
     ProtocolMismatch,
+    #[error("Persistence error")]
+    PersistenceError(#[from] PersistenceError),
 }
 
 #[cfg(test)]

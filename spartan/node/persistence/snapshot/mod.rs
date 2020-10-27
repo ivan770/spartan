@@ -29,9 +29,12 @@ impl<'a> Snapshot<'a> {
         S: Serialize,
     {
         let path = self.config.path.join(destination);
-        write(path, serialize(source).map_err(PersistenceError::SerializationError)?)
-            .await
-            .map_err(PersistenceError::FileWriteError)
+        write(
+            path,
+            serialize(source).map_err(PersistenceError::SerializationError)?,
+        )
+        .await
+        .map_err(PersistenceError::FileWriteError)
     }
 
     pub async fn load<S, P>(&self, source: P) -> Result<S, PersistenceError>
@@ -40,15 +43,15 @@ impl<'a> Snapshot<'a> {
         S: DeserializeOwned,
     {
         let path = self.config.path.join(source);
-        deserialize(
-            &read(path)
-                .await
-                .map_err(PersistenceError::FileReadError)?,
-        )
-        .map_err(PersistenceError::InvalidFileFormat)
+        deserialize(&read(path).await.map_err(PersistenceError::FileReadError)?)
+            .map_err(PersistenceError::InvalidFileFormat)
     }
 
-    pub async fn persist_queue<P, DB>(&self, name: P, queue: &Queue<DB>) -> Result<(), PersistenceError>
+    pub async fn persist_queue<P, DB>(
+        &self,
+        name: P,
+        queue: &Queue<DB>,
+    ) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
         DB: Serialize,
