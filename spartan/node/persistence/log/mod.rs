@@ -2,34 +2,39 @@ use std::{io::SeekFrom, mem::size_of, path::Path};
 
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
+use once_cell::sync::OnceCell;
 use serde::{de::DeserializeOwned, Serialize};
-use tokio::{
-    fs::OpenOptions, io::AsyncRead, io::AsyncReadExt, io::AsyncSeek, io::AsyncSeekExt,
-    io::AsyncWriteExt,
-};
+use tokio::{fs::OpenOptions, io::AsyncRead, io::AsyncReadExt, io::AsyncSeek, io::AsyncSeekExt, io::AsyncWriteExt, fs::remove_file};
 
 use crate::{
     config::persistence::PersistenceConfig,
     node::{
         event::{Event, EventLog},
         Queue,
+        persistence::snapshot::Snapshot
     },
 };
 
 use super::PersistenceError;
 
 #[cfg(feature = "replication")]
-use crate::node::persistence::snapshot::{Snapshot, REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE};
+use crate::node::persistence::snapshot::{REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE};
 
 const QUEUE_FILE: &str = "queue_log";
 
+const QUEUE_COMPACTION_FILE: &str = "queue_compacted_log";
+
 pub struct Log<'a> {
     config: &'a PersistenceConfig<'a>,
+    snapshot: OnceCell<Snapshot<'a>>
 }
 
 impl<'a> Log<'a> {
     pub fn new(config: &'a PersistenceConfig) -> Self {
-        Log { config }
+        Log {
+            config,
+            snapshot: OnceCell::new()
+        }
     }
 
     fn make_log_entry<S>(source: &S) -> Result<Vec<u8>, PersistenceError>
@@ -138,21 +143,41 @@ impl<'a> Log<'a> {
     pub async fn load_queue<P, DB>(&self, source: P) -> Result<Queue<DB>, PersistenceError>
     where
         P: AsRef<Path>,
-        DB: EventLog<Vec<Event<'static>>>,
+        DB: EventLog<Vec<Event<'static>>> + Serialize + DeserializeOwned,
     {
-        // TODO: Log compaction by saving snapshot right after loading log
         let events = self
             .load::<Event, _>(source.as_ref().join(QUEUE_FILE))
             .await?;
 
-        let database = DB::from_log(events);
+        let database = if self.config.compaction {
+            let compaction_path = source.as_ref().join(QUEUE_COMPACTION_FILE);
+
+            match self.get_snapshot().load::<DB, _>(&compaction_path).await {
+                Ok(mut database) => {
+                    database.apply_log(events);
+
+                    self.get_snapshot()
+                        .persist(&database, &compaction_path)
+                        .await?;
+
+                    self.prune(&source).await?;
+
+                    database
+                },
+                Err(PersistenceError::FileReadError(e)) => {
+                    error!("Compaction file read error: {}", e);
+                    DB::from_log(events)
+                },
+                Err(e) => return Err(e)
+            }
+        } else {
+            DB::from_log(events)
+        };
 
         cfg_if! {
             if #[cfg(feature = "replication")] {
                 // Thanks to GC threshold, it's currently impossible to use log driver
-                let snapshot = Snapshot::new(self.config);
-
-                let replication_storage = snapshot.load(source.as_ref().join(SNAPSHOT_REPLICATION_FILE)).await?;
+                let replication_storage = self.get_snapshot().load(source.as_ref().join(SNAPSHOT_REPLICATION_FILE)).await?;
                 let queue = Queue::new(database, replication_storage);
             } else {
                 let queue = Queue::new(database);
@@ -160,6 +185,19 @@ impl<'a> Log<'a> {
         }
 
         Ok(queue)
+    }
+
+    async fn prune<P>(&self, queue: P) -> Result<(), PersistenceError>
+    where
+        P: AsRef<Path>
+    {
+        remove_file(queue.as_ref().join(QUEUE_FILE))
+            .await
+            .map_err(PersistenceError::GenericIoError)
+    }
+
+    fn get_snapshot(&self) -> &Snapshot<'_> {
+        self.snapshot.get_or_init(|| Snapshot::new(self.config))
     }
 }
 

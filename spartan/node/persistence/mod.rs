@@ -30,6 +30,8 @@ pub enum PersistenceError {
     FileWriteError(IoError),
     #[error("Unable to read from file: {0}")]
     FileReadError(IoError),
+    #[error("IO error: {0}")]
+    GenericIoError(IoError)
 }
 
 impl ResponseError for PersistenceError {}

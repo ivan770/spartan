@@ -12,7 +12,7 @@ use super::PersistenceError;
 const QUEUE_FILE: &str = "queue";
 
 #[cfg(feature = "replication")]
-pub const REPLICATION_FILE: &str = "replication";
+pub(crate) const REPLICATION_FILE: &str = "replication";
 
 /// Snapshot persistence modes
 #[derive(Copy, Clone)]
