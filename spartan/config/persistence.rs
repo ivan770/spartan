@@ -16,6 +16,10 @@ const fn default_snapshot_timer() -> u64 {
     900
 }
 
+const fn default_compaction() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum Persistence {
     Log,
@@ -35,6 +39,10 @@ pub struct PersistenceConfig<'a> {
     /// When using log config, this value defines interval for replication log snapshots
     #[serde(default = "default_snapshot_timer")]
     pub timer: u64,
+
+    /// Log compaction on queue restoring from FS
+    #[serde(default = "default_compaction")]
+    pub compaction: bool
 }
 
 impl Default for PersistenceConfig<'_> {
@@ -43,6 +51,7 @@ impl Default for PersistenceConfig<'_> {
             mode: default_persistence(),
             path: default_path(),
             timer: default_snapshot_timer(),
+            compaction: default_compaction()
         }
     }
 }

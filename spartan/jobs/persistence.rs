@@ -46,6 +46,7 @@ mod tests {
                 mode: Persistence::Snapshot,
                 path: Cow::Borrowed(tempdir.path()),
                 timer: 10,
+                ..Default::default()
             }),
             ..Default::default()
         };
