@@ -21,9 +21,7 @@ pub async fn push(
     let message: Message = request.into_inner().into();
 
     queue
-        .log_event(&name, &manager, || {
-            Event::Push(MaybeOwned::Borrowed(&message))
-        })
+        .log_event(&name, &manager, Event::Push(MaybeOwned::Borrowed(&message)))
         .await?;
 
     queue.database().await.push(message);

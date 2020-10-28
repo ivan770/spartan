@@ -1,6 +1,9 @@
-use crate::node::{Manager, event::Event, persistence::PersistenceError};
+use crate::node::{event::Event, persistence::PersistenceError, Manager};
 use actix_rt::time::delay_for;
-use futures_util::{TryStreamExt, stream::{iter, StreamExt}};
+use futures_util::{
+    stream::{iter, StreamExt},
+    TryStreamExt,
+};
 use spartan_lib::core::dispatcher::SimpleDispatcher;
 use std::time::Duration;
 
@@ -11,8 +14,7 @@ async fn execute_gc(manager: &Manager<'_>) -> Result<(), PersistenceError> {
         .try_for_each_concurrent(None, |(name, queue)| async move {
             info!("Started GC cycle on database \"{}\"", name);
 
-            queue.log_event(name, manager, || Event::Gc)
-                .await?;
+            queue.log_event(name, manager, Event::Gc).await?;
 
             queue.database().await.gc();
 

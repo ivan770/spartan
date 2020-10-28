@@ -42,7 +42,7 @@ pub struct PersistenceConfig<'a> {
 
     /// Log compaction on queue restoring from FS
     #[serde(default = "default_compaction")]
-    pub compaction: bool
+    pub compaction: bool,
 }
 
 impl Default for PersistenceConfig<'_> {
@@ -51,7 +51,7 @@ impl Default for PersistenceConfig<'_> {
             mode: default_persistence(),
             path: default_path(),
             timer: default_snapshot_timer(),
-            compaction: default_compaction()
+            compaction: default_compaction(),
         }
     }
 }

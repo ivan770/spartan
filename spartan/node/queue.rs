@@ -70,17 +70,12 @@ impl<DB> Queue<DB> {
         }
     }
 
-    pub async fn log_event<'a, F>(
+    pub async fn log_event(
         &self,
         name: &str,
         manager: &Manager<'_>,
-        f: F,
-    ) -> Result<(), PersistenceError>
-    where
-        F: FnOnce() -> Event<'a>,
-    {
-        let event = f();
-
+        event: Event<'_>,
+    ) -> Result<(), PersistenceError> {
         manager.log::<DB>(name, &event).await?;
 
         #[cfg(feature = "replication")]

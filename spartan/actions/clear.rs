@@ -16,7 +16,7 @@ pub async fn clear(
 ) -> Result<HttpResponse> {
     let queue = manager.queue(&name)?;
 
-    queue.log_event(&name, &manager, || Event::Clear).await?;
+    queue.log_event(&name, &manager, Event::Clear).await?;
 
     queue.database().await.clear();
     Ok(HttpResponse::Ok().json(()))

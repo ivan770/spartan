@@ -20,7 +20,7 @@ pub async fn requeue(
     let queue = manager.queue(&name)?;
 
     queue
-        .log_event(&name, &manager, || Event::Requeue(request.id))
+        .log_event(&name, &manager, Event::Requeue(request.id))
         .await?;
 
     queue

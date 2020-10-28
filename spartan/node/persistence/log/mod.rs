@@ -13,15 +13,13 @@ use crate::{
     node::{
         event::{Event, EventLog},
         Queue,
-    }
+    },
 };
 
 use super::PersistenceError;
 
 #[cfg(feature = "replication")]
-use crate::{
-    node::persistence::snapshot::{Snapshot, REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE}
-};
+use crate::node::persistence::snapshot::{Snapshot, REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE};
 
 const QUEUE_FILE: &str = "queue_log";
 

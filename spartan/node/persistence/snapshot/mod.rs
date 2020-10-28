@@ -21,7 +21,7 @@ pub enum PersistMode {
     Queue,
 
     /// Persist only replication log
-    Replication
+    Replication,
 }
 
 pub struct Snapshot<'a> {
@@ -61,7 +61,7 @@ impl<'a> Snapshot<'a> {
         &self,
         name: P,
         queue: &Queue<DB>,
-        mode: PersistMode
+        mode: PersistMode,
     ) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,

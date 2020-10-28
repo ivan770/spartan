@@ -22,7 +22,7 @@ pub async fn delete(
     let queue = manager.queue(&name)?;
 
     queue
-        .log_event(&name, &manager, || Event::Delete(request.id))
+        .log_event(&name, &manager, Event::Delete(request.id))
         .await?;
 
     let message = queue
