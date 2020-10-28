@@ -1,8 +1,5 @@
 use std::{io::SeekFrom, mem::size_of, path::Path};
 
-#[cfg(feature = "replication")]
-use std::borrow::Cow;
-
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
 use serde::{de::DeserializeOwned, Serialize};
@@ -155,15 +152,7 @@ impl<'a> Log<'a> {
         cfg_if! {
             if #[cfg(feature = "replication")] {
                 // Thanks to GC threshold, it's currently impossible to use log driver
-                // for persisting PrimaryStorage, so for now we'll use snapshot driver
-
-                let config = PersistenceConfig {
-                    path: Cow::Borrowed(&self.config.path),
-                    // Timer is useless in this context, so it's just random number
-                    timer: 0
-                };
-
-                let snapshot = Snapshot::new(&config);
+                let snapshot = Snapshot::new(self.config);
 
                 let replication_storage = snapshot.load(source.as_ref().join(SNAPSHOT_REPLICATION_FILE)).await?;
                 let queue = Queue::new(database, replication_storage);
