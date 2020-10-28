@@ -5,7 +5,7 @@ use cfg_if::cfg_if;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::fs::{create_dir, read, write};
 
-use crate::{config::persistence::SnapshotConfig, node::Queue};
+use crate::{config::persistence::PersistenceConfig, node::Queue};
 
 use super::PersistenceError;
 
@@ -14,12 +14,22 @@ const QUEUE_FILE: &str = "queue";
 #[cfg(feature = "replication")]
 pub const REPLICATION_FILE: &str = "replication";
 
+/// Snapshot persistence modes
+#[derive(Copy, Clone)]
+pub enum PersistMode {
+    /// Persist whole queue (both DB and replication log)
+    Queue,
+
+    /// Persist only replication log
+    Replication
+}
+
 pub struct Snapshot<'a> {
-    config: &'a SnapshotConfig<'a>,
+    config: &'a PersistenceConfig<'a>,
 }
 
 impl<'a> Snapshot<'a> {
-    pub fn new(config: &'a SnapshotConfig) -> Self {
+    pub fn new(config: &'a PersistenceConfig) -> Self {
         Snapshot { config }
     }
 
@@ -51,6 +61,7 @@ impl<'a> Snapshot<'a> {
         &self,
         name: P,
         queue: &Queue<DB>,
+        mode: PersistMode
     ) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
@@ -63,8 +74,10 @@ impl<'a> Snapshot<'a> {
                 .map_err(PersistenceError::FileWriteError)?;
         }
 
-        self.persist(&*queue.database().await, name.as_ref().join(QUEUE_FILE))
-            .await?;
+        if let PersistMode::Queue = mode {
+            self.persist(&*queue.database().await, name.as_ref().join(QUEUE_FILE))
+                .await?;
+        }
 
         #[cfg(feature = "replication")]
         {

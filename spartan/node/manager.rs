@@ -1,9 +1,4 @@
-use super::{
-    event::Event,
-    persistence::log::Log,
-    persistence::{snapshot::Snapshot, PersistenceError},
-    Node, DB,
-};
+use super::{DB, Node, event::Event, persistence::log::Log, persistence::{PersistenceError, snapshot::{PersistMode, Snapshot}}};
 use crate::{config::Config, persistence_config::Persistence};
 use actix_web::{http::StatusCode, ResponseError};
 use futures_util::{stream::iter, StreamExt, TryStreamExt};
@@ -69,13 +64,18 @@ impl<'a> Manager<'a> {
     }
 
     pub async fn snapshot(&self) -> Result<(), PersistenceError> {
-        if let Some(Persistence::Snapshot(config)) = self.config.persistence.as_ref() {
-            let driver = &Snapshot::new(config);
+        if let Some(persistence) = self.config.persistence.as_ref() {
+            let mode = match persistence {
+                Persistence::Snapshot(_) => PersistMode::Queue,
+                Persistence::Log(_) => PersistMode::Replication
+            };
+
+            let driver = &Snapshot::new(persistence.config());
 
             iter(self.node.iter())
                 .map(Ok)
                 .try_for_each_concurrent(None, |(name, db)| async move {
-                    driver.persist_queue(name, db).await
+                    driver.persist_queue(name, db, mode).await
                 })
                 .await
         } else {

@@ -3,7 +3,7 @@ use std::{borrow::Cow, path::Path};
 use serde::{Deserialize, Serialize};
 
 pub(super) fn default_persistence() -> Option<Persistence<'static>> {
-    Some(Persistence::Snapshot(SnapshotConfig::default()))
+    Some(Persistence::Snapshot(PersistenceConfig::default()))
 }
 
 /// Default database path
@@ -18,50 +18,36 @@ const fn default_snapshot_timer() -> u64 {
 
 #[derive(Serialize, Deserialize)]
 pub enum Persistence<'a> {
-    Log(LogConfig<'a>),
-    Snapshot(SnapshotConfig<'a>),
+    Log(PersistenceConfig<'a>),
+    Snapshot(PersistenceConfig<'a>),
 }
 
 impl Persistence<'_> {
-    pub fn path(&self) -> &Path {
+    pub fn config(&self) -> &PersistenceConfig<'_> {
         match self {
-            Persistence::Log(config) => &config.path,
-            Persistence::Snapshot(config) => &config.path,
+            Persistence::Log(config) => &config,
+            Persistence::Snapshot(config) => &config,
         }
     }
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SnapshotConfig<'a> {
+pub struct PersistenceConfig<'a> {
     /// Database path
     #[serde(default = "default_path")]
     pub path: Cow<'a, Path>,
 
     /// Amount of seconds between snapshot creation
+    /// When using log config, this value defines interval for replication log snapshots
     #[serde(default = "default_snapshot_timer")]
     pub timer: u64,
 }
 
-impl Default for SnapshotConfig<'_> {
+impl Default for PersistenceConfig<'_> {
     fn default() -> Self {
-        SnapshotConfig {
+        PersistenceConfig {
             path: default_path(),
             timer: default_snapshot_timer(),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct LogConfig<'a> {
-    /// Database path
-    #[serde(default = "default_path")]
-    pub path: Cow<'a, Path>,
-}
-
-impl Default for LogConfig<'_> {
-    fn default() -> Self {
-        LogConfig {
-            path: default_path(),
         }
     }
 }

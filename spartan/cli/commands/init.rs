@@ -49,8 +49,8 @@ impl InitCommand {
         let config: Config = from_str(&text).map_err(InitCommandError::IncorrectConfig)?;
 
         if let Some(persistence) = config.persistence {
-            if !persistence.path().is_dir() {
-                create_dir(persistence.path())
+            if !persistence.config().path.is_dir() {
+                create_dir(&persistence.config().path)
                     .await
                     .map_err(InitCommandError::DirectoryCreateError)?;
             }

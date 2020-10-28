@@ -1,4 +1,4 @@
-use crate::{node::Manager, persistence_config::Persistence};
+use crate::node::Manager;
 use actix_rt::time::delay_for;
 use std::time::Duration;
 
@@ -6,8 +6,8 @@ use std::time::Duration;
 pub async fn spawn_persistence(manager: &Manager<'_>) {
     debug!("Spawning persistence job.");
 
-    if let Some(Persistence::Snapshot(config)) = manager.config.persistence.as_ref() {
-        let timer = Duration::from_secs(config.timer);
+    if let Some(persistence) = manager.config.persistence.as_ref() {
+        let timer = Duration::from_secs(persistence.config().timer);
 
         loop {
             delay_for(timer).await;
@@ -24,7 +24,7 @@ mod tests {
 
     use crate::{
         config::Config, node::Manager, persistence_config::Persistence,
-        persistence_config::SnapshotConfig,
+        persistence_config::PersistenceConfig,
     };
     use spartan_lib::core::{
         dispatcher::{SimpleDispatcher, StatusAwareDispatcher},
@@ -42,7 +42,7 @@ mod tests {
                 String::from("test").into_boxed_str(),
                 String::from("test2").into_boxed_str(),
             ]),
-            persistence: Some(Persistence::Snapshot(SnapshotConfig {
+            persistence: Some(Persistence::Snapshot(PersistenceConfig {
                 path: Cow::Borrowed(tempdir.path()),
                 timer: 10,
             })),

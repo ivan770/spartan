@@ -12,7 +12,7 @@ use tokio::{
 };
 
 use crate::{
-    config::persistence::LogConfig,
+    config::persistence::PersistenceConfig,
     node::{
         event::{Event, EventLog},
         Queue,
@@ -23,18 +23,17 @@ use super::PersistenceError;
 
 #[cfg(feature = "replication")]
 use crate::{
-    persistence_config::SnapshotConfig,
     node::persistence::snapshot::{Snapshot, REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE}
 };
 
 const QUEUE_FILE: &str = "queue_log";
 
 pub struct Log<'a> {
-    config: &'a LogConfig<'a>,
+    config: &'a PersistenceConfig<'a>,
 }
 
 impl<'a> Log<'a> {
-    pub fn new(config: &'a LogConfig) -> Self {
+    pub fn new(config: &'a PersistenceConfig) -> Self {
         Log { config }
     }
 
@@ -158,7 +157,7 @@ impl<'a> Log<'a> {
                 // Thanks to GC threshold, it's currently impossible to use log driver
                 // for persisting PrimaryStorage, so for now we'll use snapshot driver
 
-                let config = SnapshotConfig {
+                let config = PersistenceConfig {
                     path: Cow::Borrowed(&self.config.path),
                     // Timer is useless in this context, so it's just random number
                     timer: 0
@@ -188,8 +187,9 @@ mod tests {
     #[tokio::test]
     async fn test_append_read() {
         let file = NamedTempFile::new().unwrap();
-        let config = LogConfig {
+        let config = PersistenceConfig {
             path: Cow::Borrowed(file.path().parent().unwrap()),
+            ..Default::default()
         };
 
         let log = Log::new(&config);
@@ -206,8 +206,9 @@ mod tests {
     #[tokio::test]
     async fn test_empty_file_load() {
         let file = NamedTempFile::new().unwrap();
-        let config = LogConfig {
+        let config = PersistenceConfig {
             path: Cow::Borrowed(file.path().parent().unwrap()),
+            ..Default::default()
         };
 
         let log = Log::new(&config);
