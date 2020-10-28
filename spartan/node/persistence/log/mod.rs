@@ -1,4 +1,7 @@
-use std::{borrow::Cow, io::SeekFrom, mem::size_of, path::Path};
+use std::{io::SeekFrom, mem::size_of, path::Path};
+
+#[cfg(feature = "replication")]
+use std::borrow::Cow;
 
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
@@ -13,13 +16,15 @@ use crate::{
     node::{
         event::{Event, EventLog},
         Queue,
-    },
-    persistence_config::SnapshotConfig,
+    }
 };
 
-use super::{
-    snapshot::{Snapshot, REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE},
-    PersistenceError,
+use super::PersistenceError;
+
+#[cfg(feature = "replication")]
+use crate::{
+    persistence_config::SnapshotConfig,
+    node::persistence::snapshot::{Snapshot, REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE}
 };
 
 const QUEUE_FILE: &str = "queue_log";

@@ -19,6 +19,7 @@ pub enum Event<'a> {
     Clear,
 }
 
+#[cfg(feature = "replication")]
 impl<'a> Event<'a> {
     pub(super) fn into_owned(self) -> Event<'static> {
         match self {

@@ -9,7 +9,6 @@ use actix_web::{
 };
 use spartan_lib::core::dispatcher::simple::PositionBasedDelete;
 
-#[cfg(feature = "replication")]
 use crate::node::event::Event;
 
 /// Delete message from queue.

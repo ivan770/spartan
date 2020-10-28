@@ -6,7 +6,6 @@ use actix_web::{
 use maybe_owned::MaybeOwned;
 use spartan_lib::core::{dispatcher::SimpleDispatcher, message::Message};
 
-#[cfg(feature = "replication")]
 use crate::node::event::Event;
 
 /// Push message to queue.

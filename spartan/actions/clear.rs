@@ -5,7 +5,6 @@ use actix_web::{
 };
 use spartan_lib::core::dispatcher::simple::SimpleDispatcher;
 
-#[cfg(feature = "replication")]
 use crate::node::event::Event;
 
 /// Clear queue.
