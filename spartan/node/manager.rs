@@ -39,9 +39,9 @@ impl<'a> Manager<'a> {
     }
 
     pub async fn load_from_fs(&mut self) -> Result<(), PersistenceError> {
-        if let Some(persistence) = self.config.persistence.as_ref() {
-            match persistence {
-                Persistence::Log(config) => {
+        if let Some(config) = self.config.persistence.as_ref() {
+            match config.mode {
+                Persistence::Log => {
                     let driver = Log::new(config);
 
                     for name in self.config.queues.iter() {
@@ -49,7 +49,7 @@ impl<'a> Manager<'a> {
                         self.node.add_db(name, queue);
                     }
                 }
-                Persistence::Snapshot(config) => {
+                Persistence::Snapshot => {
                     let driver = Snapshot::new(config);
 
                     for name in self.config.queues.iter() {
@@ -64,13 +64,13 @@ impl<'a> Manager<'a> {
     }
 
     pub async fn snapshot(&self) -> Result<(), PersistenceError> {
-        if let Some(persistence) = self.config.persistence.as_ref() {
-            let mode = match persistence {
-                Persistence::Snapshot(_) => PersistMode::Queue,
-                Persistence::Log(_) => PersistMode::Replication
+        if let Some(config) = self.config.persistence.as_ref() {
+            let mode = match config.mode {
+                Persistence::Snapshot => PersistMode::Queue,
+                Persistence::Log => PersistMode::Replication
             };
 
-            let driver = &Snapshot::new(persistence.config());
+            let driver = &Snapshot::new(config);
 
             iter(self.node.iter())
                 .map(Ok)
@@ -84,7 +84,11 @@ impl<'a> Manager<'a> {
     }
 
     pub async fn log<DB>(&self, queue: &str, event: &Event<'_>) -> Result<(), PersistenceError> {
-        if let Some(Persistence::Log(config)) = self.config.persistence.as_ref() {
+        if let Some(config) = self.config
+            .persistence
+            .as_ref()
+            .filter(|config| matches!(config.mode, Persistence::Log))
+        {
             Log::new(config).persist_event(event, queue).await
         } else {
             Ok(())

@@ -12,11 +12,15 @@ use replication::Replication;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-use persistence::{default_persistence, Persistence};
+use persistence::PersistenceConfig;
 
 /// Default amount of seconds between GC jobs
 const fn default_gc_timer() -> u64 {
     300
+}
+
+fn default_persistence() -> Option<PersistenceConfig<'static>> {
+    Some(PersistenceConfig::default())
 }
 
 /// Server configuration
@@ -46,7 +50,7 @@ pub struct Config<'a> {
     /// Persistence config
     #[serde(default = "default_persistence")]
     #[serde(skip_serializing)]
-    pub persistence: Option<Persistence<'a>>,
+    pub persistence: Option<PersistenceConfig<'a>>,
 }
 
 #[cfg(not(test))]

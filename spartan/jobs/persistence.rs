@@ -6,8 +6,8 @@ use std::time::Duration;
 pub async fn spawn_persistence(manager: &Manager<'_>) {
     debug!("Spawning persistence job.");
 
-    if let Some(persistence) = manager.config.persistence.as_ref() {
-        let timer = Duration::from_secs(persistence.config().timer);
+    if let Some(config) = manager.config.persistence.as_ref() {
+        let timer = Duration::from_secs(config.timer);
 
         loop {
             delay_for(timer).await;
@@ -42,10 +42,11 @@ mod tests {
                 String::from("test").into_boxed_str(),
                 String::from("test2").into_boxed_str(),
             ]),
-            persistence: Some(Persistence::Snapshot(PersistenceConfig {
+            persistence: Some(PersistenceConfig {
+                mode: Persistence::Snapshot,
                 path: Cow::Borrowed(tempdir.path()),
                 timer: 10,
-            })),
+            }),
             ..Default::default()
         };
 

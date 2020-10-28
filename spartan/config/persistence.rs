@@ -2,8 +2,8 @@ use std::{borrow::Cow, path::Path};
 
 use serde::{Deserialize, Serialize};
 
-pub(super) fn default_persistence() -> Option<Persistence<'static>> {
-    Some(Persistence::Snapshot(PersistenceConfig::default()))
+const fn default_persistence() -> Persistence {
+    Persistence::Snapshot
 }
 
 /// Default database path
@@ -17,22 +17,16 @@ const fn default_snapshot_timer() -> u64 {
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum Persistence<'a> {
-    Log(PersistenceConfig<'a>),
-    Snapshot(PersistenceConfig<'a>),
-}
-
-impl Persistence<'_> {
-    pub fn config(&self) -> &PersistenceConfig<'_> {
-        match self {
-            Persistence::Log(config) => &config,
-            Persistence::Snapshot(config) => &config,
-        }
-    }
+pub enum Persistence {
+    Log,
+    Snapshot,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct PersistenceConfig<'a> {
+    /// Persistence mode
+    pub mode: Persistence,
+
     /// Database path
     #[serde(default = "default_path")]
     pub path: Cow<'a, Path>,
@@ -46,6 +40,7 @@ pub struct PersistenceConfig<'a> {
 impl Default for PersistenceConfig<'_> {
     fn default() -> Self {
         PersistenceConfig {
+            mode: default_persistence(),
             path: default_path(),
             timer: default_snapshot_timer(),
         }
