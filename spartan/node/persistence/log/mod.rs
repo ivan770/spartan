@@ -1,10 +1,10 @@
-use std::{io::SeekFrom, mem::size_of, path::Path};
+use std::{path::PathBuf, io::SeekFrom, mem::size_of, path::Path};
 
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
 use once_cell::sync::OnceCell;
 use serde::{de::DeserializeOwned, Serialize};
-use tokio::{fs::OpenOptions, io::AsyncRead, io::AsyncReadExt, io::AsyncSeek, io::AsyncSeekExt, io::AsyncWriteExt, fs::remove_file};
+use tokio::{fs::OpenOptions, fs::remove_file, io::AsyncRead, io::AsyncReadExt, io::AsyncSeek, io::AsyncSeekExt, io::AsyncWriteExt, fs::create_dir};
 
 use crate::{
     config::persistence::PersistenceConfig,
@@ -18,7 +18,7 @@ use crate::{
 use super::PersistenceError;
 
 #[cfg(feature = "replication")]
-use crate::node::persistence::snapshot::{REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE};
+use crate::node::persistence::snapshot::REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE;
 
 const QUEUE_FILE: &str = "queue_log";
 
@@ -99,15 +99,24 @@ impl<'a> Log<'a> {
         Ok(entries)
     }
 
-    pub async fn append<P, S>(&self, source: &S, destination: P) -> Result<(), PersistenceError>
+    async fn append<P, S>(&self, source: &S, destination: P) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
         S: Serialize,
     {
+        let path = self.config.path.join(destination);
+        if let Some(parent) = path.parent() {
+            if !parent.is_dir() {
+                create_dir(&parent)
+                    .await
+                    .map_err(PersistenceError::FileWriteError)?;
+            }
+        }
+                
         OpenOptions::new()
             .create(true)
             .append(true)
-            .open(self.config.path.join(destination))
+            .open(path)
             .await
             .map_err(PersistenceError::FileReadError)?
             .write_all(&Self::make_log_entry(source)?)
@@ -152,32 +161,43 @@ impl<'a> Log<'a> {
         let database = if self.config.compaction {
             let compaction_path = source.as_ref().join(QUEUE_COMPACTION_FILE);
 
-            match self.get_snapshot().load::<DB, _>(&compaction_path).await {
+            let inner_db = match self.get_snapshot().load::<DB, _>(&compaction_path).await {
                 Ok(mut database) => {
                     database.apply_log(events);
-
-                    self.get_snapshot()
-                        .persist(&database, &compaction_path)
-                        .await?;
-
-                    self.prune(&source).await?;
-
                     database
                 },
                 Err(PersistenceError::FileReadError(e)) => {
                     error!("Compaction file read error: {}", e);
-                    DB::from_log(events)
+                    let database = DB::from_log(events);
+                    database
                 },
                 Err(e) => return Err(e)
-            }
+            };
+
+            self.get_snapshot()
+                .persist(&inner_db, &compaction_path)
+                .await?;
+    
+            self.prune(&source).await?;
+
+            inner_db
         } else {
             DB::from_log(events)
         };
 
+
         cfg_if! {
             if #[cfg(feature = "replication")] {
                 // Thanks to GC threshold, it's currently impossible to use log driver
-                let replication_storage = self.get_snapshot().load(source.as_ref().join(SNAPSHOT_REPLICATION_FILE)).await?;
+                let replication_storage = match self.get_snapshot().load(source.as_ref().join(SNAPSHOT_REPLICATION_FILE)).await {
+                    Ok(storage) => storage,
+                    Err(PersistenceError::FileReadError(e)) => {
+                        error!("{}", e);
+                        None
+                    },
+                    Err(e) => return Err(e)
+                };
+
                 let queue = Queue::new(database, replication_storage);
             } else {
                 let queue = Queue::new(database);
@@ -191,7 +211,7 @@ impl<'a> Log<'a> {
     where
         P: AsRef<Path>
     {
-        remove_file(queue.as_ref().join(QUEUE_FILE))
+        remove_file([&self.config.path, queue.as_ref(), QUEUE_FILE.as_ref()].iter().collect::<PathBuf>())
             .await
             .map_err(PersistenceError::GenericIoError)
     }
@@ -203,11 +223,15 @@ impl<'a> Log<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::{node::DB, persistence_config::Persistence};
+
     use super::*;
 
     use std::{borrow::Cow, io::Cursor};
 
-    use tempfile::NamedTempFile;
+    use maybe_owned::MaybeOwned;
+    use spartan_lib::core::{db::tree::TreeDatabase, dispatcher::StatusAwareDispatcher, message::builder::MessageBuilder, payload::Dispatchable, message::Message};
+    use tempfile::{NamedTempFile, TempDir};
 
     #[tokio::test]
     async fn test_append_read() {
@@ -263,5 +287,56 @@ mod tests {
             .unwrap();
         assert_eq!(parsed.len(), 3);
         assert_eq!(parsed, vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]]);
+    }
+
+    #[tokio::test]
+    async fn test_persist_and_restore_from_events() {
+        let tempdir = TempDir::new().expect("Unable to create temporary test directory");
+        let event = Event::Push(MaybeOwned::Owned(MessageBuilder::default().body("Hello").compose().unwrap()));
+
+        let config = PersistenceConfig {
+            mode: Persistence::Log,
+            path: Cow::Borrowed(tempdir.path()),
+            timer: 0,
+            compaction: false
+        };
+        let log = Log::new(&config);
+
+        log.persist_event(&event, "test").await.unwrap();
+
+        let queue: DB = log.load_queue("test").await.unwrap();
+
+        assert_eq!(queue.database().await.pop().unwrap().body(), "Hello");
+    }
+
+    #[tokio::test]
+    async fn test_compaction() {
+        let tempdir = TempDir::new().expect("Unable to create temporary test directory");
+        let event = Event::Push(MaybeOwned::Owned(MessageBuilder::default().body("Hello").compose().unwrap()));
+
+        let config = PersistenceConfig {
+            mode: Persistence::Log,
+            path: Cow::Borrowed(tempdir.path()),
+            timer: 0,
+            compaction: true
+        };
+        let log = Log::new(&config);
+
+        log.persist_event(&event, "test").await.unwrap();
+
+        let queue: DB = log.load_queue("test").await.unwrap();
+
+        assert_eq!(queue.database().await.pop().unwrap().body(), "Hello");
+
+        assert!(matches!(log.load::<Event, _>(Path::new("test").join(QUEUE_FILE))
+            .await
+            .unwrap_err(), PersistenceError::FileReadError(_)));
+
+        let snapshot = Snapshot::new(&config);
+        let mut database: TreeDatabase<Message> = snapshot.load(Path::new("test").join(QUEUE_COMPACTION_FILE)).await.unwrap();
+
+        assert_eq!(database.pop().unwrap().body(), "Hello");
+
+
     }
 }
