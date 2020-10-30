@@ -39,6 +39,15 @@ impl<'a> Snapshot<'a> {
         S: Serialize,
     {
         let path = self.config.path.join(destination);
+
+        if let Some(parent) = path.parent() {
+            if !parent.is_dir() {
+                create_dir(&parent)
+                    .await
+                    .map_err(PersistenceError::FileWriteError)?;
+            }
+        }
+
         write(
             path,
             serialize(source).map_err(PersistenceError::SerializationError)?,
@@ -67,13 +76,6 @@ impl<'a> Snapshot<'a> {
         P: AsRef<Path>,
         DB: Serialize,
     {
-        let path = self.config.path.join(&name);
-        if !path.is_dir() {
-            create_dir(&path)
-                .await
-                .map_err(PersistenceError::FileWriteError)?;
-        }
-
         if let PersistMode::Queue = mode {
             self.persist(&*queue.database().await, name.as_ref().join(QUEUE_FILE))
                 .await?;
