@@ -42,7 +42,7 @@ impl<'a> Snapshot<'a> {
 
         if let Some(parent) = path.parent() {
             if !parent.is_dir() {
-                create_dir(&parent)
+                create_dir(parent)
                     .await
                     .map_err(PersistenceError::FileWriteError)?;
             }

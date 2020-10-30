@@ -171,8 +171,7 @@ impl<'a> Log<'a> {
                 }
                 Err(PersistenceError::FileReadError(e)) => {
                     error!("Compaction file read error: {}", e);
-                    let database = DB::from_log(events);
-                    database
+                    DB::from_log(events)
                 }
                 Err(e) => return Err(e),
             };
