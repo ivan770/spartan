@@ -1,17 +1,20 @@
-use std::{path::PathBuf, io::SeekFrom, mem::size_of, path::Path};
+use std::{io::SeekFrom, mem::size_of, path::Path, path::PathBuf};
 
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
 use once_cell::sync::OnceCell;
 use serde::{de::DeserializeOwned, Serialize};
-use tokio::{fs::OpenOptions, fs::remove_file, io::AsyncRead, io::AsyncReadExt, io::AsyncSeek, io::AsyncSeekExt, io::AsyncWriteExt, fs::create_dir};
+use tokio::{
+    fs::create_dir, fs::remove_file, fs::OpenOptions, io::AsyncRead, io::AsyncReadExt,
+    io::AsyncSeek, io::AsyncSeekExt, io::AsyncWriteExt,
+};
 
 use crate::{
     config::persistence::PersistenceConfig,
     node::{
         event::{Event, EventLog},
+        persistence::snapshot::Snapshot,
         Queue,
-        persistence::snapshot::Snapshot
     },
 };
 
@@ -26,14 +29,14 @@ const QUEUE_COMPACTION_FILE: &str = "queue_compacted_log";
 
 pub struct Log<'a> {
     config: &'a PersistenceConfig<'a>,
-    snapshot: OnceCell<Snapshot<'a>>
+    snapshot: OnceCell<Snapshot<'a>>,
 }
 
 impl<'a> Log<'a> {
     pub fn new(config: &'a PersistenceConfig) -> Self {
         Log {
             config,
-            snapshot: OnceCell::new()
+            snapshot: OnceCell::new(),
         }
     }
 
@@ -112,7 +115,7 @@ impl<'a> Log<'a> {
                     .map_err(PersistenceError::FileWriteError)?;
             }
         }
-                
+
         OpenOptions::new()
             .create(true)
             .append(true)
@@ -165,26 +168,25 @@ impl<'a> Log<'a> {
                 Ok(mut database) => {
                     database.apply_log(events);
                     database
-                },
+                }
                 Err(PersistenceError::FileReadError(e)) => {
                     error!("Compaction file read error: {}", e);
                     let database = DB::from_log(events);
                     database
-                },
-                Err(e) => return Err(e)
+                }
+                Err(e) => return Err(e),
             };
 
             self.get_snapshot()
                 .persist(&inner_db, &compaction_path)
                 .await?;
-    
+
             self.prune(&source).await?;
 
             inner_db
         } else {
             DB::from_log(events)
         };
-
 
         cfg_if! {
             if #[cfg(feature = "replication")] {
@@ -209,11 +211,15 @@ impl<'a> Log<'a> {
 
     async fn prune<P>(&self, queue: P) -> Result<(), PersistenceError>
     where
-        P: AsRef<Path>
+        P: AsRef<Path>,
     {
-        remove_file([&self.config.path, queue.as_ref(), QUEUE_FILE.as_ref()].iter().collect::<PathBuf>())
-            .await
-            .map_err(PersistenceError::GenericIoError)
+        remove_file(
+            [&self.config.path, queue.as_ref(), QUEUE_FILE.as_ref()]
+                .iter()
+                .collect::<PathBuf>(),
+        )
+        .await
+        .map_err(PersistenceError::GenericIoError)
     }
 
     fn get_snapshot(&self) -> &Snapshot<'_> {
@@ -230,7 +236,10 @@ mod tests {
     use std::{borrow::Cow, io::Cursor};
 
     use maybe_owned::MaybeOwned;
-    use spartan_lib::core::{db::tree::TreeDatabase, dispatcher::StatusAwareDispatcher, message::builder::MessageBuilder, payload::Dispatchable, message::Message};
+    use spartan_lib::core::{
+        db::tree::TreeDatabase, dispatcher::StatusAwareDispatcher,
+        message::builder::MessageBuilder, message::Message, payload::Dispatchable,
+    };
     use tempfile::{NamedTempFile, TempDir};
 
     #[tokio::test]
@@ -292,13 +301,15 @@ mod tests {
     #[tokio::test]
     async fn test_persist_and_restore_from_events() {
         let tempdir = TempDir::new().expect("Unable to create temporary test directory");
-        let event = Event::Push(MaybeOwned::Owned(MessageBuilder::default().body("Hello").compose().unwrap()));
+        let event = Event::Push(MaybeOwned::Owned(
+            MessageBuilder::default().body("Hello").compose().unwrap(),
+        ));
 
         let config = PersistenceConfig {
             mode: Persistence::Log,
             path: Cow::Borrowed(tempdir.path()),
             timer: 0,
-            compaction: false
+            compaction: false,
         };
         let log = Log::new(&config);
 
@@ -312,13 +323,15 @@ mod tests {
     #[tokio::test]
     async fn test_compaction() {
         let tempdir = TempDir::new().expect("Unable to create temporary test directory");
-        let event = Event::Push(MaybeOwned::Owned(MessageBuilder::default().body("Hello").compose().unwrap()));
+        let event = Event::Push(MaybeOwned::Owned(
+            MessageBuilder::default().body("Hello").compose().unwrap(),
+        ));
 
         let config = PersistenceConfig {
             mode: Persistence::Log,
             path: Cow::Borrowed(tempdir.path()),
             timer: 0,
-            compaction: true
+            compaction: true,
         };
         let log = Log::new(&config);
 
@@ -328,15 +341,19 @@ mod tests {
 
         assert_eq!(queue.database().await.pop().unwrap().body(), "Hello");
 
-        assert!(matches!(log.load::<Event, _>(Path::new("test").join(QUEUE_FILE))
-            .await
-            .unwrap_err(), PersistenceError::FileReadError(_)));
+        assert!(matches!(
+            log.load::<Event, _>(Path::new("test").join(QUEUE_FILE))
+                .await
+                .unwrap_err(),
+            PersistenceError::FileReadError(_)
+        ));
 
         let snapshot = Snapshot::new(&config);
-        let mut database: TreeDatabase<Message> = snapshot.load(Path::new("test").join(QUEUE_COMPACTION_FILE)).await.unwrap();
+        let mut database: TreeDatabase<Message> = snapshot
+            .load(Path::new("test").join(QUEUE_COMPACTION_FILE))
+            .await
+            .unwrap();
 
         assert_eq!(database.pop().unwrap().body(), "Hello");
-
-
     }
 }
