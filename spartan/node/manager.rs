@@ -91,7 +91,7 @@ impl<'a> Manager<'a> {
         }
     }
 
-    pub async fn log<DB>(&self, queue: &str, event: &Event<'_>) -> Result<(), PersistenceError> {
+    pub async fn log(&self, queue: &str, event: &Event<'_>) -> Result<(), PersistenceError> {
         if let Some(config) = self
             .config
             .persistence
@@ -102,5 +102,140 @@ impl<'a> Manager<'a> {
         } else {
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::borrow::Cow;
+
+    use maybe_owned::MaybeOwned;
+    use spartan_lib::core::{
+        dispatcher::SimpleDispatcher, message::builder::MessageBuilder, payload::Dispatchable,
+    };
+    use tempfile::TempDir;
+
+    use crate::{
+        config::Config,
+        node::event::Event,
+        persistence_config::{Persistence, PersistenceConfig},
+    };
+
+    use super::Manager;
+
+    #[tokio::test]
+    async fn test_load_snapshot() {
+        let dir = TempDir::new().unwrap();
+
+        let config = Config {
+            persistence: Some(PersistenceConfig {
+                mode: Persistence::Snapshot,
+                path: Cow::Borrowed(&dir.path()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        {
+            let manager = Manager::new(&config);
+
+            manager.queue("test").unwrap().database().await.push(
+                MessageBuilder::default()
+                    .body("Hello, world")
+                    .compose()
+                    .unwrap(),
+            );
+
+            manager.snapshot().await.unwrap();
+        }
+
+        let mut manager = Manager::new(&config);
+        manager.load_from_fs().await.unwrap();
+
+        assert_eq!(
+            manager
+                .queue("test")
+                .unwrap()
+                .database()
+                .await
+                .peek()
+                .unwrap()
+                .body(),
+            "Hello, world"
+        );
+    }
+
+    async fn load_log(compaction: bool) {
+        let dir = TempDir::new().unwrap();
+
+        let config = Config {
+            persistence: Some(PersistenceConfig {
+                mode: Persistence::Log,
+                path: Cow::Borrowed(&dir.path()),
+                compaction,
+                ..Default::default()
+            }),
+            queues: vec!["test".to_string().into_boxed_str()].into_boxed_slice(),
+            ..Default::default()
+        };
+
+        {
+            let manager = Manager::new(&config);
+
+            manager
+                .log(
+                    "test",
+                    &Event::Push(MaybeOwned::Owned(
+                        MessageBuilder::default()
+                            .body("Hello, world")
+                            .compose()
+                            .unwrap(),
+                    )),
+                )
+                .await
+                .unwrap();
+        }
+
+        let mut manager = Manager::new(&config);
+        manager.load_from_fs().await.unwrap();
+
+        assert_eq!(
+            manager
+                .queue("test")
+                .unwrap()
+                .database()
+                .await
+                .peek()
+                .unwrap()
+                .body(),
+            "Hello, world"
+        );
+
+        if compaction {
+            let mut manager = Manager::new(&config);
+            manager.load_from_fs().await.unwrap();
+
+            assert_eq!(
+                manager
+                    .queue("test")
+                    .unwrap()
+                    .database()
+                    .await
+                    .peek()
+                    .unwrap()
+                    .body(),
+                "Hello, world"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_load_log() {
+        load_log(false).await;
+    }
+
+    #[tokio::test]
+    async fn test_load_log_compaction() {
+        load_log(true).await;
     }
 }

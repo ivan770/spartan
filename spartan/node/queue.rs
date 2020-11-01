@@ -76,7 +76,7 @@ impl<DB> Queue<DB> {
         manager: &Manager<'_>,
         event: Event<'_>,
     ) -> Result<(), PersistenceError> {
-        manager.log::<DB>(name, &event).await?;
+        manager.log(name, &event).await?;
 
         #[cfg(feature = "replication")]
         if let Some(storage) = self.replication_storage().await.as_mut() {

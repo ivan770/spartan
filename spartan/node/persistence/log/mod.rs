@@ -1,4 +1,9 @@
-use std::{io::SeekFrom, mem::size_of, path::Path, path::PathBuf};
+use std::{
+    io::{ErrorKind, SeekFrom},
+    mem::size_of,
+    path::Path,
+    path::PathBuf,
+};
 
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
@@ -157,9 +162,17 @@ impl<'a> Log<'a> {
         P: AsRef<Path>,
         DB: EventLog<Vec<Event<'static>>> + Serialize + DeserializeOwned,
     {
-        let events = self
+        let events = match self
             .load::<Event, _>(source.as_ref().join(QUEUE_FILE))
-            .await?;
+            .await
+        {
+            Ok(events) => events,
+            Err(PersistenceError::FileReadError(e)) if matches!(e.kind(), ErrorKind::NotFound) => {
+                error!("Log file not found: {}", e);
+                Vec::new()
+            }
+            Err(e) => return Err(e),
+        };
 
         let database = if self.config.compaction {
             let compaction_path = source.as_ref().join(QUEUE_COMPACTION_FILE);
@@ -169,8 +182,10 @@ impl<'a> Log<'a> {
                     database.apply_log(events);
                     database
                 }
-                Err(PersistenceError::FileReadError(e)) => {
-                    error!("Compaction file read error: {}", e);
+                Err(PersistenceError::FileReadError(e))
+                    if matches!(e.kind(), ErrorKind::NotFound) =>
+                {
+                    error!("Compaction file not found: {}", e);
                     DB::from_log(events)
                 }
                 Err(e) => return Err(e),
@@ -180,7 +195,14 @@ impl<'a> Log<'a> {
                 .persist(&inner_db, &compaction_path)
                 .await?;
 
-            self.prune(&source).await?;
+            match self.prune(&source).await {
+                Err(PersistenceError::GenericIoError(e))
+                    if !matches!(e.kind(), ErrorKind::NotFound) =>
+                {
+                    return Err(PersistenceError::GenericIoError(e))
+                }
+                _ => (),
+            };
 
             inner_db
         } else {
