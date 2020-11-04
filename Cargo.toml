@@ -25,7 +25,7 @@ replication = ["tokio-util", "itertools"]
 init = ["dialoguer"]
 
 [dependencies]
-actix-web = { version = "3.0" }
+actix-web = { version = "3.2" }
 actix-rt = { version = "1.1" }
 actix-service = { version = "1.0" }
 structopt = { version = "0.3" }
@@ -40,8 +40,8 @@ futures-util = { version = "0.3" }
 once_cell = { version = "1.4" } 
 tokio-util = { version = "0.3", optional = true }
 itertools = { version = "0.9", optional = true }
-cfg-if = { version = "0.1" }
-dialoguer = { version = "0.6", optional = true }
+cfg-if = { version = "1.0" }
+dialoguer = { version = "0.7", optional = true }
 
 [dev-dependencies]
 tempfile = { version = "3.1" }

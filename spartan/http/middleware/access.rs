@@ -1,4 +1,4 @@
-use std::pin::Pin;
+use std::{future::Ready, pin::Pin, future::ready};
 use std::task::{Context, Poll};
 
 use crate::config::Config;
@@ -6,7 +6,6 @@ use actix_service::{Service, Transform};
 use actix_web::{
     dev::ServiceRequest, dev::ServiceResponse, http::StatusCode, Error, ResponseError,
 };
-use futures_util::future::{ok, Ready};
 use std::future::Future;
 use thiserror::Error as ThisError;
 
@@ -55,10 +54,10 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ok(AccessMiddleware {
+        ready(Ok(AccessMiddleware {
             service,
             config: self.config,
-        })
+        }))
     }
 }
 
