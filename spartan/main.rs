@@ -18,7 +18,7 @@ mod node;
 mod http;
 
 /// Configuration
-mod config;
+pub mod config;
 
 /// Background jobs
 mod jobs;
@@ -30,8 +30,6 @@ use anyhow::Error;
 use cli::{Command::*, Server};
 use once_cell::sync::OnceCell;
 use structopt::StructOpt;
-
-pub use config::persistence as persistence_config;
 
 static SERVER: OnceCell<Server> = OnceCell::new();
 

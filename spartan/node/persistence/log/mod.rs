@@ -243,7 +243,7 @@ impl<'a> Log<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{node::DB, persistence_config::Persistence};
+    use crate::{node::DB, config::persistence::Persistence};
 
     use super::*;
 

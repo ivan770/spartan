@@ -7,7 +7,7 @@ use super::{
     },
     Node, DB,
 };
-use crate::{config::Config, persistence_config::Persistence};
+use crate::{config::{Config, persistence::Persistence}};
 use actix_web::{http::StatusCode, ResponseError};
 use futures_util::{stream::iter, StreamExt, TryStreamExt};
 use thiserror::Error;
@@ -116,9 +116,8 @@ mod tests {
     use tempfile::TempDir;
 
     use crate::{
-        config::Config,
+        config::{Config, persistence::{Persistence, PersistenceConfig}},
         node::event::Event,
-        persistence_config::{Persistence, PersistenceConfig},
     };
 
     use super::Manager;
