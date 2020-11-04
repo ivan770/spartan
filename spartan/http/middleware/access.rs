@@ -1,5 +1,5 @@
-use std::{future::Ready, pin::Pin, future::ready};
 use std::task::{Context, Poll};
+use std::{future::ready, future::Ready, pin::Pin};
 
 use crate::config::Config;
 use actix_service::{Service, Transform};

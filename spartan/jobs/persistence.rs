@@ -23,7 +23,11 @@ mod tests {
     use std::borrow::Cow;
 
     use crate::{
-        config::{Config, persistence::{Persistence, PersistenceConfig}}, node::Manager,
+        config::{
+            persistence::{Persistence, PersistenceConfig},
+            Config,
+        },
+        node::Manager,
     };
     use spartan_lib::core::{
         dispatcher::{SimpleDispatcher, StatusAwareDispatcher},

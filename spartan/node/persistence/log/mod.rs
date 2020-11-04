@@ -1,9 +1,4 @@
-use std::{
-    io::{ErrorKind, SeekFrom},
-    mem::size_of,
-    path::Path,
-    path::PathBuf,
-};
+use std::{io::SeekFrom, mem::size_of, path::Path, path::PathBuf};
 
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
@@ -189,11 +184,8 @@ impl<'a> Log<'a> {
                 .await?;
 
             match self.prune(&source).await {
-                Err(PersistenceError::GenericIoError(e))
-                    if !matches!(e.kind(), ErrorKind::NotFound) =>
-                {
-                    return Err(PersistenceError::GenericIoError(e))
-                }
+                Err(PersistenceError::FileOpenError(_)) => (),
+                Err(e) => return Err(e),
                 _ => (),
             };
 
@@ -243,7 +235,7 @@ impl<'a> Log<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{node::DB, config::persistence::Persistence};
+    use crate::{config::persistence::Persistence, node::DB};
 
     use super::*;
 
