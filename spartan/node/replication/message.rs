@@ -1,4 +1,4 @@
-use crate::node::replication::event::Event;
+use crate::node::event::Event;
 use maybe_owned::MaybeOwned;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -10,7 +10,7 @@ pub enum PrimaryRequest<'a> {
     AskIndex,
     SendRange(
         Cow<'a, str>,
-        Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event>)]>,
+        Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event<'static>>)]>,
     ),
 }
 

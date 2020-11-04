@@ -1,11 +1,8 @@
 use crate::{
     cli::Server,
     http::server::{start_http_server, ServerError},
-    jobs::{
-        exit::spawn_ctrlc_handler,
-        gc::spawn_gc,
-        persistence::{load_from_fs, spawn_persistence, PersistenceError},
-    },
+    jobs::{exit::spawn_ctrlc_handler, gc::spawn_gc, persistence::spawn_persistence},
+    node::persistence::PersistenceError,
     node::Manager,
 };
 use actix_rt::System;
@@ -20,14 +17,14 @@ use crate::jobs::replication::spawn_replication;
 
 #[derive(Error, Debug)]
 pub enum StartCommandError {
-    #[error("Unable to restore DB from FS: {0}")]
-    RestoreDB(PersistenceError),
     #[error("Unable to load configuration file")]
     ConfigFileError,
     #[error("Internal runtime error")]
     RuntimeError(IoError),
     #[error("HTTP server error: {0}")]
     HttpServerError(ServerError),
+    #[error("Persistence error: {0}")]
+    PersistenceError(PersistenceError),
 }
 
 #[derive(StructOpt)]
@@ -59,11 +56,11 @@ impl StartCommand {
 
         info!("Loading queues from FS.");
 
-        load_from_fs(&mut manager)
-            .await
-            .map_err(StartCommandError::RestoreDB)?;
-
-        info!("Queues loaded successfully.");
+        match manager.load_from_fs().await {
+            Err(PersistenceError::FileOpenError(e)) => error!("Unable to load database: {}", e),
+            Err(e) => Err(e).map_err(StartCommandError::PersistenceError)?,
+            _ => (),
+        };
 
         let manager = Data::new(manager);
 

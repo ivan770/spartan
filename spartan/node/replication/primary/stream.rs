@@ -4,9 +4,9 @@ use super::{
 };
 use crate::{
     config::replication::Primary,
-    node::replication::{
+    node::{
         event::Event,
-        message::{PrimaryRequest, ReplicaRequest, Request},
+        replication::message::{PrimaryRequest, ReplicaRequest, Request},
     },
     utils::codec::BincodeCodec,
 };
@@ -65,7 +65,7 @@ where
     pub(super) async fn send_range(
         &mut self,
         queue: &str,
-        range: Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event>)]>,
+        range: Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event<'static>>)]>,
     ) -> PrimaryResult<()> {
         match self
             .exchange(PrimaryRequest::SendRange(Cow::Borrowed(queue), range))

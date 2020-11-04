@@ -41,9 +41,6 @@
 /// Replication storage (event log)
 pub mod storage;
 
-/// Database event
-pub mod event;
-
 /// Replication TCP messages
 pub mod message;
 

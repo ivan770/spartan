@@ -7,6 +7,7 @@ pub mod storage;
 use super::message::Request;
 use crate::{
     config::replication::Replica,
+    node::event::EventLog,
     node::{
         replication::message::{PrimaryRequest, ReplicaRequest},
         Manager,
@@ -16,6 +17,7 @@ use crate::{
 use actix_rt::time::delay_for;
 use error::{ReplicaError, ReplicaResult};
 use futures_util::{SinkExt, StreamExt};
+use maybe_owned::MaybeOwned;
 use std::{future::Future, time::Duration};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::{Decoder, Framed};
@@ -115,7 +117,26 @@ pub async fn accept_connection<'a>(
         PrimaryRequest::SendRange(queue, range) => match manager.queue(&queue) {
             Ok(db) => {
                 debug!("Applying event slice.");
-                db.apply_events(range).await;
+                let range = range.into_vec();
+
+                let index = range.last().map(|(index, _)| **index);
+
+                db.database()
+                    .await
+                    .apply_log(range.into_iter().map(|(_, event)| match event {
+                        MaybeOwned::Owned(event) => event,
+                        MaybeOwned::Borrowed(_) => unreachable!(),
+                    }));
+
+                if let Some(index) = index {
+                    db.replication_storage()
+                        .await
+                        .as_mut()
+                        .expect("No storage provided")
+                        .get_replica()
+                        .confirm(index);
+                }
+
                 ReplicaRequest::RecvRange
             }
             Err(_) => ReplicaRequest::QueueNotFound(queue),
@@ -130,8 +151,8 @@ mod tests {
         config::replication::Replica,
         node::replication::message::Request,
         node::{
+            event::Event,
             replication::{
-                event::Event,
                 message::{PrimaryRequest, ReplicaRequest},
                 storage::ReplicationStorage,
             },

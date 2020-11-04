@@ -1,14 +1,20 @@
-use crate::node::Manager;
+use crate::node::{event::Event, persistence::PersistenceError, Manager};
 use actix_rt::time::delay_for;
-use futures_util::stream::{iter, StreamExt};
+use futures_util::{
+    stream::{iter, StreamExt},
+    TryStreamExt,
+};
 use spartan_lib::core::dispatcher::SimpleDispatcher;
 use std::time::Duration;
 
 /// Concurrently iterates over all databases in node, and executes GC on them.
-async fn execute_gc(manager: &Manager<'_>) {
+async fn execute_gc(manager: &Manager<'_>) -> Result<(), PersistenceError> {
     iter(manager.node.iter())
-        .for_each_concurrent(None, |(name, queue)| async move {
+        .map(Ok)
+        .try_for_each_concurrent(None, |(name, queue)| async move {
             info!("Started GC cycle on database \"{}\"", name);
+
+            queue.log_event(name, manager, Event::Gc).await?;
 
             queue.database().await.gc();
 
@@ -18,8 +24,10 @@ async fn execute_gc(manager: &Manager<'_>) {
             }
 
             info!("GC cycle on \"{}\" completed successfully", name);
+
+            Ok(())
         })
-        .await;
+        .await
 }
 
 /// GC handler
@@ -33,7 +41,9 @@ pub async fn spawn_gc(manager: &Manager<'_>) {
     loop {
         delay_for(timer).await;
 
-        execute_gc(manager).await;
+        if let Err(e) = execute_gc(manager).await {
+            error!("{}", e);
+        }
     }
 }
 
@@ -68,7 +78,7 @@ mod tests {
 
         assert_eq!(manager.queue("first").unwrap().database().await.size(), 1);
 
-        execute_gc(&manager).await;
+        execute_gc(&manager).await.unwrap();
 
         assert_eq!(manager.queue("first").unwrap().database().await.size(), 0);
     }

@@ -1,10 +1,8 @@
 use crate::{
     cli::Server,
     config::replication::Replication,
-    jobs::{
-        exit::spawn_ctrlc_handler,
-        persistence::{load_from_fs, spawn_persistence},
-    },
+    jobs::{exit::spawn_ctrlc_handler, persistence::spawn_persistence},
+    node::persistence::PersistenceError,
     node::{
         replication::{
             replica::{
@@ -30,9 +28,11 @@ impl ReplicaCommand {
         let config = server.config().expect("Config not loaded");
         let mut manager = Manager::new(config);
 
-        load_from_fs(&mut manager)
-            .await
-            .map_err(ReplicaError::PersistenceError)?;
+        match manager.load_from_fs().await {
+            Err(PersistenceError::FileOpenError(e)) => error!("Unable to load database: {}", e),
+            Err(e) => Err(e).map_err(ReplicaError::PersistenceError)?,
+            _ => (),
+        };
 
         let manager = Arc::new(manager);
 

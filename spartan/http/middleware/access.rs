@@ -32,7 +32,7 @@ impl ResponseError for AccessError {
 }
 
 pub struct Access {
-    config: &'static Config,
+    config: &'static Config<'static>,
 }
 
 impl Access {
@@ -64,7 +64,7 @@ where
 
 pub struct AccessMiddleware<S> {
     service: S,
-    config: &'static Config,
+    config: &'static Config<'static>,
 }
 
 #[allow(clippy::type_complexity)]

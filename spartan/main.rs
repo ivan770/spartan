@@ -1,3 +1,5 @@
+// Replication GC
+// https://github.com/rust-lang/rust/issues/70530
 #![feature(btree_drain_filter)]
 
 #[macro_use]
@@ -28,6 +30,8 @@ use anyhow::Error;
 use cli::{Command::*, Server};
 use once_cell::sync::OnceCell;
 use structopt::StructOpt;
+
+pub use config::persistence as persistence_config;
 
 static SERVER: OnceCell<Server> = OnceCell::new();
 

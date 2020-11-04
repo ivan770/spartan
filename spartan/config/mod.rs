@@ -4,46 +4,35 @@ pub mod key;
 /// Replication config
 pub mod replication;
 
+/// Persistence config
+pub mod persistence;
+
 use key::Key;
 use replication::Replication;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    path::{Path, PathBuf},
-};
+use std::collections::HashSet;
 
-/// Default database path
-fn default_path() -> Box<Path> {
-    PathBuf::from("./db").into_boxed_path()
-}
-
-/// Default amount of seconds between persistence jobs
-const fn default_persistence_timer() -> u64 {
-    900
-}
+use persistence::PersistenceConfig;
 
 /// Default amount of seconds between GC jobs
 const fn default_gc_timer() -> u64 {
     300
 }
 
+fn default_persistence() -> Option<PersistenceConfig<'static>> {
+    Some(PersistenceConfig::default())
+}
+
 /// Server configuration
 #[derive(Serialize, Deserialize)]
-pub struct Config {
+pub struct Config<'a> {
     /// Max body size in bytes
     /// Default value is defined in Actix source code
     pub body_size: Option<usize>,
 
-    /// Database path
-    #[serde(default = "default_path")]
-    pub path: Box<Path>,
-
-    /// Amount of seconds between persistence jobs
-    #[serde(default = "default_persistence_timer")]
-    pub persistence_timer: u64,
-
     /// Amount of seconds between GC jobs
     #[serde(default = "default_gc_timer")]
+    #[serde(skip_serializing)]
     pub gc_timer: u64,
 
     /// Array of queues
@@ -57,31 +46,33 @@ pub struct Config {
 
     /// Replication config
     pub replication: Option<Replication>,
+
+    /// Persistence config
+    #[serde(default = "default_persistence")]
+    #[serde(skip_serializing)]
+    pub persistence: Option<PersistenceConfig<'a>>,
 }
 
 #[cfg(not(test))]
-impl Default for Config {
-    fn default() -> Config {
+impl Default for Config<'_> {
+    fn default() -> Self {
         Config {
             body_size: None,
-            path: default_path(),
-            persistence_timer: default_persistence_timer(),
             gc_timer: default_gc_timer(),
             queues: Box::new([]),
             encryption_key: None,
             access_keys: None,
             replication: None,
+            persistence: default_persistence(),
         }
     }
 }
 
 #[cfg(test)]
-impl Default for Config {
-    fn default() -> Config {
+impl Default for Config<'_> {
+    fn default() -> Self {
         Config {
             body_size: None,
-            path: default_path(),
-            persistence_timer: 30,
             gc_timer: 10,
             queues: Box::new([
                 String::from("test").into_boxed_str(),
@@ -90,6 +81,7 @@ impl Default for Config {
             encryption_key: None,
             access_keys: None,
             replication: None,
+            persistence: default_persistence(),
         }
     }
 }

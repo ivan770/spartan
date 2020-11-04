@@ -5,8 +5,7 @@ use actix_web::{
 };
 use spartan_lib::core::dispatcher::simple::SimpleDispatcher;
 
-#[cfg(feature = "replication")]
-use crate::node::replication::event::Event;
+use crate::node::event::Event;
 
 /// Clear queue.
 ///
@@ -17,8 +16,7 @@ pub async fn clear(
 ) -> Result<HttpResponse> {
     let queue = manager.queue(&name)?;
 
-    #[cfg(feature = "replication")]
-    queue.log_event(|| Event::Clear).await;
+    queue.log_event(&name, &manager, Event::Clear).await?;
 
     queue.database().await.clear();
     Ok(HttpResponse::Ok().json(()))

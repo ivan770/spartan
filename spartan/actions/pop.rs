@@ -6,8 +6,7 @@ use actix_web::{
 };
 use spartan_lib::core::dispatcher::StatusAwareDispatcher;
 
-#[cfg(feature = "replication")]
-use crate::node::replication::event::Event;
+use crate::node::event::Event;
 
 /// Pop message from queue.
 ///
@@ -20,8 +19,7 @@ pub async fn pop(
 ) -> Result<HttpResponse> {
     let queue = manager.queue(&name)?;
 
-    #[cfg(feature = "replication")]
-    queue.log_event(|| Event::Pop).await;
+    queue.log_event(&name, &manager, Event::Pop).await?;
 
     let mut database = queue.database().await;
     let message = database.pop().ok_or(QueueError::NoMessageAvailable)?;
