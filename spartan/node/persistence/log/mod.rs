@@ -74,23 +74,20 @@ impl<'a> Log<'a> {
         let source_size = source
             .seek(SeekFrom::End(0))
             .await
-            .map_err(PersistenceError::LineReadError)?;
+            .map_err(PersistenceError::from)?;
 
         source
             .seek(SeekFrom::Start(0))
             .await
-            .map_err(PersistenceError::LineReadError)?;
+            .map_err(PersistenceError::from)?;
 
         while source
             .seek(SeekFrom::Current(0))
             .await
-            .map_err(PersistenceError::LineReadError)?
+            .map_err(PersistenceError::from)?
             < source_size
         {
-            let size = source
-                .read_u64_le()
-                .await
-                .map_err(PersistenceError::LineReadError)?;
+            let size = source.read_u64_le().await.map_err(PersistenceError::from)?;
 
             // Might need to re-use allocations here
             let mut buf = Vec::with_capacity(size as usize);
@@ -99,7 +96,7 @@ impl<'a> Log<'a> {
                 .take(size)
                 .read_buf(&mut buf)
                 .await
-                .map_err(PersistenceError::LineReadError)?;
+                .map_err(PersistenceError::from)?;
 
             entries.push(deserialize(&buf).map_err(PersistenceError::SerializationError)?);
         }
@@ -115,9 +112,7 @@ impl<'a> Log<'a> {
         let path = self.config.path.join(destination);
         if let Some(parent) = path.parent() {
             if !parent.is_dir() {
-                create_dir(&parent)
-                    .await
-                    .map_err(PersistenceError::FileWriteError)?;
+                create_dir(&parent).await.map_err(PersistenceError::from)?;
             }
         }
 
@@ -126,10 +121,10 @@ impl<'a> Log<'a> {
             .append(true)
             .open(path)
             .await
-            .map_err(PersistenceError::FileReadError)?
+            .map_err(PersistenceError::from)?
             .write_all(&Self::make_log_entry(source)?)
             .await
-            .map_err(PersistenceError::FileWriteError)
+            .map_err(PersistenceError::from)
     }
 
     pub async fn load<S, P>(&self, source: P) -> Result<Vec<S>, PersistenceError>
@@ -141,7 +136,7 @@ impl<'a> Log<'a> {
             .read(true)
             .open(self.config.path.join(source))
             .await
-            .map_err(PersistenceError::FileReadError)?;
+            .map_err(PersistenceError::from)?;
 
         Self::parse_log(&mut file).await
     }
@@ -167,7 +162,7 @@ impl<'a> Log<'a> {
             .await
         {
             Ok(events) => events,
-            Err(PersistenceError::FileReadError(e)) if matches!(e.kind(), ErrorKind::NotFound) => {
+            Err(PersistenceError::FileOpenError(e)) => {
                 error!("Log file not found: {}", e);
                 Vec::new()
             }
@@ -182,9 +177,7 @@ impl<'a> Log<'a> {
                     database.apply_log(events);
                     database
                 }
-                Err(PersistenceError::FileReadError(e))
-                    if matches!(e.kind(), ErrorKind::NotFound) =>
-                {
+                Err(PersistenceError::FileOpenError(e)) => {
                     error!("Compaction file not found: {}", e);
                     DB::from_log(events)
                 }
@@ -214,7 +207,7 @@ impl<'a> Log<'a> {
                 // Thanks to GC threshold, it's currently impossible to use log driver
                 let replication_storage = match self.get_snapshot().load(source.as_ref().join(SNAPSHOT_REPLICATION_FILE)).await {
                     Ok(storage) => storage,
-                    Err(PersistenceError::FileReadError(e)) => {
+                    Err(PersistenceError::FileOpenError(e)) => {
                         error!("{}", e);
                         None
                     },
@@ -366,7 +359,7 @@ mod tests {
             log.load::<Event, _>(Path::new("test").join(QUEUE_FILE))
                 .await
                 .unwrap_err(),
-            PersistenceError::FileReadError(_)
+            PersistenceError::FileOpenError(_)
         ));
 
         let snapshot = Snapshot::new(&config);

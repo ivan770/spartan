@@ -42,9 +42,7 @@ impl<'a> Snapshot<'a> {
 
         if let Some(parent) = path.parent() {
             if !parent.is_dir() {
-                create_dir(parent)
-                    .await
-                    .map_err(PersistenceError::FileWriteError)?;
+                create_dir(parent).await.map_err(PersistenceError::from)?;
             }
         }
 
@@ -53,7 +51,7 @@ impl<'a> Snapshot<'a> {
             serialize(source).map_err(PersistenceError::SerializationError)?,
         )
         .await
-        .map_err(PersistenceError::FileWriteError)
+        .map_err(PersistenceError::from)
     }
 
     pub async fn load<S, P>(&self, source: P) -> Result<S, PersistenceError>
@@ -62,7 +60,7 @@ impl<'a> Snapshot<'a> {
         S: DeserializeOwned,
     {
         let path = self.config.path.join(source);
-        deserialize(&read(path).await.map_err(PersistenceError::FileReadError)?)
+        deserialize(&read(path).await.map_err(PersistenceError::from)?)
             .map_err(PersistenceError::InvalidFileFormat)
     }
 

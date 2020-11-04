@@ -29,7 +29,7 @@ impl ReplicaCommand {
         let mut manager = Manager::new(config);
 
         match manager.load_from_fs().await {
-            Err(PersistenceError::FileReadError(e)) => error!("Unable to load database: {}", e),
+            Err(PersistenceError::FileOpenError(e)) => error!("Unable to load database: {}", e),
             Err(e) => Err(e).map_err(ReplicaError::PersistenceError)?,
             _ => (),
         };
