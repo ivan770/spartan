@@ -23,8 +23,8 @@ fn default_persistence() -> Option<PersistenceConfig<'static>> {
     Some(PersistenceConfig::default())
 }
 
-fn serialize_persistence<'a, S>(
-    value: &Option<PersistenceConfig<'a>>,
+fn serialize_persistence<S>(
+    value: &Option<PersistenceConfig<'_>>,
     serializer: S,
 ) -> Result<S::Ok, S::Error>
 where

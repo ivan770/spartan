@@ -29,7 +29,7 @@ pub mod utils;
 
 use anyhow::Error;
 use cli::{
-    Command::{Init, Replica, Start},
+    Command::*,
     Server,
 };
 use once_cell::sync::OnceCell;
