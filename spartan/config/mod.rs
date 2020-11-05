@@ -23,9 +23,12 @@ fn default_persistence() -> Option<PersistenceConfig<'static>> {
     Some(PersistenceConfig::default())
 }
 
-fn serialize_persistence<'a, S>(value: &Option<PersistenceConfig<'a>>, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_persistence<'a, S>(
+    value: &Option<PersistenceConfig<'a>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
 where
-    S: Serializer
+    S: Serializer,
 {
     if let Some(config) = value.as_ref() {
         config.serialize(serializer)
