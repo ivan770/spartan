@@ -6,13 +6,14 @@ use thiserror::Error;
 use tokio::fs::{create_dir, write};
 use toml::{
     de::{from_str, Error},
+    ser::Error as SerError,
     to_string_pretty,
 };
 
 #[derive(Error, Debug)]
 pub enum InitCommandError {
     #[error("Unable to serialize config")]
-    ConfigSerializationError,
+    ConfigSerializationError(SerError),
     #[error("Unable to write serialized config to file: {0}")]
     ConfigWriteError(IoError),
     #[error("Missing config text. Probably file was not saved properly")]
@@ -39,10 +40,7 @@ impl InitCommand {
 
         let text = editor
             .require_save(true)
-            .edit(
-                &to_string_pretty(&config)
-                    .map_err(|_| InitCommandError::ConfigSerializationError)?,
-            )
+            .edit(&to_string_pretty(&config).map_err(InitCommandError::ConfigSerializationError)?)
             .map_err(InitCommandError::ConfigWriteError)?
             .ok_or(InitCommandError::MissingConfigText)?;
 

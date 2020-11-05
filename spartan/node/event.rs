@@ -65,7 +65,9 @@ where
             match event {
                 Event::Push(message) => match message {
                     MaybeOwned::Owned(message) => self.push(message),
-                    _ => panic!("Applying push event with borrowed message is not allowed."),
+                    MaybeOwned::Borrowed(_) => {
+                        panic!("Applying push event with borrowed message is not allowed.")
+                    }
                 },
                 Event::Pop => {
                     self.pop();

@@ -56,7 +56,7 @@ where
                     return;
                 }
                 Err(e) => error!("Error occured during replication process: {}", e),
-                _ => (),
+                Ok(_) => (),
             }
         }
     }
@@ -109,7 +109,7 @@ pub async fn accept_connection<'a>(
                     .get_replica()
                     .get_index();
 
-                indexes.push((name.to_string().into_boxed_str(), index));
+                indexes.push(((*name).to_string().into_boxed_str(), index));
             }
 
             ReplicaRequest::RecvIndex(indexes.into_boxed_slice())

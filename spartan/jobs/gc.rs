@@ -7,6 +7,9 @@ use futures_util::{
 use spartan_lib::core::dispatcher::SimpleDispatcher;
 use std::time::Duration;
 
+#[cfg(feature = "replication")]
+use crate::node::replication::primary::storage::PrimaryStorage;
+
 /// Concurrently iterates over all databases in node, and executes GC on them.
 async fn execute_gc(manager: &Manager<'_>) -> Result<(), PersistenceError> {
     iter(manager.node.iter())
@@ -20,7 +23,7 @@ async fn execute_gc(manager: &Manager<'_>) -> Result<(), PersistenceError> {
 
             #[cfg(feature = "replication")]
             if let Some(storage) = queue.replication_storage().await.as_mut() {
-                storage.map_primary(|storage| storage.gc());
+                storage.map_primary(PrimaryStorage::gc);
             }
 
             info!("GC cycle on \"{}\" completed successfully", name);

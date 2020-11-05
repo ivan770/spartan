@@ -45,6 +45,9 @@ impl<'a> Log<'a> {
         S: Serialize,
     {
         let size = serialized_size(source).map_err(PersistenceError::SerializationError)?;
+
+        #[allow(clippy::cast_possible_truncation)]
+        // We don't provide support for 32-bit platforms, so it's safe to say that size won't be truncated
         let capacity = size_of::<u64>() + size as usize;
 
         let mut buf = Vec::with_capacity(capacity);
@@ -85,6 +88,9 @@ impl<'a> Log<'a> {
             let size = source.read_u64_le().await.map_err(PersistenceError::from)?;
 
             // Might need to re-use allocations here
+
+            #[allow(clippy::cast_possible_truncation)]
+            // We don't provide support for 32-bit platforms, so it's safe to say that size won't be truncated
             let mut buf = Vec::with_capacity(size as usize);
 
             source
@@ -184,9 +190,8 @@ impl<'a> Log<'a> {
                 .await?;
 
             match self.prune(&source).await {
-                Err(PersistenceError::FileOpenError(_)) => (),
+                Err(PersistenceError::FileOpenError(_)) | Ok(_) => (),
                 Err(e) => return Err(e),
-                _ => (),
             };
 
             inner_db

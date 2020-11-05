@@ -26,10 +26,10 @@ impl Decoder for BincodeCodec {
     type Error = Error;
 
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-        if !src.is_empty() {
-            Ok(Some(deserialize(&src.split_to(src.len()))?))
-        } else {
+        if src.is_empty() {
             Ok(None)
+        } else {
+            Ok(Some(deserialize(&src.split_to(src.len()))?))
         }
     }
 }

@@ -59,7 +59,7 @@ impl StartCommand {
         match manager.load_from_fs().await {
             Err(PersistenceError::FileOpenError(e)) => error!("Unable to load database: {}", e),
             Err(e) => Err(e).map_err(StartCommandError::PersistenceError)?,
-            _ => (),
+            Ok(_) => (),
         };
 
         let manager = Data::new(manager);

@@ -99,19 +99,16 @@ where
 {
     fn parse_request(&self, req: &<S as Service>::Request) -> Result<(), AccessError> {
         if self.has_access_keys() {
-            req.match_info()
-                .get("queue")
-                .map(|queue| {
-                    req.headers()
-                        .get("Authorization")
-                        .ok_or(AccessError::AuthorizationHeaderNotFound)?
-                        .to_str()
-                        .map_err(|_| AccessError::IncorrectKeyHeader)?
-                        .strip_prefix("Bearer ")
-                        .map(|token| self.check_access(token, queue))
-                        .ok_or(AccessError::IncorrectKeyHeader)?
-                })
-                .unwrap_or_else(|| Ok(()))
+            req.match_info().get("queue").map_or(Ok(()), |queue| {
+                req.headers()
+                    .get("Authorization")
+                    .ok_or(AccessError::AuthorizationHeaderNotFound)?
+                    .to_str()
+                    .map_err(|_| AccessError::IncorrectKeyHeader)?
+                    .strip_prefix("Bearer ")
+                    .map(|token| self.check_access(token, queue))
+                    .ok_or(AccessError::IncorrectKeyHeader)?
+            })
         } else {
             Ok(())
         }

@@ -20,11 +20,9 @@ impl Timeout {
     }
 
     pub(super) fn expired(&self, timestamp: i64) -> bool {
-        if let Some(obtained_at) = self.obtained_at {
-            (obtained_at + self.max as i64) < timestamp
-        } else {
-            false
-        }
+        self.obtained_at.map_or(false, |obtained_at| {
+            (obtained_at + i64::from(self.max)) < timestamp
+        })
     }
 }
 
@@ -47,11 +45,8 @@ impl Time {
     }
 
     pub(crate) fn check_delay(&self) -> bool {
-        if let Some(delay) = self.delay {
-            delay <= self.get_timestamp()
-        } else {
-            true
-        }
+        self.delay
+            .map_or(true, |delay| delay <= self.get_timestamp())
     }
 
     pub(crate) fn get_raw_delay(&self) -> Option<i64> {
@@ -67,7 +62,7 @@ impl Time {
     }
 
     fn convert_delay(seconds: Option<u32>, offset: i32) -> Option<i64> {
-        Some(Self::get_offset_timestamp(offset) + seconds? as i64)
+        Some(Self::get_offset_timestamp(offset) + i64::from(seconds?))
     }
 
     fn get_timestamp(&self) -> i64 {

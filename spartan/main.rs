@@ -1,6 +1,7 @@
 // Replication GC
 // https://github.com/rust-lang/rust/issues/70530
 #![feature(btree_drain_filter)]
+#![allow(clippy::module_name_repetitions)]
 
 #[macro_use]
 extern crate log;
@@ -27,7 +28,10 @@ mod jobs;
 pub mod utils;
 
 use anyhow::Error;
-use cli::{Command::*, Server};
+use cli::{
+    Command::{Init, Replica, Start},
+    Server,
+};
 use once_cell::sync::OnceCell;
 use structopt::StructOpt;
 

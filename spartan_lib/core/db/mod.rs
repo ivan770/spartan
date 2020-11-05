@@ -1,7 +1,7 @@
-/// TreeDatabase
+/// [`TreeDatabase`]
 pub mod tree;
 
-/// VecDatabase
+/// [`VecDatabase`]
 pub mod vec;
 
 /// Interface for working with databases
@@ -173,7 +173,7 @@ pub trait StatusAwareDatabase<M>: Database<M> {
 
     /// Reserve message in database
     ///
-    /// Removes message from tree in TreeDatabase, does nothing in VecDatabase
+    /// Removes message from tree in [`TreeDatabase`], does nothing in [`VecDatabase`]
     ///
     /// ```
     /// use spartan_lib::core::db::{Database, StatusAwareDatabase};
@@ -196,7 +196,7 @@ pub trait StatusAwareDatabase<M>: Database<M> {
 
     /// Requeue message back to database
     ///
-    /// Returns message back to tree in TreeDatabase, does nothing in VecDatabase
+    /// Returns message back to tree in [`TreeDatabase`], does nothing in [`VecDatabase`]
     ///
     /// ```
     /// use spartan_lib::core::db::{Database, StatusAwareDatabase};

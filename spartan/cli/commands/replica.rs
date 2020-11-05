@@ -31,7 +31,7 @@ impl ReplicaCommand {
         match manager.load_from_fs().await {
             Err(PersistenceError::FileOpenError(e)) => error!("Unable to load database: {}", e),
             Err(e) => Err(e).map_err(ReplicaError::PersistenceError)?,
-            _ => (),
+            Ok(_) => (),
         };
 
         let manager = Arc::new(manager);

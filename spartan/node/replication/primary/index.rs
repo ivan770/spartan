@@ -102,8 +102,7 @@ impl<'a, T> Sync<'a, T> {
             .batch_ask_index
             .batch
             .iter()
-            .map(|index| index.indexes.iter())
-            .flatten()
+            .flat_map(|index| index.indexes.iter())
             .sorted_by(|a, b| Ord::cmp(a, b))
             .unique_by(|(name, _)| {
                 let mut hasher = H::default();
