@@ -9,7 +9,7 @@ pub mod persistence;
 
 use key::Key;
 use replication::Replication;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashSet;
 
 use persistence::PersistenceConfig;
@@ -21,6 +21,17 @@ const fn default_gc_timer() -> u64 {
 
 fn default_persistence() -> Option<PersistenceConfig<'static>> {
     Some(PersistenceConfig::default())
+}
+
+fn serialize_persistence<'a, S>(value: &Option<PersistenceConfig<'a>>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer
+{
+    if let Some(config) = value.as_ref() {
+        config.serialize(serializer)
+    } else {
+        PersistenceConfig::default().serialize(serializer)
+    }
 }
 
 /// Server configuration
@@ -48,8 +59,7 @@ pub struct Config<'a> {
     pub replication: Option<Replication>,
 
     /// Persistence config
-    #[serde(default = "default_persistence")]
-    #[serde(skip_serializing)]
+    #[serde(serialize_with = "serialize_persistence")]
     pub persistence: Option<PersistenceConfig<'a>>,
 }
 

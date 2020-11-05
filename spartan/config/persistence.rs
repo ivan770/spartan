@@ -21,6 +21,7 @@ const fn default_compaction() -> bool {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Persistence {
     Log,
     Snapshot,
@@ -29,6 +30,7 @@ pub enum Persistence {
 #[derive(Serialize, Deserialize)]
 pub struct PersistenceConfig<'a> {
     /// Persistence mode
+    #[serde(default = "default_persistence")]
     pub mode: Persistence,
 
     /// Database path
@@ -42,6 +44,7 @@ pub struct PersistenceConfig<'a> {
 
     /// Log compaction on queue restoring from FS
     #[serde(default = "default_compaction")]
+    #[serde(skip_serializing)]
     pub compaction: bool,
 }
 
