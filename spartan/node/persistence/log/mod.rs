@@ -230,7 +230,7 @@ impl<'a> Log<'a> {
                 .collect::<PathBuf>(),
         )
         .await
-        .map_err(PersistenceError::GenericIoError)
+        .map_err(PersistenceError::from)
     }
 
     fn get_snapshot(&self) -> &Snapshot<'_> {
