@@ -58,12 +58,29 @@ cargo build --release
 ### Spartan.toml keys
 
 * `queues` - Array of queue names (required).
-* `path` - Database path (default: `./db`).
-* `body_size` - Max body size in bytes (default: 32 Kb)
-* `persistence_timer` - Amount of seconds between each database write to disk (default: `900`).
+* `body_size` - Max body size in bytes (default: 32 Kb).
 * `gc_timer` - Amount of seconds between each GC job wake (GC cycle times vary, default: `300`).
+* `persistence` - Persistence configuration for both log and snapshot drivers.
 * `access_keys` - Table of queue access keys. Anonymous access to queues will not be permitted if this key has any value.
 * `replication` - Replication configuration for both primary and replica nodes.
+
+#### `persistence`
+There are two available persistence drivers, that Spartan supports - `log` and `snapshot`.
+
+|                    | `log` | `snapshot`         |
+|--------------------|-------|--------------------|
+| Performance        | -     | +                  |
+| Small disk usage   | -     | +                  |
+| Reliability        | +     | -                  |
+| Compaction support | +     | Always compacted   |
+
+By default, after executing `spartan init` command you'll receive config with `snapshot` driver, which is an optimal variant for most cases.
+
+Both drivers support these configuration keys:
+* `mode` - Persistence mode (default: `snapshot`).
+* `path` - Database path (default: `./db`).
+* `timer` - Timer between each queue persistence cycle for `snapshot` driver, and replication storage persistence cycle for `log` (default: 900 seconds).
+* `compaction` - Enable `log` driver compaction on Spartan startup (default: true).
 
 #### `access_keys`
 Spartan has authentication and authorization mechanism using access keys.
