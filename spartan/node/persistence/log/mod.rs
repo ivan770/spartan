@@ -79,6 +79,8 @@ impl<'a> Log<'a> {
             .await
             .map_err(PersistenceError::from)?;
 
+        let mut buf = Vec::new();
+
         while source
             .seek(SeekFrom::Current(0))
             .await
@@ -87,11 +89,9 @@ impl<'a> Log<'a> {
         {
             let size = source.read_u64_le().await.map_err(PersistenceError::from)?;
 
-            // Might need to re-use allocations here
-
             #[allow(clippy::cast_possible_truncation)]
             // We don't provide support for 32-bit platforms, so it's safe to say that size won't be truncated
-            let mut buf = Vec::with_capacity(size as usize);
+            buf.reserve(size as usize);
 
             source
                 .take(size)
@@ -100,6 +100,8 @@ impl<'a> Log<'a> {
                 .map_err(PersistenceError::from)?;
 
             entries.push(deserialize(&buf).map_err(PersistenceError::SerializationError)?);
+
+            buf.clear();
         }
 
         Ok(entries)

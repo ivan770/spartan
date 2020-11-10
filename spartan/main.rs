@@ -28,10 +28,7 @@ mod jobs;
 pub mod utils;
 
 use anyhow::Error;
-use cli::{
-    Command::*,
-    Server,
-};
+use cli::{Command::*, Server};
 use once_cell::sync::OnceCell;
 use structopt::StructOpt;
 
