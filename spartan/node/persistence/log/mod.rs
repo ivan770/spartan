@@ -46,6 +46,8 @@ impl<'a> Log<'a> {
     {
         let size = serialized_size(source).map_err(PersistenceError::SerializationError)?;
 
+        debug!("Log entry size: {}", size);
+
         #[allow(clippy::cast_possible_truncation)]
         // We don't provide support for 32-bit platforms, so it's safe to say that size won't be truncated
         let capacity = size_of::<u64>() + size as usize;
@@ -74,6 +76,8 @@ impl<'a> Log<'a> {
             .await
             .map_err(PersistenceError::from)?;
 
+        debug!("Log source size: {}", source_size);
+
         source
             .seek(SeekFrom::Start(0))
             .await
@@ -88,6 +92,8 @@ impl<'a> Log<'a> {
             < source_size
         {
             let size = source.read_u64_le().await.map_err(PersistenceError::from)?;
+
+            debug!("Log entry size: {}", size);
 
             #[allow(clippy::cast_possible_truncation)]
             // We don't provide support for 32-bit platforms, so it's safe to say that size won't be truncated
@@ -113,6 +119,9 @@ impl<'a> Log<'a> {
         S: Serialize,
     {
         let path = self.config.path.join(destination);
+
+        debug!("Appending to {}", path.display());
+
         if let Some(parent) = path.parent() {
             if !parent.is_dir() {
                 create_dir(&parent).await.map_err(PersistenceError::from)?;
@@ -135,9 +144,13 @@ impl<'a> Log<'a> {
         S: DeserializeOwned,
         P: AsRef<Path>,
     {
+        let path = self.config.path.join(source);
+
+        debug!("Loading from {}", path.display());
+
         let mut file = OpenOptions::new()
             .read(true)
-            .open(self.config.path.join(source))
+            .open(path)
             .await
             .map_err(PersistenceError::from)?;
 
@@ -226,13 +239,13 @@ impl<'a> Log<'a> {
     where
         P: AsRef<Path>,
     {
-        remove_file(
-            [&self.config.path, queue.as_ref(), QUEUE_FILE.as_ref()]
-                .iter()
-                .collect::<PathBuf>(),
-        )
-        .await
-        .map_err(PersistenceError::from)
+        let path = [&self.config.path, queue.as_ref(), QUEUE_FILE.as_ref()]
+            .iter()
+            .collect::<PathBuf>();
+
+        debug!("Pruning {}", path.display());
+
+        remove_file(path).await.map_err(PersistenceError::from)
     }
 
     fn get_snapshot(&self) -> &Snapshot<'_> {
