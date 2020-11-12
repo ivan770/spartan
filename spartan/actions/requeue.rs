@@ -43,7 +43,7 @@ mod tests {
         test::{init_service, read_response, read_response_json},
         web::Bytes,
     };
-    use spartan_lib::uuid::Uuid;
+    use spartan_lib::{core::payload::Identifiable, uuid::Uuid};
 
     #[actix_rt::test]
     async fn test_empty_requeue() {
@@ -87,7 +87,7 @@ mod tests {
                 post,
                 "/test/requeue",
                 &RequeueRequest {
-                    id: first_pop.message.id
+                    id: first_pop.message.id()
                 }
             ),
         )
@@ -96,7 +96,7 @@ mod tests {
         let second_pop: TestPopResponse =
             read_response_json(&mut app, test_request!(get, "/test")).await;
 
-        assert_eq!(first_pop.message.id, second_pop.message.id);
+        assert_eq!(first_pop.message.id(), second_pop.message.id());
 
         read_response(
             &mut app,
@@ -104,7 +104,7 @@ mod tests {
                 post,
                 "/test/requeue",
                 &RequeueRequest {
-                    id: second_pop.message.id
+                    id: second_pop.message.id()
                 }
             ),
         )

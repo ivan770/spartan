@@ -91,7 +91,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::{Database, VecDatabase};
-    use crate::core::message::{builder::MessageBuilder, Message};
+    use crate::core::{
+        message::{builder::MessageBuilder, Message},
+        payload::Identifiable,
+    };
 
     fn create_message() -> Message {
         MessageBuilder::default()
@@ -117,7 +120,7 @@ mod tests {
         let mut db = create_database();
         let message = create_message();
         db.push_raw(message.clone());
-        assert_eq!(db.position(|msg| msg.id == message.id).unwrap(), 0);
+        assert_eq!(db.position(|msg| msg.id() == message.id()).unwrap(), 0);
     }
 
     #[test]
@@ -125,7 +128,7 @@ mod tests {
         let mut db = create_database();
         let message = create_message();
         db.push_raw(message.clone());
-        assert_eq!(db.get(0).unwrap().id, message.id);
+        assert_eq!(db.get(0).unwrap().id(), message.id());
     }
 
     #[test]
@@ -133,7 +136,7 @@ mod tests {
         let mut db = create_database();
         let message = create_message();
         db.push_raw(message.clone());
-        assert_eq!(db.get_mut(0).unwrap().id, message.id);
+        assert_eq!(db.get_mut(0).unwrap().id(), message.id());
     }
 
     #[test]
@@ -153,7 +156,7 @@ mod tests {
         db.push_raw(message.clone());
         db.push_raw(message2);
         assert_eq!(db.len(), 2);
-        db.retain(|msg| msg.id == message.id);
+        db.retain(|msg| msg.id() == message.id());
         assert_eq!(db.len(), 1);
     }
 

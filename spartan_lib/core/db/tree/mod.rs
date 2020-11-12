@@ -157,7 +157,7 @@ mod tests {
     use crate::core::{
         db::Database,
         message::{builder::MessageBuilder, Message},
-        payload::Status,
+        payload::{Identifiable, Status},
     };
 
     fn create_database() -> TreeDatabase<Message> {
@@ -183,7 +183,7 @@ mod tests {
     macro_rules! position {
         ($database:expr, $message:expr) => {
             let pos = $database.position(|_| true).unwrap();
-            assert_eq!($database.get(pos).unwrap().id, $message.id);
+            assert_eq!($database.get(pos).unwrap().id(), $message.id());
             $database.delete_pos(pos).unwrap();
         };
     }
@@ -239,7 +239,7 @@ mod tests {
         assert_eq!(database.objects.len(), 1);
         assert_eq!(database.queue_tree.len(), 1);
         let pos = database.position(|_| true).unwrap();
-        assert_eq!(database.get(pos).unwrap().id, message2.id);
+        assert_eq!(database.get(pos).unwrap().id(), message2.id());
     }
 
     #[test]
@@ -249,11 +249,11 @@ mod tests {
         let message2 = create_message!();
         database.push_raw(message1);
         database.push_raw(message2.clone());
-        database.retain(|message| message.id == message2.id);
+        database.retain(|message| message.id() == message2.id());
         assert_eq!(database.objects.len(), 1);
         assert_eq!(database.queue_tree.len(), 1);
         let pos = database.position(|_| true).unwrap();
-        assert_eq!(database.get(pos).unwrap().id, message2.id);
+        assert_eq!(database.get(pos).unwrap().id(), message2.id());
     }
 
     #[test]
