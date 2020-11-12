@@ -125,9 +125,11 @@ where
     }
 
     pub async fn ask(&'a mut self) -> PrimaryResult<BatchAskIndex<'a, T>> {
-        debug!("Asking stream pool for indexes.");
+        let len = self.0.len();
 
-        let mut batch = BatchAskIndex::with_capacity(self.0.len());
+        debug!("Asking stream pool of {} nodes for indexes.", len);
+
+        let mut batch = BatchAskIndex::with_capacity(len);
 
         for host in &mut *self.0 {
             batch.push(host.ask().await?);
