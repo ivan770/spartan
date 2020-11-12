@@ -37,7 +37,7 @@
 
 ### Build from source
 
-Make sure you have Rust toolchain installed on your system.
+Make sure you have latest **nightly** Rust toolchain installed on your system.
 
 ```
 git clone https://github.com/ivan770/spartan
