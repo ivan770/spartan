@@ -40,6 +40,8 @@ impl<'a> Snapshot<'a> {
     {
         let path = self.config.path.join(destination);
 
+        debug!("Writing to {}", path.display());
+
         if let Some(parent) = path.parent() {
             if !parent.is_dir() {
                 create_dir(parent).await.map_err(PersistenceError::from)?;
@@ -60,6 +62,9 @@ impl<'a> Snapshot<'a> {
         S: DeserializeOwned,
     {
         let path = self.config.path.join(source);
+
+        debug!("Loading from {}", path.display());
+
         deserialize(&read(path).await.map_err(PersistenceError::from)?)
             .map_err(PersistenceError::InvalidFileFormat)
     }
