@@ -111,6 +111,8 @@ impl<'a, T> Sync<'a, T> {
             });
 
         for (queue, index) in iter {
+            debug!("Updating {} GC threshold to {}", queue, index);
+
             manager
                 .queue(&queue)
                 .as_mut()
