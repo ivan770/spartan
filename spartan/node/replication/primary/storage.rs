@@ -38,6 +38,8 @@ impl PrimaryStorage {
         &self,
         start: u64,
     ) -> Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event<'static>>)]> {
+        debug!("Obtaining event log slice starting from ID {}", start);
+
         self.log
             .range(start..)
             .map(|(k, v)| (MaybeOwned::Borrowed(k), MaybeOwned::Borrowed(v)))
