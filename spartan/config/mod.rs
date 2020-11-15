@@ -7,11 +7,12 @@ pub mod replication;
 /// Persistence config
 pub mod persistence;
 
-use key::Key;
-use replication::Replication;
-use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashSet;
 
+use serde::{Deserialize, Serialize, Serializer};
+
+use key::Key;
+use replication::ReplicationConfig;
 use persistence::PersistenceConfig;
 
 /// Default amount of seconds between GC jobs
@@ -59,7 +60,7 @@ pub struct Config<'a> {
     pub access_keys: Option<HashSet<Key>>,
 
     /// Replication config
-    pub replication: Option<Replication>,
+    pub replication: Option<ReplicationConfig>,
 
     /// Persistence config
     #[serde(serialize_with = "serialize_persistence")]

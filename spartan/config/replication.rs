@@ -36,7 +36,20 @@ pub struct Replica {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Replication {
-    Primary(Primary),
-    Replica(Replica),
+    Primary,
+    Replica,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ReplicationConfig {
+    /// Replication mode
+    pub mode: Replication,
+
+    /// Primary node config
+    pub primary: Option<Primary>,
+
+    /// Replica node config
+    pub replica: Option<Replica>
 }
