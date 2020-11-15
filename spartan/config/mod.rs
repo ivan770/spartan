@@ -12,8 +12,8 @@ use std::collections::HashSet;
 use serde::{Deserialize, Serialize, Serializer};
 
 use key::Key;
-use replication::ReplicationConfig;
 use persistence::PersistenceConfig;
+use replication::ReplicationConfig;
 
 /// Default amount of seconds between GC jobs
 const fn default_gc_timer() -> u64 {

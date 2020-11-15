@@ -51,5 +51,5 @@ pub struct ReplicationConfig {
     pub primary: Option<Primary>,
 
     /// Replica node config
-    pub replica: Option<Replica>
+    pub replica: Option<Replica>,
 }
