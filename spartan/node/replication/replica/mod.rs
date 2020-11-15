@@ -109,6 +109,8 @@ pub async fn accept_connection<'a>(
                     .get_replica()
                     .get_index();
 
+                debug!("Sending {} as confirmed index of {}", index, name);
+
                 indexes.push(((*name).to_string().into_boxed_str(), index));
             }
 
@@ -129,6 +131,8 @@ pub async fn accept_connection<'a>(
                     }));
 
                 if let Some(index) = index {
+                    debug!("Setting {} as confirmed index of {}", index, queue);
+
                     db.replication_storage()
                         .await
                         .as_mut()
