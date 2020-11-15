@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
-    pub id: Uuid,
+    id: Uuid,
     body: Box<str>,
     state: State,
     time: Time,

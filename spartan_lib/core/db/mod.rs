@@ -214,7 +214,7 @@ pub trait StatusAwareDatabase<M>: Database<M> {
     /// let message = db.reserve(position).unwrap();
     /// message.reserve();
     ///
-    /// let id = message.id;
+    /// let id = message.id();
     ///
     /// // requeue tries to find a message with provided id, and checks it for predicate
     /// let message = db.requeue(id, |msg| msg.requeueable()).unwrap();

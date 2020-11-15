@@ -63,8 +63,10 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
     debug!("Spawning replication job.");
 
     if let Some(config) = manager.config.replication.as_ref() {
-        match config {
-            Replication::Primary(config) => {
+        match config.mode {
+            Replication::Primary if config.primary.is_some() => {
+                let config = config.primary.as_ref().unwrap();
+
                 manager
                     .node
                     .prepare_replication(
@@ -84,7 +86,11 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
                     }
                 }
             }
-            Replication::Replica(_) => {
+            Replication::Primary => {
+                warn!("Primary node started without primary configuration!");
+                warn!("Event log will be disabled for this session.");
+            }
+            Replication::Replica => {
                 warn!("Primary node started with replica configuration!");
                 warn!("Event log will be disabled for this session.");
             }

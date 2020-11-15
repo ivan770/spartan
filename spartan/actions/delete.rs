@@ -50,7 +50,7 @@ mod tests {
         test::{init_service, read_response, read_response_json},
         web::Bytes,
     };
-    use spartan_lib::uuid::Uuid;
+    use spartan_lib::{core::payload::Identifiable, uuid::Uuid};
 
     #[actix_rt::test]
     async fn test_empty_delete() {
@@ -88,11 +88,17 @@ mod tests {
 
         let delete: DeleteResponse = read_response_json(
             &mut app,
-            test_request!(delete, "/test", &DeleteRequest { id: pop.message.id }),
+            test_request!(
+                delete,
+                "/test",
+                &DeleteRequest {
+                    id: pop.message.id()
+                }
+            ),
         )
         .await;
 
-        assert_eq!(delete.message.id, pop.message.id);
+        assert_eq!(delete.message.id(), pop.message.id());
 
         let size: SizeResponse =
             read_response_json(&mut app, test_request!(get, "/test/size")).await;

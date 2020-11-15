@@ -94,7 +94,9 @@ mod tests {
     use super::{Event, EventLog};
     use crate::node::DB;
     use maybe_owned::MaybeOwned;
-    use spartan_lib::core::{dispatcher::StatusAwareDispatcher, message::builder::MessageBuilder};
+    use spartan_lib::core::{
+        dispatcher::StatusAwareDispatcher, message::builder::MessageBuilder, payload::Identifiable,
+    };
 
     #[tokio::test]
     async fn test_apply_events() {
@@ -106,6 +108,6 @@ mod tests {
 
         queue.database().await.apply_log(events);
 
-        assert_eq!(queue.database().await.pop().unwrap().id, message.id);
+        assert_eq!(queue.database().await.pop().unwrap().id(), message.id());
     }
 }

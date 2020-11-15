@@ -11,7 +11,7 @@ mod tests {
         ($db:tt) => {
             use crate::core::dispatcher::SimpleDispatcher;
             use crate::core::message::{builder::MessageBuilder, Message};
-            use crate::core::payload::Status;
+            use crate::core::payload::{Identifiable, Status};
             use uuid::Uuid;
 
             fn generate_test_message() -> Message {
@@ -40,7 +40,7 @@ mod tests {
                 let message = generate_test_message();
                 let mut db = create_database();
                 db.push(message.clone());
-                assert_eq!(db.peek().unwrap().id, message.id);
+                assert_eq!(db.peek().unwrap().id(), message.id());
                 assert!(db.peek().unwrap().reservable());
             }
 
@@ -50,7 +50,7 @@ mod tests {
                 let mut db = create_database();
                 db.push(message.clone());
                 assert_eq!(db.size(), 1);
-                db.delete(message.id).unwrap();
+                db.delete(message.id()).unwrap();
             }
 
             #[test]
@@ -81,7 +81,7 @@ mod tests {
                 assert_eq!(db.size(), 3);
                 db.gc();
                 assert_eq!(db.size(), 2);
-                assert_eq!(db.peek().unwrap().id, message.id);
+                assert_eq!(db.peek().unwrap().id(), message.id());
             }
         };
     }
@@ -96,7 +96,7 @@ mod tests {
                 let message = generate_test_message();
                 let mut db = create_database();
                 db.push(message.clone());
-                assert_eq!(db.pop().unwrap().id, message.id);
+                assert_eq!(db.pop().unwrap().id(), message.id());
             }
 
             #[test]
@@ -106,8 +106,8 @@ mod tests {
                 let mut db = create_database();
                 db.push(message1.clone());
                 db.push(message2.clone());
-                assert_eq!(db.pop().unwrap().id, message1.id);
-                assert_eq!(db.pop().unwrap().id, message2.id);
+                assert_eq!(db.pop().unwrap().id(), message1.id());
+                assert_eq!(db.pop().unwrap().id(), message2.id());
                 assert!(db.pop().is_none());
             }
 
@@ -125,7 +125,7 @@ mod tests {
                 db.push(delayed_message);
                 db.push(message.clone());
 
-                assert_eq!(db.pop().unwrap().id, message.id);
+                assert_eq!(db.pop().unwrap().id(), message.id());
                 assert_eq!(db.pop().is_some(), false);
             }
 
@@ -143,8 +143,8 @@ mod tests {
                 db.push(message.clone());
                 db.push(delayed_message.clone());
 
-                assert_eq!(db.pop().unwrap().id, message.id);
-                assert_eq!(db.pop().unwrap().id, delayed_message.id);
+                assert_eq!(db.pop().unwrap().id(), message.id());
+                assert_eq!(db.pop().unwrap().id(), delayed_message.id());
             }
         };
     }
