@@ -34,10 +34,7 @@ impl PrimaryStorage {
             .for_each(drop);
     }
 
-    pub fn slice(
-        &self,
-        start: u64,
-    ) -> Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event<'static>>)]> {
+    pub fn slice(&self, start: u64) -> Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event<'_>>)]> {
         self.log
             .range(start..)
             .map(|(k, v)| (MaybeOwned::Borrowed(k), MaybeOwned::Borrowed(v)))
