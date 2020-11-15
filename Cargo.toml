@@ -1,6 +1,6 @@
 [package]
 name = "spartan"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["ivan770 <leshenko.ivan770@gmail.com>"]
 edition = "2018"
 

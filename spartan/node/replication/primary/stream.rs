@@ -65,7 +65,7 @@ where
     pub(super) async fn send_range(
         &mut self,
         queue: &str,
-        range: Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event<'static>>)]>,
+        range: Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event<'a>>)]>,
     ) -> PrimaryResult<()> {
         match self
             .exchange(PrimaryRequest::SendRange(Cow::Borrowed(queue), range))

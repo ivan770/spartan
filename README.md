@@ -22,7 +22,7 @@
 * Rich messages, with support for timezone, timeout, delay, max tries, and states
 * Integrated time handling
 * Queue replication
-* Redis-like database persistence using timers
+* Redis-like database persistence using snapshots and logs
 * Background GC that helps you keep your queues tidy
 * Key-based queue authorization
 * Simple API
