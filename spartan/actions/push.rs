@@ -11,6 +11,7 @@ use crate::node::event::Event;
 /// Push message to queue.
 ///
 /// Requires message body. Offset, max tries, timeout, delay are optional.
+///
 /// Returns empty response.
 pub async fn push(
     request: Json<PushRequest>,

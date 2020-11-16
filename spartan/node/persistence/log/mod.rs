@@ -23,12 +23,21 @@ use super::PersistenceError;
 #[cfg(feature = "replication")]
 use crate::node::persistence::snapshot::REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE;
 
+/// Queue log file name
 const QUEUE_FILE: &str = "queue_log";
 
+/// Queue compacted log file name
 const QUEUE_COMPACTION_FILE: &str = "queue_compacted_log";
 
 pub struct Log<'a> {
+    /// Persistence config
     config: &'a PersistenceConfig<'a>,
+
+    /// Internal instance of [`Snapshot`] driver
+    ///
+    /// Due to limitations of current replication storage implementation
+    /// it is impossible to rely only on [`Log`] driver to save event log,
+    /// so [`Snapshot`] driver is being used to fill the gap.
     snapshot: OnceCell<Snapshot<'a>>,
 }
 
@@ -40,6 +49,18 @@ impl<'a> Log<'a> {
         }
     }
 
+    /// Make log entry from serializable source
+    ///
+    /// Returns bytes buffer, filled with header (currently only with entry size) and serialized entry, without any offset between each other.
+    /// ```
+    /// +---------+
+    /// |Entry len|
+    /// +---------+
+    /// |         |
+    /// |  Entry  |
+    /// |         |
+    /// +---------+
+    /// ```
     fn make_log_entry<S>(source: &S) -> Result<Vec<u8>, PersistenceError>
     where
         S: Serialize,
@@ -62,6 +83,7 @@ impl<'a> Log<'a> {
         Ok(buf)
     }
 
+    /// Get buffer of log entries from byte source
     async fn parse_log<T, S>(source: &mut S) -> Result<Vec<T>, PersistenceError>
     where
         S: AsyncSeek + AsyncRead + Unpin,
@@ -107,6 +129,9 @@ impl<'a> Log<'a> {
         Ok(entries)
     }
 
+    /// Appends [make_log_entry] result of `source` to `destination`
+    ///
+    /// [make_log_entry]: Log::make_log_entry
     async fn append<P, S>(&self, source: &S, destination: P) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
@@ -130,6 +155,9 @@ impl<'a> Log<'a> {
             .map_err(PersistenceError::from)
     }
 
+    /// Get log entries from `source` log file using [parse_log]
+    ///
+    /// [parse_log]: Log::parse_log
     pub async fn load<S, P>(&self, source: P) -> Result<Vec<S>, PersistenceError>
     where
         S: DeserializeOwned,

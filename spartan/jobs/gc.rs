@@ -33,7 +33,7 @@ async fn execute_gc(manager: &Manager<'_>) -> Result<(), PersistenceError> {
         .await
 }
 
-/// GC handler
+/// GC job spawner
 ///
 /// Periodically iterates over all databases in node, and executes GC on them.
 pub async fn spawn_gc(manager: &Manager<'_>) {

@@ -2,7 +2,12 @@ use crate::node::Manager;
 use actix_rt::time::delay_for;
 use std::time::Duration;
 
-/// Persistence job handler, that persists all databases from manager
+/// Persistence job spawner
+///
+/// Persists whole queue when [Snapshot] driver is enabled, and only replication storage if [Log] driver is being used
+///
+/// [Snapshot]: crate::node::persistence::snapshot::Snapshot
+/// [Log]: crate::node::persistence::log::Log
 pub async fn spawn_persistence(manager: &Manager<'_>) {
     debug!("Spawning persistence job.");
 

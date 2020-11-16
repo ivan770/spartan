@@ -33,7 +33,11 @@ impl<'a> Snapshot<'a> {
         Snapshot { config }
     }
 
-    pub(crate) async fn persist<S, P>(&self, source: &S, destination: P) -> Result<(), PersistenceError>
+    pub(crate) async fn persist<S, P>(
+        &self,
+        source: &S,
+        destination: P,
+    ) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
         S: Serialize,

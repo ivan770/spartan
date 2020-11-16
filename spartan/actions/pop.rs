@@ -11,7 +11,9 @@ use crate::node::event::Event;
 /// Pop message from queue.
 ///
 /// Doesn't require any input, returns reserved message.
+///
 /// After reserving message, you either need to return it to queue, or delete it.
+///
 /// Messages that are not returned after timeout are deleted by GC.
 pub async fn pop(
     manager: Data<Manager<'_>>,

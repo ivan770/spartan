@@ -11,6 +11,7 @@ use crate::node::event::Event;
 /// Requeues message back to queue.
 ///
 /// Requires ID of message being requeued, returns empty response.
+///
 /// Message try counter is incremented.
 pub async fn requeue(
     request: Json<RequeueRequest>,

@@ -38,6 +38,7 @@ pub struct PersistenceConfig<'a> {
     pub path: Cow<'a, Path>,
 
     /// Amount of seconds between snapshot creation
+    ///
     /// When using log config, this value defines interval for replication log snapshots
     #[serde(default = "default_snapshot_timer")]
     pub timer: u64,

@@ -42,6 +42,7 @@ where
 #[derive(Serialize, Deserialize)]
 pub struct Config<'a> {
     /// Max body size in bytes
+    ///
     /// Default value is defined in Actix source code
     pub body_size: Option<usize>,
 

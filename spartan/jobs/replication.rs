@@ -59,6 +59,7 @@ async fn start_replication(
     }
 }
 
+/// Spawn replication job
 pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
     debug!("Spawning replication job.");
 

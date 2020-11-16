@@ -5,15 +5,25 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+/// Wildcard queue name. Used in `queues` to represent all available queues in node
 const WILDCARD_QUEUE: &str = "*";
 
+/// Single access key
+///
+/// Contains key value, and queues that are protected with it
+///
+/// For usage with HashMap/HashSet implements [`Borrow<str>`] and [`Hash`]
 #[derive(Serialize, Deserialize, Eq, Clone)]
 pub struct Key {
+    /// Key value. Passed in request as Bearer token.
     pub key: Box<str>,
+
+    /// Set of queues, that key has access to
     pub queues: HashSet<Box<str>>,
 }
 
 impl Key {
+    /// Check if user of key has access to provided queue, or if key contains wildcard queue access.
     pub fn has_queue(&self, queue: &str) -> bool {
         self.queues.contains(WILDCARD_QUEUE) || self.queues.contains(queue)
     }

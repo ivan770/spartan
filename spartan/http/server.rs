@@ -15,6 +15,7 @@ pub enum ServerError {
     ServerError(IoError),
 }
 
+/// Start HTTP server with shared manager
 pub async fn start_http_server(
     host: SocketAddr,
     manager: Data<Manager<'static>>,

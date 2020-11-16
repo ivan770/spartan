@@ -60,11 +60,13 @@ impl Server {
         self.loaded_config.as_ref()
     }
 
+    /// Get configuration file path
     #[cfg(feature = "init")]
     pub fn config_path(&self) -> &Path {
         self.config.as_path()
     }
 
+    /// Get CLI command, that started server
     pub fn command(&self) -> &Command {
         &self.command
     }
