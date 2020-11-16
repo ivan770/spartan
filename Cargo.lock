@@ -1547,7 +1547,7 @@ dependencies = [
 
 [[package]]
 name = "spartan"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "actix-rt",
  "actix-service",

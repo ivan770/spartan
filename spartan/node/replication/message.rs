@@ -10,7 +10,7 @@ pub enum PrimaryRequest<'a> {
     AskIndex,
     SendRange(
         Cow<'a, str>,
-        Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event<'static>>)]>,
+        Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event<'a>>)]>,
     ),
 }
 

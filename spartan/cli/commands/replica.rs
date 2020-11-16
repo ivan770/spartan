@@ -1,6 +1,5 @@
 use crate::{
     cli::Server,
-    config::replication::Replication,
     jobs::{exit::spawn_ctrlc_handler, persistence::spawn_persistence},
     node::persistence::PersistenceError,
     node::{
@@ -50,14 +49,13 @@ impl ReplicaCommand {
             )
             .await;
 
-        let config = match config
+        let config = config
             .replication
             .as_ref()
             .ok_or(ReplicaError::ReplicaConfigNotFound)?
-        {
-            Replication::Replica(config) => Ok(config),
-            _ => Err(ReplicaError::ReplicaConfigNotFound),
-        }?;
+            .replica
+            .as_ref()
+            .ok_or(ReplicaError::ReplicaConfigNotFound)?;
 
         let mut socket = TcpListener::bind(config.host)
             .await
