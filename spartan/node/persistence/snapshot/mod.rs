@@ -33,7 +33,7 @@ impl<'a> Snapshot<'a> {
         Snapshot { config }
     }
 
-    pub async fn persist<S, P>(&self, source: &S, destination: P) -> Result<(), PersistenceError>
+    pub(crate) async fn persist<S, P>(&self, source: &S, destination: P) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
         S: Serialize,
@@ -54,7 +54,7 @@ impl<'a> Snapshot<'a> {
         .map_err(PersistenceError::from)
     }
 
-    pub async fn load<S, P>(&self, source: P) -> Result<S, PersistenceError>
+    pub(crate) async fn load<S, P>(&self, source: P) -> Result<S, PersistenceError>
     where
         P: AsRef<Path>,
         S: DeserializeOwned,
