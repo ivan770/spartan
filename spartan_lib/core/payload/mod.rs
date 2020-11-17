@@ -1,7 +1,7 @@
-pub mod dispatchable;
-pub mod identifiable;
-pub mod sortable;
-pub mod status;
+mod dispatchable;
+mod identifiable;
+mod sortable;
+mod status;
 
 pub use dispatchable::Dispatchable;
 pub use identifiable::Identifiable;

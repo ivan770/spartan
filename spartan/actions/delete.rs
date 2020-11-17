@@ -7,7 +7,7 @@ use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
 };
-use spartan_lib::core::dispatcher::simple::PositionBasedDelete;
+use spartan_lib::core::dispatcher::PositionBasedDelete;
 
 use crate::node::event::Event;
 

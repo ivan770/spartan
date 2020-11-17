@@ -263,8 +263,8 @@ mod tests {
 
     use maybe_owned::MaybeOwned;
     use spartan_lib::core::{
-        db::tree::TreeDatabase, dispatcher::StatusAwareDispatcher,
-        message::builder::MessageBuilder, message::Message, payload::Dispatchable,
+        db::TreeDatabase, dispatcher::StatusAwareDispatcher, message::builder::MessageBuilder,
+        message::Message, payload::Dispatchable,
     };
     use tempfile::{NamedTempFile, TempDir};
 

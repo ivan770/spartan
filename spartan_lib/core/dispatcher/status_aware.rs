@@ -15,7 +15,7 @@ where
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::{SimpleDispatcher, StatusAwareDispatcher};
-    /// use spartan_lib::core::db::tree::TreeDatabase;
+    /// use spartan_lib::core::db::TreeDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Identifiable;
     ///
@@ -34,7 +34,7 @@ where
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::{SimpleDispatcher, StatusAwareDispatcher};
-    /// use spartan_lib::core::db::tree::TreeDatabase;
+    /// use spartan_lib::core::db::TreeDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Identifiable;
     ///

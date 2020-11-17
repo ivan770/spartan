@@ -3,7 +3,7 @@ use actix_web::{
     web::{Data, Path},
     HttpResponse, Result,
 };
-use spartan_lib::core::dispatcher::simple::SimpleDispatcher;
+use spartan_lib::core::dispatcher::SimpleDispatcher;
 
 /// Get queue size.
 ///
