@@ -2,6 +2,14 @@ use super::StatusAwareDatabase;
 use crate::core::{db::Database, payload::Identifiable};
 use serde::{Deserialize, Serialize};
 
+/// [`Vec`]-based database
+///
+/// Internally contains only [`Vec`] of messages,
+/// so lookups based on query may be slower, than with [TreeDatabase]
+///
+/// Currently used only for testing purposes due to simple implementation details
+///
+/// [TreeDatabase]: super::TreeDatabase
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VecDatabase<M> {
     db: Vec<M>,
@@ -182,7 +190,7 @@ mod tests {
 #[cfg(test)]
 mod dispatcher_tests {
     use super::VecDatabase;
-    use crate::core::dispatcher::simple::Delete;
+    use crate::core::dispatcher::Delete;
 
     crate::test_dispatcher!(VecDatabase);
     crate::test_status_dispatcher!(VecDatabase);

@@ -1,8 +1,11 @@
 /// `TreeDatabase`
-pub mod tree;
+mod tree;
 
 /// `VecDatabase`
-pub mod vec;
+mod vec;
+
+pub use tree::TreeDatabase;
+pub use vec::VecDatabase;
 
 /// Interface for working with databases
 pub trait Database<M>: Default {
@@ -12,7 +15,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     ///
     /// let mut db = VecDatabase::default();
@@ -26,7 +29,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Dispatchable;
     ///
@@ -45,7 +48,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Dispatchable;
     ///
@@ -64,7 +67,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::{Dispatchable, Status};
     ///
@@ -85,7 +88,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Dispatchable;
     ///
@@ -104,7 +107,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     ///
     /// let mut db = VecDatabase::default();
     ///
@@ -124,7 +127,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     ///
     /// let mut db = VecDatabase::default();
     ///
@@ -140,7 +143,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     ///
     /// let mut db = VecDatabase::default();
     ///
@@ -154,7 +157,7 @@ pub trait Database<M>: Default {
     ///
     /// ```
     /// use spartan_lib::core::db::Database;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     ///
     /// let mut db = VecDatabase::default();
     ///
@@ -177,7 +180,7 @@ pub trait StatusAwareDatabase<M>: Database<M> {
     ///
     /// ```
     /// use spartan_lib::core::db::{Database, StatusAwareDatabase};
-    /// use spartan_lib::core::db::tree::TreeDatabase;
+    /// use spartan_lib::core::db::TreeDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::{Dispatchable, Status};
     ///
@@ -200,7 +203,7 @@ pub trait StatusAwareDatabase<M>: Database<M> {
     ///
     /// ```
     /// use spartan_lib::core::db::{Database, StatusAwareDatabase};
-    /// use spartan_lib::core::db::tree::TreeDatabase;
+    /// use spartan_lib::core::db::TreeDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::{Dispatchable, Status, Identifiable};
     ///

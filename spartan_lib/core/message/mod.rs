@@ -10,6 +10,12 @@ use state::State;
 use time::Time;
 use uuid::Uuid;
 
+/// Default message implementation, with support of all [payload] traits
+///
+/// [`Sortable`] implementation is compatible with [TreeDatabase]
+///
+/// [payload]: crate::core::payload
+/// [TreeDatabase]: crate::core::db::TreeDatabase
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     id: Uuid,

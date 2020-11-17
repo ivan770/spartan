@@ -12,7 +12,7 @@ where
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::SimpleDispatcher;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     ///
     /// let mut db = VecDatabase::default();
@@ -26,7 +26,7 @@ where
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::SimpleDispatcher;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Identifiable;
     ///
@@ -43,7 +43,7 @@ where
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::SimpleDispatcher;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::{Identifiable, Status};
     /// use std::thread::sleep;
@@ -79,7 +79,7 @@ where
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::SimpleDispatcher;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     ///
     /// let mut db = VecDatabase::default();
@@ -97,7 +97,7 @@ where
     ///
     /// ```
     /// use spartan_lib::core::dispatcher::SimpleDispatcher;
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     ///
     /// let mut db = VecDatabase::default();
@@ -126,8 +126,8 @@ where
     /// Returns owned message if id is present in database
     ///
     /// ```
-    /// use spartan_lib::core::dispatcher::{SimpleDispatcher, simple::Delete};
-    /// use spartan_lib::core::db::vec::VecDatabase;
+    /// use spartan_lib::core::dispatcher::{SimpleDispatcher, Delete};
+    /// use spartan_lib::core::db::VecDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Identifiable;
     ///
@@ -146,6 +146,7 @@ where
 }
 
 /// Interface for deleting messages from queue, where database position key is the same, as message ID
+///
 /// It is preferable to use `PositionBasedDelete` instead of `Delete`
 pub trait PositionBasedDelete<M>: SimpleDispatcher<M>
 where
@@ -156,8 +157,8 @@ where
     /// Returns owned message if id is present in database
     ///
     /// ```
-    /// use spartan_lib::core::dispatcher::{SimpleDispatcher, simple::PositionBasedDelete};
-    /// use spartan_lib::core::db::tree::TreeDatabase;
+    /// use spartan_lib::core::dispatcher::{SimpleDispatcher, PositionBasedDelete};
+    /// use spartan_lib::core::db::TreeDatabase;
     /// use spartan_lib::core::message::builder::MessageBuilder;
     /// use spartan_lib::core::payload::Identifiable;
     ///

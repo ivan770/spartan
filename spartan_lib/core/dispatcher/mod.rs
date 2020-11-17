@@ -1,7 +1,7 @@
-pub mod simple;
-pub mod status_aware;
+mod simple;
+mod status_aware;
 
-pub use simple::SimpleDispatcher;
+pub use simple::{Delete, PositionBasedDelete, SimpleDispatcher};
 pub use status_aware::StatusAwareDispatcher;
 
 #[cfg(test)]

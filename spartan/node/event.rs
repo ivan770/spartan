@@ -1,7 +1,7 @@
 use maybe_owned::MaybeOwned;
 use serde::{Deserialize, Serialize};
 use spartan_lib::core::{
-    dispatcher::{simple::PositionBasedDelete, SimpleDispatcher, StatusAwareDispatcher},
+    dispatcher::{PositionBasedDelete, SimpleDispatcher, StatusAwareDispatcher},
     message::Message,
     payload::Identifiable,
 };

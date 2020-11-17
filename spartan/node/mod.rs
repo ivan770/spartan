@@ -18,7 +18,7 @@ pub use manager::Manager;
 pub use queue::Queue;
 
 use crate::config::Config;
-use spartan_lib::core::{db::tree::TreeDatabase, message::Message};
+use spartan_lib::core::{db::TreeDatabase, message::Message};
 use std::collections::{hash_map::RandomState, HashMap};
 
 #[cfg(feature = "replication")]

@@ -10,6 +10,17 @@ use std::hash::Hash;
 type MessageStore<M, S = RandomState> = HashMap<<M as Identifiable>::Id, (u64, M), S>;
 type Tree<M> = BTreeMap<(<M as Sortable>::Sort, u64), <M as Identifiable>::Id>;
 
+/// Tree-based database
+///
+/// Used by default server implementation.
+///
+/// Internally, contains message storage, and index for fast lookups,
+/// thus improving performance in comparison with [VecDatabase]
+///
+/// [`TreeDatabase`] heavily relies on correct `M` implementation of Sortable
+/// as only first element of index is used to check if there are any available messages in queue.
+///
+/// [VecDatabase]: super::VecDatabase
 #[derive(Serialize, Deserialize)]
 #[serde(bound = "M: Serialize + DeserializeOwned")]
 pub struct TreeDatabase<M>
@@ -281,7 +292,7 @@ mod tests {
 #[cfg(test)]
 mod dispatcher_tests {
     use super::TreeDatabase;
-    use crate::core::dispatcher::simple::PositionBasedDelete;
+    use crate::core::dispatcher::PositionBasedDelete;
 
     crate::test_dispatcher!(TreeDatabase);
     crate::test_status_dispatcher!(TreeDatabase);
