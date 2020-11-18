@@ -7,6 +7,7 @@ use spartan_lib::core::{
 };
 
 /// Database event
+///
 /// Only events that mutate database are present here
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(Debug))]
