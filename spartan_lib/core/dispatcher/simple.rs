@@ -117,6 +117,8 @@ where
 }
 
 /// Interface for deleting messages from queue, where database position key is not the same, as message ID
+///
+/// It is preferable to use [`PositionBasedDelete`] instead of [`Delete`]
 pub trait Delete<M>: SimpleDispatcher<M>
 where
     M: Dispatchable,
@@ -146,8 +148,6 @@ where
 }
 
 /// Interface for deleting messages from queue, where database position key is the same, as message ID
-///
-/// It is preferable to use `PositionBasedDelete` instead of `Delete`
 pub trait PositionBasedDelete<M>: SimpleDispatcher<M>
 where
     M: Dispatchable,
