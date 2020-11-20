@@ -88,8 +88,8 @@ impl<'a> Log<'a> {
     /// Get buffer of log entries from byte source
     async fn parse_log<T, S>(source: &mut S) -> Result<Vec<T>, PersistenceError>
     where
-        S: AsyncSeek + AsyncRead + Unpin,
         T: DeserializeOwned,
+        S: AsyncSeek + AsyncRead + Unpin,
     {
         let mut entries = Vec::new();
 
@@ -167,7 +167,7 @@ impl<'a> Log<'a> {
     /// Get log entries from `source` log file using [parse_log]
     ///
     /// [parse_log]: Log::parse_log
-    pub async fn load<S, P>(&self, source: P) -> Result<Vec<S>, PersistenceError>
+    async fn load<S, P>(&self, source: P) -> Result<Vec<S>, PersistenceError>
     where
         S: DeserializeOwned,
         P: AsRef<Path>,
@@ -185,6 +185,7 @@ impl<'a> Log<'a> {
         Self::parse_log(&mut file).await
     }
 
+    /// Append single event to `source` log file (usually queue name)
     pub async fn persist_event<P>(
         &self,
         event: &Event<'_>,
@@ -196,6 +197,9 @@ impl<'a> Log<'a> {
         self.append(event, source.as_ref().join(QUEUE_FILE)).await
     }
 
+    /// Restore database events from `source` log file (usually queue name)
+    ///
+    /// If specified in [`PersistenceConfig`], compaction will be executed after successful loading.
     pub async fn load_queue<P, DB>(&self, source: P) -> Result<Queue<DB>, PersistenceError>
     where
         P: AsRef<Path>,
@@ -263,6 +267,7 @@ impl<'a> Log<'a> {
         Ok(queue)
     }
 
+    /// Prune `queue` log file
     async fn prune<P>(&self, queue: P) -> Result<(), PersistenceError>
     where
         P: AsRef<Path>,
@@ -276,6 +281,7 @@ impl<'a> Log<'a> {
         remove_file(path).await.map_err(PersistenceError::from)
     }
 
+    /// Get shared [`Snapshot`] instance
     fn get_snapshot(&self) -> &Snapshot<'_> {
         self.snapshot.get_or_init(|| Snapshot::new(self.config))
     }

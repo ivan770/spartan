@@ -25,6 +25,7 @@ pub enum PersistMode {
 }
 
 pub struct Snapshot<'a> {
+    /// Persistence config
     config: &'a PersistenceConfig<'a>,
 }
 
@@ -33,14 +34,15 @@ impl<'a> Snapshot<'a> {
         Snapshot { config }
     }
 
+    /// Serialize `source` into `destination`.
     pub(crate) async fn persist<S, P>(
         &self,
         source: &S,
         destination: P,
     ) -> Result<(), PersistenceError>
     where
-        P: AsRef<Path>,
         S: Serialize,
+        P: AsRef<Path>,
     {
         let path = self.config.path.join(destination);
 
@@ -60,6 +62,7 @@ impl<'a> Snapshot<'a> {
         .map_err(PersistenceError::from)
     }
 
+    /// Load serialized database from `source`
     pub(crate) async fn load<S, P>(&self, source: P) -> Result<S, PersistenceError>
     where
         P: AsRef<Path>,
@@ -73,6 +76,11 @@ impl<'a> Snapshot<'a> {
             .map_err(PersistenceError::InvalidFileFormat)
     }
 
+    /// Persist queue with provided [`PersistMode`]
+    ///
+    /// Usually, when using this driver you may prefer [`PersistMode::Queue`],
+    /// but if your driver doesn't support replication storage serialization,
+    /// then choose [`PersistMode::Replication`]
     pub async fn persist_queue<P, DB>(
         &self,
         name: P,
@@ -100,6 +108,7 @@ impl<'a> Snapshot<'a> {
         Ok(())
     }
 
+    /// Deserialize queue from file
     pub async fn load_queue<P, DB>(&self, name: P) -> Result<Queue<DB>, PersistenceError>
     where
         P: AsRef<Path>,
