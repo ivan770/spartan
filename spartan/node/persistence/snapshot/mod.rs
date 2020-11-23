@@ -80,7 +80,7 @@ impl<'a> Snapshot<'a> {
     ///
     /// Usually, when using this driver you may prefer [`PersistMode::Queue`],
     /// but if your driver doesn't support replication storage serialization,
-    /// then choose [`PersistMode::Replication`]
+    /// then pair it with [`Snapshot`] and choose [`PersistMode::Replication`] mode
     pub async fn persist_queue<P, DB>(
         &self,
         name: P,
