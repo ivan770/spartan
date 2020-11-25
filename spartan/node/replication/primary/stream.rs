@@ -108,9 +108,9 @@ where
         let pool = pool
             .into_iter()
             .map(|stream| Stream(BincodeCodec::default().framed(stream)))
-            .collect::<Vec<_>>();
+            .collect::<Box<[_]>>();
 
-        StreamPool(pool.into_boxed_slice())
+        StreamPool(pool)
     }
 
     pub async fn ping(&mut self) -> PrimaryResult<()> {
