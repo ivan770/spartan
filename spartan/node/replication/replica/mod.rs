@@ -18,7 +18,7 @@ use actix_rt::time::delay_for;
 use error::{ReplicaError, ReplicaResult};
 use futures_util::{SinkExt, StreamExt};
 use maybe_owned::MaybeOwned;
-use std::{future::Future, time::Duration};
+use std::{borrow::Cow, future::Future, time::Duration};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::{Decoder, Framed};
 
@@ -92,7 +92,7 @@ where
 
 pub async fn accept_connection<'a>(
     request: PrimaryRequest<'static>,
-    manager: &Manager<'a>,
+    manager: &'a Manager<'a>,
 ) -> ReplicaRequest<'a> {
     match request {
         PrimaryRequest::Ping => ReplicaRequest::Pong,
@@ -111,7 +111,7 @@ pub async fn accept_connection<'a>(
 
                 debug!("Sending {} as confirmed index of {}", index, name);
 
-                indexes.push(((*name).to_string().into_boxed_str(), index));
+                indexes.push((Cow::Borrowed(*name), index));
             }
 
             ReplicaRequest::RecvIndex(indexes.into_boxed_slice())
@@ -192,10 +192,7 @@ mod tests {
                 index.sort();
                 assert_eq!(
                     index,
-                    Vec::from([
-                        (String::from("test").into_boxed_str(), 1),
-                        (String::from("test_2").into_boxed_str(), 1),
-                    ])
+                    Vec::from([(Cow::Borrowed("test"), 1), (Cow::Borrowed("test_2"), 1),])
                 );
             }
             _ => panic!("Invalid response"),
@@ -226,10 +223,7 @@ mod tests {
                 index.sort();
                 assert_eq!(
                     index,
-                    Vec::from([
-                        (String::from("test").into_boxed_str(), 3),
-                        (String::from("test_2").into_boxed_str(), 1),
-                    ])
+                    Vec::from([(Cow::Borrowed("test"), 3), (Cow::Borrowed("test_2"), 1),])
                 );
             }
             _ => panic!("Invalid response"),

@@ -5,19 +5,22 @@ use super::{
 use crate::node::Manager;
 use futures_util::{stream::iter, StreamExt, TryStreamExt};
 use itertools::Itertools;
-use std::hash::{Hash, Hasher};
+use std::{
+    borrow::Cow,
+    hash::{Hash, Hasher},
+};
 use tokio::io::{AsyncRead, AsyncWrite};
 
 pub struct RecvIndex<'a, T> {
     stream: &'a mut Stream<T>,
-    indexes: Box<[(Box<str>, u64)]>,
+    indexes: Box<[(Cow<'static, str>, u64)]>,
 }
 
 impl<'a, T> RecvIndex<'a, T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
-    pub fn new(stream: &'a mut Stream<T>, indexes: Box<[(Box<str>, u64)]>) -> Self {
+    pub fn new(stream: &'a mut Stream<T>, indexes: Box<[(Cow<'static, str>, u64)]>) -> Self {
         RecvIndex { stream, indexes }
     }
 

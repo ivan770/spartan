@@ -18,7 +18,7 @@ pub enum PrimaryRequest<'a> {
 #[cfg_attr(test, derive(PartialEq, Debug))]
 pub enum ReplicaRequest<'a> {
     Pong,
-    RecvIndex(Box<[(Box<str>, u64)]>),
+    RecvIndex(Box<[(Cow<'a, str>, u64)]>),
     RecvRange,
     QueueNotFound(Cow<'a, str>),
 }

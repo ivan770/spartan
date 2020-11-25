@@ -30,7 +30,7 @@ where
     pub async fn exchange(
         &mut self,
         message: PrimaryRequest<'_>,
-    ) -> PrimaryResult<ReplicaRequest<'_>> {
+    ) -> PrimaryResult<ReplicaRequest<'static>> {
         self.0
             .send(Request::Primary(message))
             .await
@@ -141,6 +141,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::borrow::Cow;
+
     use super::StreamPool;
     use crate::{
         node::replication::message::{PrimaryRequest, ReplicaRequest, Request},
@@ -171,7 +173,7 @@ mod tests {
         let mut buf = BytesMut::default();
         let stream = vec![TestStream::from_output(
             Request::Replica(ReplicaRequest::RecvIndex(
-                vec![(String::from("test").into_boxed_str(), 123)].into_boxed_slice(),
+                vec![(Cow::Borrowed("test"), 123)].into_boxed_slice(),
             )),
             &mut BincodeCodec,
         )
