@@ -1,4 +1,4 @@
-use std::{io::SeekFrom, mem::size_of, path::Path, path::PathBuf};
+use std::{convert::TryInto, io::SeekFrom, mem::size_of, path::Path, path::PathBuf};
 
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
@@ -69,9 +69,8 @@ impl<'a> Log<'a> {
 
         debug!("Log entry size: {}", size);
 
-        #[allow(clippy::cast_possible_truncation)]
-        // We don't provide support for 32-bit platforms, so it's safe to say that size won't be truncated
-        let capacity = size_of::<u64>() + size as usize;
+        let capacity = size_of::<u64>()
+            + TryInto::<usize>::try_into(size).map_err(PersistenceError::LogEntryTooBig)?;
 
         let mut buf = Vec::with_capacity(capacity);
 
@@ -117,9 +116,7 @@ impl<'a> Log<'a> {
 
             debug!("Log entry size: {}", size);
 
-            #[allow(clippy::cast_possible_truncation)]
-            // We don't provide support for 32-bit platforms, so it's safe to say that size won't be truncated
-            buf.reserve(size as usize);
+            buf.reserve(size.try_into().map_err(PersistenceError::LogEntryTooBig)?);
 
             source
                 .take(size)

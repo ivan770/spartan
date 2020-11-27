@@ -11,7 +11,10 @@ pub mod log;
 /// Best performance, yet worse reliability.
 pub mod snapshot;
 
-use std::io::{Error as IoError, ErrorKind};
+use std::{
+    io::{Error as IoError, ErrorKind},
+    num::TryFromIntError,
+};
 
 use actix_web::ResponseError;
 use bincode::Error as BincodeError;
@@ -24,6 +27,8 @@ pub enum PersistenceError {
     InvalidFileFormat(BincodeError),
     #[error("Unable to serialize database: {0}")]
     SerializationError(BincodeError),
+    #[error("Log entry size is too big for current platform")]
+    LogEntryTooBig(TryFromIntError),
     #[error("Unable to read database file: {0}")]
     FileOpenError(IoError),
     #[error("IO error: {0}")]
