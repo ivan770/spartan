@@ -20,8 +20,8 @@ const fn default_gc_timer() -> u64 {
     300
 }
 
-fn default_persistence() -> Option<PersistenceConfig<'static>> {
-    Some(PersistenceConfig::default())
+fn default_persistence() -> PersistenceConfig<'static> {
+    PersistenceConfig::default()
 }
 
 fn serialize_persistence<S>(
@@ -34,7 +34,7 @@ where
     if let Some(config) = value.as_ref() {
         config.serialize(serializer)
     } else {
-        PersistenceConfig::default().serialize(serializer)
+        default_persistence().serialize(serializer)
     }
 }
 
@@ -78,7 +78,7 @@ impl Default for Config<'_> {
             encryption_key: None,
             access_keys: None,
             replication: None,
-            persistence: default_persistence(),
+            persistence: Some(default_persistence()),
         }
     }
 }
@@ -96,7 +96,7 @@ impl Default for Config<'_> {
             encryption_key: None,
             access_keys: None,
             replication: None,
-            persistence: default_persistence(),
+            persistence: Some(default_persistence()),
         }
     }
 }
