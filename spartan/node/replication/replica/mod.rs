@@ -111,7 +111,7 @@ pub async fn accept_connection<'a>(
 
                 debug!("Sending {} as confirmed index of {}", index, name);
 
-                indexes.push((Cow::Borrowed(*name), index));
+                indexes.push((Cow::Borrowed(name), index));
             }
 
             ReplicaRequest::RecvIndex(indexes.into_boxed_slice())

@@ -25,17 +25,17 @@ impl ResponseError for ManagerError {
 }
 
 /// Node manager
-pub struct Manager<'a> {
+pub struct Manager<'c> {
     /// Server config
-    pub config: &'a Config<'a>,
+    pub config: &'c Config<'c>,
 
     /// Node
-    pub node: Node<'a>,
+    pub node: Node<'c>,
 }
 
-impl<'a> Manager<'a> {
+impl<'c> Manager<'c> {
     /// Create new manager without node
-    pub fn new(config: &'a Config) -> Manager<'a> {
+    pub fn new(config: &'c Config) -> Manager<'c> {
         let mut node = Node::default();
         node.load_from_config(config);
         Manager { config, node }

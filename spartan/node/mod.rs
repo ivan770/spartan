@@ -28,35 +28,35 @@ pub type DB = Queue<TreeDatabase<Message>>;
 
 /// Key-value node implementation
 #[derive(Default)]
-pub struct Node<'a, S = RandomState> {
+pub struct Node<'c, S = RandomState> {
     /// Node database
-    db: HashMap<&'a str, DB, S>,
+    db: HashMap<&'c str, DB, S>,
 }
 
-impl<'a> Node<'a> {
+impl<'c> Node<'c> {
     /// Get node queue entry
     pub fn queue(&self, name: &str) -> Option<&DB> {
         self.db.get(name)
     }
 
     /// Add default queue entry to node
-    pub fn add(&mut self, name: &'a str) {
+    pub fn add(&mut self, name: &'c str) {
         self.add_db(name, DB::default())
     }
 
     /// Add queue entry to node
-    pub fn add_db(&mut self, name: &'a str, db: DB) {
+    pub fn add_db(&mut self, name: &'c str, db: DB) {
         info!("Initializing queue \"{}\"", name);
         self.db.insert(name, db);
     }
 
     /// Iterate over queues in Node
-    pub fn iter(&'a self) -> impl Iterator<Item = (&&'a str, &'a DB)> {
-        self.db.iter()
+    pub fn iter(&'c self) -> impl Iterator<Item = (&'c str, &'c DB)> {
+        self.db.iter().map(|(name, db)| (*name, db))
     }
 
     /// Load queues from config
-    pub fn load_from_config(&mut self, config: &'a Config) {
+    pub fn load_from_config(&mut self, config: &'c Config) {
         config.queues.iter().for_each(|queue| self.add(queue));
     }
 
