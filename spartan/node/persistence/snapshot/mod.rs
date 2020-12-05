@@ -24,13 +24,13 @@ pub enum PersistMode {
     Replication,
 }
 
-pub struct Snapshot<'a> {
+pub struct Snapshot<'c> {
     /// Persistence config
-    config: &'a PersistenceConfig<'a>,
+    config: &'c PersistenceConfig<'c>,
 }
 
-impl<'a> Snapshot<'a> {
-    pub fn new(config: &'a PersistenceConfig) -> Self {
+impl<'c> Snapshot<'c> {
+    pub fn new(config: &'c PersistenceConfig) -> Self {
         Snapshot { config }
     }
 

@@ -11,8 +11,8 @@ use spartan_lib::core::{
 /// Only events that mutate database are present here
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(Debug))]
-pub enum Event<'a> {
-    Push(MaybeOwned<'a, Message>),
+pub enum Event<'msg> {
+    Push(MaybeOwned<'msg, Message>),
     Pop,
     Requeue(<Message as Identifiable>::Id),
     Delete(<Message as Identifiable>::Id),
@@ -21,7 +21,10 @@ pub enum Event<'a> {
 }
 
 #[cfg(feature = "replication")]
-impl<'a> Event<'a> {
+impl<'msg> Event<'msg> {
+    /// Make `'static` [`Event`] by cloning message if needed
+    ///
+    /// If [`Event`] is of any variant but [`Event::Push`], then does nothing
     pub(super) fn into_owned(self) -> Event<'static> {
         match self {
             Event::Push(message) => Event::Push(MaybeOwned::Owned(message.into_owned())),

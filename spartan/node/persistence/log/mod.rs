@@ -29,20 +29,20 @@ const QUEUE_FILE: &str = "queue_log";
 /// Queue compacted log file name
 const QUEUE_COMPACTION_FILE: &str = "queue_compacted_log";
 
-pub struct Log<'a> {
+pub struct Log<'c> {
     /// Persistence config
-    config: &'a PersistenceConfig<'a>,
+    config: &'c PersistenceConfig<'c>,
 
     /// Internal instance of [`Snapshot`] driver
     ///
     /// Due to limitations of current replication storage implementation
     /// it is impossible to rely only on [`Log`] driver to save event log,
     /// so [`Snapshot`] driver is being used to fill the gap.
-    snapshot: OnceCell<Snapshot<'a>>,
+    snapshot: OnceCell<Snapshot<'c>>,
 }
 
-impl<'a> Log<'a> {
-    pub fn new(config: &'a PersistenceConfig) -> Self {
+impl<'c> Log<'c> {
+    pub fn new(config: &'c PersistenceConfig) -> Self {
         Log {
             config,
             snapshot: OnceCell::new(),
