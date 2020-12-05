@@ -36,10 +36,12 @@ pub(crate) struct Time {
 
 impl Time {
     pub(crate) fn new(offset: i32, delay: Option<u32>, timeout: u32) -> Time {
+        let timestamp = Self::get_offset_timestamp(offset);
+
         Time {
             offset,
-            timestamp: Self::get_offset_timestamp(offset),
-            delay: Self::convert_delay(delay, offset),
+            timestamp,
+            delay: Self::convert_delay(delay, timestamp),
             timeout: Timeout::new(timeout),
         }
     }
@@ -50,7 +52,10 @@ impl Time {
     }
 
     pub(crate) fn get_raw_delay(&self) -> Option<i64> {
-        self.delay
+        // Previous version of get_raw_delay was without this map,
+        // resulting in incorrect timezone handling, and possibly even
+        // damaging database indexes (such as TreeDatabase index)
+        self.delay.map(|delay| delay - i64::from(self.offset))
     }
 
     pub(crate) fn obtain(&mut self) {
@@ -61,8 +66,8 @@ impl Time {
         self.timeout.expired(self.get_timestamp())
     }
 
-    fn convert_delay(seconds: Option<u32>, offset: i32) -> Option<i64> {
-        Some(Self::get_offset_timestamp(offset) + i64::from(seconds?))
+    fn convert_delay(seconds: Option<u32>, timestamp: i64) -> Option<i64> {
+        Some(timestamp + i64::from(seconds?))
     }
 
     fn get_timestamp(&self) -> i64 {
@@ -100,5 +105,14 @@ mod tests {
         assert!(!time.check_delay());
         sleep(Duration::from_secs(3));
         assert!(time.check_delay());
+    }
+
+    // This test covers 'fast index lookup' bug, that came in version 0.6
+    #[test]
+    fn test_delay_compare() {
+        let time1 = Time::new(0, Some(10), 0);
+        let time2 = Time::new(10, Some(2), 0);
+
+        assert!(time1.get_raw_delay() > time2.get_raw_delay());
     }
 }
