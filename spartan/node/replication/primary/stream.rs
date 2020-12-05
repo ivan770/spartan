@@ -29,7 +29,7 @@ where
 {
     pub async fn exchange(
         &mut self,
-        message: PrimaryRequest<'_>,
+        message: PrimaryRequest<'_, '_>,
     ) -> PrimaryResult<ReplicaRequest<'static>> {
         self.0
             .send(Request::Primary(message))

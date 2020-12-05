@@ -20,8 +20,7 @@ where
 }
 
 impl Decoder for BincodeCodec {
-    // GAT's required to have generic impl
-    type Item = Request<'static>;
+    type Item = Request<'static, 'static>;
 
     type Error = Error;
 

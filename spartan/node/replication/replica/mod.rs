@@ -42,7 +42,7 @@ where
 
     pub async fn exchange<F, Fut>(&mut self, f: F)
     where
-        F: Fn(PrimaryRequest<'static>, &'a Manager<'a>) -> Fut + Copy,
+        F: Fn(PrimaryRequest<'static, 'static>, &'a Manager<'a>) -> Fut + Copy,
         Fut: Future<Output = ReplicaRequest<'a>>,
     {
         let timer = Duration::from_secs(self.config.try_timer);
@@ -63,7 +63,7 @@ where
 
     async fn process<F, Fut>(&mut self, f: F) -> ReplicaResult<()>
     where
-        F: Fn(PrimaryRequest<'static>, &'a Manager<'a>) -> Fut,
+        F: Fn(PrimaryRequest<'static, 'static>, &'a Manager<'a>) -> Fut,
         Fut: Future<Output = ReplicaRequest<'a>>,
     {
         let buf = match self.socket.next().await {
@@ -91,7 +91,7 @@ where
 }
 
 pub async fn accept_connection<'a>(
-    request: PrimaryRequest<'static>,
+    request: PrimaryRequest<'static, 'static>,
     manager: &'a Manager<'a>,
 ) -> ReplicaRequest<'a> {
     match request {
@@ -293,7 +293,7 @@ mod tests {
         );
     }
 
-    async fn process<'a>(req: PrimaryRequest<'static>, _: &Manager<'a>) -> ReplicaRequest<'a> {
+    async fn process<'a>(req: PrimaryRequest<'static, 'static>, _: &Manager<'a>) -> ReplicaRequest<'a> {
         assert_eq!(req, PrimaryRequest::Ping);
         ReplicaRequest::Pong
     }

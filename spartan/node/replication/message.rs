@@ -5,40 +5,40 @@ use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq, Debug))]
-pub enum PrimaryRequest<'a> {
+pub enum PrimaryRequest<'c, 'r> {
     Ping,
     AskIndex,
     SendRange(
-        Cow<'a, str>,
-        Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event<'a>>)]>,
+        Cow<'c, str>,
+        Box<[(MaybeOwned<'r, u64>, MaybeOwned<'r, Event<'r>>)]>,
     ),
 }
 
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq, Debug))]
-pub enum ReplicaRequest<'a> {
+pub enum ReplicaRequest<'c> {
     Pong,
-    RecvIndex(Box<[(Cow<'a, str>, u64)]>),
+    RecvIndex(Box<[(Cow<'c, str>, u64)]>),
     RecvRange,
-    QueueNotFound(Cow<'a, str>),
+    QueueNotFound(Cow<'c, str>),
 }
 
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq, Debug))]
-pub enum Request<'a> {
-    Primary(PrimaryRequest<'a>),
-    Replica(ReplicaRequest<'a>),
+pub enum Request<'c, 'r> {
+    Primary(PrimaryRequest<'c, 'r>),
+    Replica(ReplicaRequest<'c>),
 }
 
-impl<'a> Request<'a> {
-    pub fn get_primary(self) -> Option<PrimaryRequest<'a>> {
+impl<'c, 'r> Request<'c, 'r> {
+    pub fn get_primary(self) -> Option<PrimaryRequest<'c, 'r>> {
         match self {
             Request::Primary(r) => Some(r),
             Request::Replica(_) => None,
         }
     }
 
-    pub fn get_replica(self) -> Option<ReplicaRequest<'a>> {
+    pub fn get_replica(self) -> Option<ReplicaRequest<'c>> {
         match self {
             Request::Replica(r) => Some(r),
             Request::Primary(_) => None,
