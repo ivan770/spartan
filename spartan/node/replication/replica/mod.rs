@@ -22,17 +22,17 @@ use std::{borrow::Cow, future::Future, time::Duration};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::{Decoder, Framed};
 
-pub struct ReplicaSocket<'a, T> {
-    manager: &'a Manager<'a>,
-    config: &'a Replica,
+pub struct ReplicaSocket<'m, 'c, T> {
+    manager: &'m Manager<'c>,
+    config: &'c Replica,
     socket: Framed<T, BincodeCodec>,
 }
 
-impl<'a, T> ReplicaSocket<'a, T>
+impl<'m, 'c, T> ReplicaSocket<'m, 'c, T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
-    pub fn new(manager: &'a Manager<'a>, config: &'a Replica, socket: T) -> Self {
+    pub fn new(manager: &'m Manager<'c>, config: &'c Replica, socket: T) -> Self {
         ReplicaSocket {
             manager,
             config,
@@ -42,8 +42,8 @@ where
 
     pub async fn exchange<F, Fut>(&mut self, f: F)
     where
-        F: Fn(PrimaryRequest<'static, 'static>, &'a Manager<'a>) -> Fut + Copy,
-        Fut: Future<Output = ReplicaRequest<'a>>,
+        F: Fn(PrimaryRequest<'static, 'static>, &'m Manager<'c>) -> Fut + Copy,
+        Fut: Future<Output = ReplicaRequest<'c>>,
     {
         let timer = Duration::from_secs(self.config.try_timer);
 
@@ -63,8 +63,8 @@ where
 
     async fn process<F, Fut>(&mut self, f: F) -> ReplicaResult<()>
     where
-        F: Fn(PrimaryRequest<'static, 'static>, &'a Manager<'a>) -> Fut,
-        Fut: Future<Output = ReplicaRequest<'a>>,
+        F: Fn(PrimaryRequest<'static, 'static>, &'m Manager<'c>) -> Fut,
+        Fut: Future<Output = ReplicaRequest<'c>>,
     {
         let buf = match self.socket.next().await {
             Some(r) => r.map_err(ReplicaError::CodecError)?,
@@ -90,10 +90,10 @@ where
     }
 }
 
-pub async fn accept_connection<'a>(
+pub async fn accept_connection<'m, 'c>(
     request: PrimaryRequest<'static, 'static>,
-    manager: &'a Manager<'a>,
-) -> ReplicaRequest<'a> {
+    manager: &'m Manager<'c>,
+) -> ReplicaRequest<'m> {
     match request {
         PrimaryRequest::Ping => ReplicaRequest::Pong,
         PrimaryRequest::AskIndex => {
@@ -293,7 +293,10 @@ mod tests {
         );
     }
 
-    async fn process<'a>(req: PrimaryRequest<'static, 'static>, _: &Manager<'a>) -> ReplicaRequest<'a> {
+    async fn process<'a>(
+        req: PrimaryRequest<'static, 'static>,
+        _: &Manager<'a>,
+    ) -> ReplicaRequest<'a> {
         assert_eq!(req, PrimaryRequest::Ping);
         ReplicaRequest::Pong
     }

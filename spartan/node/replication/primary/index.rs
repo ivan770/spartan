@@ -11,16 +11,16 @@ use std::{
 };
 use tokio::io::{AsyncRead, AsyncWrite};
 
-pub struct RecvIndex<'a, T> {
-    stream: &'a mut Stream<T>,
+pub struct RecvIndex<'s, T> {
+    stream: &'s mut Stream<T>,
     indexes: Box<[(Cow<'static, str>, u64)]>,
 }
 
-impl<'a, T> RecvIndex<'a, T>
+impl<'s, T> RecvIndex<'s, T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
-    pub fn new(stream: &'a mut Stream<T>, indexes: Box<[(Cow<'static, str>, u64)]>) -> Self {
+    pub fn new(stream: &'s mut Stream<T>, indexes: Box<[(Cow<'static, str>, u64)]>) -> Self {
         RecvIndex { stream, indexes }
     }
 
@@ -46,11 +46,11 @@ where
     }
 }
 
-pub struct BatchAskIndex<'a, T> {
-    batch: Vec<RecvIndex<'a, T>>,
+pub struct BatchAskIndex<'s, T> {
+    batch: Vec<RecvIndex<'s, T>>,
 }
 
-impl<'a, T> BatchAskIndex<'a, T>
+impl<'s, T> BatchAskIndex<'s, T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
@@ -60,11 +60,11 @@ where
         }
     }
 
-    pub fn push(&mut self, index: RecvIndex<'a, T>) {
+    pub fn push(&mut self, index: RecvIndex<'s, T>) {
         self.batch.push(index);
     }
 
-    pub async fn sync(mut self, manager: &Manager<'_>) -> PrimaryResult<Sync<'a, T>> {
+    pub async fn sync(mut self, manager: &Manager<'_>) -> PrimaryResult<Sync<'s, T>> {
         debug!("Starting event slice sync.");
 
         iter(self.batch.iter_mut())
@@ -76,12 +76,12 @@ where
     }
 }
 
-pub struct Sync<'a, T> {
-    batch_ask_index: BatchAskIndex<'a, T>,
+pub struct Sync<'s, T> {
+    batch_ask_index: BatchAskIndex<'s, T>,
 }
 
-impl<'a, T> Sync<'a, T> {
-    fn new(batch_ask_index: BatchAskIndex<'a, T>) -> Self {
+impl<'s, T> Sync<'s, T> {
+    fn new(batch_ask_index: BatchAskIndex<'s, T>) -> Self {
         Sync { batch_ask_index }
     }
 
@@ -106,7 +106,7 @@ impl<'a, T> Sync<'a, T> {
             .batch
             .iter()
             .flat_map(|index| index.indexes.iter())
-            .sorted_by(|a, b| Ord::cmp(a, b))
+            .sorted_by(Ord::cmp)
             .unique_by(|(name, _)| {
                 let mut hasher = H::default();
                 name.hash(&mut hasher);

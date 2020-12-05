@@ -23,7 +23,7 @@ pub struct Stream<T>(Framed<T, BincodeCodec>);
 
 pub struct StreamPool<T>(Box<[Stream<T>]>);
 
-impl<'a, T> Stream<T>
+impl<T> Stream<T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
@@ -55,17 +55,17 @@ where
         }
     }
 
-    async fn ask(&'a mut self) -> PrimaryResult<RecvIndex<'a, T>> {
+    async fn ask(&mut self) -> PrimaryResult<RecvIndex<'_, T>> {
         match self.exchange(PrimaryRequest::AskIndex).await? {
             ReplicaRequest::RecvIndex(recv) => Ok(RecvIndex::new(self, recv)),
             _ => Err(PrimaryError::ProtocolMismatch),
         }
     }
 
-    pub(super) async fn send_range(
+    pub(super) async fn send_range<'r>(
         &mut self,
         queue: &str,
-        range: Box<[(MaybeOwned<'a, u64>, MaybeOwned<'a, Event<'a>>)]>,
+        range: Box<[(MaybeOwned<'r, u64>, MaybeOwned<'r, Event<'r>>)]>,
     ) -> PrimaryResult<()> {
         match self
             .exchange(PrimaryRequest::SendRange(Cow::Borrowed(queue), range))
@@ -81,7 +81,7 @@ where
     }
 }
 
-impl<'a> StreamPool<TcpStream> {
+impl StreamPool<TcpStream> {
     pub async fn from_config(config: &Primary) -> PrimaryResult<Self> {
         let mut pool = Vec::with_capacity(config.destination.len());
 
@@ -97,7 +97,7 @@ impl<'a> StreamPool<TcpStream> {
     }
 }
 
-impl<'a, T> StreamPool<T>
+impl<T> StreamPool<T>
 where
     T: AsyncRead + AsyncWrite + Unpin,
 {
@@ -118,13 +118,13 @@ where
 
         iter(self.0.iter_mut())
             .map(Ok)
-            .try_for_each_concurrent(None, |stream| async move { stream.ping().await })
+            .try_for_each_concurrent(None, Stream::ping)
             .await?;
 
         Ok(())
     }
 
-    pub async fn ask(&'a mut self) -> PrimaryResult<BatchAskIndex<'a, T>> {
+    pub async fn ask(&mut self) -> PrimaryResult<BatchAskIndex<'_, T>> {
         let len = self.0.len();
 
         debug!("Asking stream pool of {} nodes for indexes.", len);
