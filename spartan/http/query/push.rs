@@ -31,6 +31,7 @@ impl From<PushRequest> for Message {
             builder = builder.delay(delay);
         };
 
+        // TODO: Handle incorrect Offset error
         builder.compose().expect("No message body provided")
     }
 }

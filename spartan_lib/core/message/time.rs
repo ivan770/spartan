@@ -26,19 +26,34 @@ impl Timeout {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
+pub(crate) struct Offset(i32);
+
+impl Offset {
+    pub(crate) fn new(offset: i32) -> Option<Self> {
+        if -86_400 < offset && offset < 86_400 {
+            Some(Offset(offset))
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn get(self) -> i32 {
+        self.0
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct Time {
-    offset: i32,
+    offset: Offset,
     dispatched_at: DateTime<FixedOffset>,
     delay: Option<DateTime<FixedOffset>>,
     timeout: Timeout,
 }
 
 impl Time {
-    // TODO: Check for offset bounds
-    // https://docs.rs/chrono/0.4.19/src/chrono/offset/fixed.rs.html#51
-    pub(crate) fn new(offset: i32, delay: Option<u32>, timeout: u32) -> Time {
-        let dispatched_at = Self::get_datetime_with_offset(offset);
+    pub(crate) fn new(offset: Offset, delay: Option<u32>, timeout: u32) -> Time {
+        let dispatched_at = Self::get_datetime_with_offset(offset.get());
 
         Time {
             offset,
@@ -65,12 +80,15 @@ impl Time {
         self.timeout.expired(self.get_datetime())
     }
 
-    fn convert_delay(seconds: Option<i64>, dispatched_at: DateTime<FixedOffset>) -> Option<DateTime<FixedOffset>> {
+    fn convert_delay(
+        seconds: Option<i64>,
+        dispatched_at: DateTime<FixedOffset>,
+    ) -> Option<DateTime<FixedOffset>> {
         Some(dispatched_at + Duration::seconds(seconds?))
     }
 
     fn get_datetime(&self) -> DateTime<FixedOffset> {
-        Self::get_datetime_with_offset(self.offset)
+        Self::get_datetime_with_offset(self.offset.get())
     }
 
     fn get_datetime_with_offset(offset: i32) -> DateTime<FixedOffset> {
@@ -80,7 +98,7 @@ impl Time {
 
 #[cfg(test)]
 mod tests {
-    use super::{DateTime, Duration as ChronoDuration, FixedOffset, Time, Timeout, Utc};
+    use super::{DateTime, Duration as ChronoDuration, FixedOffset, Offset, Time, Timeout, Utc};
     use std::thread::sleep;
     use std::time::Duration;
 
@@ -100,7 +118,7 @@ mod tests {
 
     #[test]
     fn delay_test() {
-        let time = Time::new(0, Some(2), 1);
+        let time = Time::new(Offset::new(0).unwrap(), Some(2), 1);
         assert!(!time.check_delay());
         sleep(Duration::from_secs(3));
         assert!(time.check_delay());
@@ -109,8 +127,8 @@ mod tests {
     // This test covers 'fast index lookup' bug, that came in version 0.6
     #[test]
     fn test_delay_compare() {
-        let time1 = Time::new(0, Some(10), 0);
-        let time2 = Time::new(10, Some(2), 0);
+        let time1 = Time::new(Offset::new(0).unwrap(), Some(10), 0);
+        let time2 = Time::new(Offset::new(10).unwrap(), Some(2), 0);
 
         assert!(time1.get_raw_delay() > time2.get_raw_delay());
     }

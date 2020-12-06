@@ -1,10 +1,12 @@
-use crate::core::message::Message;
+use crate::core::message::{time::Offset, Message};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum BuilderError {
-    #[error("no body provided for builder")]
+    #[error("No body provided for builder")]
     BodyNotProvided,
+    #[error("Offset must be in range of -86400 and 86400 seconds")]
+    OffsetOutOfBounds,
 }
 
 /// Message builder
@@ -87,7 +89,7 @@ impl MessageBuilder {
             Ok(Message::new(
                 body,
                 self.delay,
-                self.offset,
+                Offset::new(self.offset).ok_or(BuilderError::OffsetOutOfBounds)?,
                 self.max_tries,
                 self.timeout,
             ))

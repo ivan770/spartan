@@ -1,13 +1,14 @@
 /// Message builder
 pub mod builder;
-mod state;
 mod time;
+
+mod state;
 
 use super::payload::Identifiable;
 use crate::core::payload::{Dispatchable, Sortable, Status};
 use serde::{Deserialize, Serialize};
 use state::State;
-use time::Time;
+use time::{Offset, Time};
 use uuid::Uuid;
 
 /// Default message implementation, with support of all [payload] traits
@@ -25,7 +26,13 @@ pub struct Message {
 }
 
 impl Message {
-    fn new(body: Box<str>, delay: Option<u32>, offset: i32, max_tries: u32, timeout: u32) -> Self {
+    fn new(
+        body: Box<str>,
+        delay: Option<u32>,
+        offset: Offset,
+        max_tries: u32,
+        timeout: u32,
+    ) -> Self {
         Message {
             id: Message::generate_id(),
             body,
