@@ -14,7 +14,7 @@ use crate::{
 };
 use actix_rt::time::delay_for;
 use std::{collections::hash_map::DefaultHasher, time::Duration};
-use tokio::{io::Result as IoResult, net::TcpStream};
+use tokio::net::TcpStream;
 
 async fn replicate_manager(
     manager: &Manager<'_>,
@@ -60,7 +60,7 @@ async fn start_replication(
 }
 
 /// Spawn replication job
-pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
+pub async fn spawn_replication(manager: &Manager<'_>) {
     debug!("Spawning replication job.");
 
     if let Some(config) = manager.config().replication.as_ref() {
@@ -97,6 +97,4 @@ pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
             }
         };
     }
-
-    Ok(())
 }
