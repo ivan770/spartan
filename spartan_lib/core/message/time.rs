@@ -53,8 +53,8 @@ impl Time {
             .map_or(true, |delay| delay <= self.get_datetime())
     }
 
-    pub(crate) fn get_raw_delay(&self) -> Option<DateTime<Utc>> {
-        self.delay.map(Into::into)
+    pub(crate) fn get_raw_delay(&self) -> Option<i64> {
+        self.delay.as_ref().map(DateTime::timestamp)
     }
 
     pub(crate) fn obtain(&mut self) {

@@ -5,7 +5,6 @@ mod time;
 
 use super::payload::Identifiable;
 use crate::core::payload::{Dispatchable, Sortable, Status};
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use state::State;
 use time::Time;
@@ -84,7 +83,7 @@ impl Status for Message {
 }
 
 impl Sortable for Message {
-    type Sort = Option<DateTime<Utc>>;
+    type Sort = Option<i64>;
 
     fn sort(&self) -> Self::Sort {
         self.time.get_raw_delay()
