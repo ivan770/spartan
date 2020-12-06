@@ -11,7 +11,7 @@ use std::time::Duration;
 pub async fn spawn_persistence(manager: &Manager<'_>) {
     debug!("Spawning persistence job.");
 
-    if let Some(config) = manager.config.persistence.as_ref() {
+    if let Some(config) = manager.config().persistence.as_ref() {
         let timer = Duration::from_secs(config.timer);
 
         loop {

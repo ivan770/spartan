@@ -42,7 +42,7 @@ impl ReplicaCommand {
         spawn(async move { spawn_persistence(&cloned_manager).await });
 
         manager
-            .node
+            .node()
             .prepare_replication(
                 |storage| matches!(storage, ReplicationStorage::Replica(_)),
                 || ReplicationStorage::Replica(ReplicaStorage::default()),

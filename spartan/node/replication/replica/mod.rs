@@ -98,9 +98,9 @@ pub async fn accept_connection<'m, 'c>(
         PrimaryRequest::Ping => ReplicaRequest::Pong,
         PrimaryRequest::AskIndex => {
             debug!("Preparing indexes for primary node.");
-            let mut indexes = Vec::with_capacity(manager.config.queues.len());
+            let mut indexes = Vec::with_capacity(manager.config().queues.len());
 
-            for (name, db) in manager.node.iter() {
+            for (name, db) in manager.node().iter() {
                 let index = db
                     .replication_storage()
                     .await
@@ -303,7 +303,7 @@ mod tests {
 
     async fn prepare_manager(manager: &mut Manager<'_>) {
         manager
-            .node
+            .node()
             .prepare_replication(
                 |storage| matches!(storage, ReplicationStorage::Replica(_)),
                 || ReplicationStorage::Replica(ReplicaStorage::default()),

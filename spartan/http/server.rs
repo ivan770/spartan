@@ -21,7 +21,7 @@ pub async fn start_http_server(
     manager: Data<Manager<'static>>,
 ) -> Result<(), ServerError> {
     HttpServer::new(move || {
-        let config = manager.clone().config;
+        let config = manager.config();
 
         let mut app = App::new()
             .app_data(manager.clone())

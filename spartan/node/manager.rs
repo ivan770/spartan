@@ -27,10 +27,10 @@ impl ResponseError for ManagerError {
 /// Node manager
 pub struct Manager<'c> {
     /// Server config
-    pub config: &'c Config<'c>,
+    config: &'c Config<'c>,
 
     /// Node
-    pub node: Node<'c>,
+    node: Node<'c>,
 }
 
 impl<'c> Manager<'c> {
@@ -44,6 +44,14 @@ impl<'c> Manager<'c> {
     /// Obtain queue from local node
     pub fn queue(&self, name: &str) -> Result<&DB, ManagerError> {
         self.node.queue(name).ok_or(ManagerError::QueueNotFound)
+    }
+
+    pub fn config(&self) -> &'c Config<'c> {
+        &self.config
+    }
+
+    pub fn node(&self) -> &Node<'_> {
+        &self.node
     }
 
     pub async fn load_from_fs(&mut self) -> Result<(), PersistenceError> {
@@ -82,8 +90,8 @@ impl<'c> Manager<'c> {
 
             iter(self.node.iter())
                 .map(Ok)
-                .try_for_each_concurrent(None, |(name, db)| async move {
-                    driver.persist_queue(name, db, mode).await
+                .try_for_each_concurrent(None, move |(name, db)| {
+                    driver.persist_queue(name, db, mode)
                 })
                 .await
         } else {
@@ -102,6 +110,13 @@ impl<'c> Manager<'c> {
         } else {
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+impl<'c> Manager<'c> {
+    pub fn node_mut(&mut self) -> &mut Node<'c> {
+        &mut self.node
     }
 }
 

@@ -12,7 +12,7 @@ use crate::node::replication::primary::storage::PrimaryStorage;
 
 /// Concurrently iterates over all databases in node, and executes GC on them.
 async fn execute_gc(manager: &Manager<'_>) -> Result<(), PersistenceError> {
-    iter(manager.node.iter())
+    iter(manager.node().iter())
         .map(Ok)
         .try_for_each_concurrent(None, |(name, queue)| async move {
             info!("Started GC cycle on database \"{}\"", name);
@@ -39,7 +39,7 @@ async fn execute_gc(manager: &Manager<'_>) -> Result<(), PersistenceError> {
 pub async fn spawn_gc(manager: &Manager<'_>) {
     debug!("Spawning GC handler.");
 
-    let timer = Duration::from_secs(manager.config.gc_timer);
+    let timer = Duration::from_secs(manager.config().gc_timer);
 
     loop {
         delay_for(timer).await;
@@ -62,7 +62,7 @@ mod tests {
     async fn test_gc() {
         let mut manager = Manager::new(&CONFIG);
 
-        manager.node.add("first");
+        manager.node_mut().add("first");
 
         let mut message = MessageBuilder::default()
             .body("Hello, world")

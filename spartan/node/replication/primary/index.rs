@@ -69,7 +69,7 @@ where
 
         iter(self.batch.iter_mut())
             .map(Ok)
-            .try_for_each_concurrent(None, |host| async move { host.sync(manager).await })
+            .try_for_each_concurrent(None, move |host| host.sync(manager))
             .await?;
 
         Ok(Sync::new(self))

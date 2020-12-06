@@ -63,13 +63,13 @@ async fn start_replication(
 pub async fn spawn_replication(manager: &Manager<'_>) -> IoResult<()> {
     debug!("Spawning replication job.");
 
-    if let Some(config) = manager.config.replication.as_ref() {
+    if let Some(config) = manager.config().replication.as_ref() {
         match config.mode {
             Replication::Primary if config.primary.is_some() => {
                 let config = config.primary.as_ref().unwrap();
 
                 manager
-                    .node
+                    .node()
                     .prepare_replication(
                         |storage| matches!(storage, ReplicationStorage::Primary(_)),
                         || ReplicationStorage::Primary(PrimaryStorage::default()),
