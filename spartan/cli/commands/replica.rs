@@ -1,5 +1,6 @@
 use crate::{
     cli::Server,
+    dispatch_jobs,
     jobs::{exit::spawn_ctrlc_handler, persistence::spawn_persistence},
     node::persistence::PersistenceError,
     node::{
@@ -17,7 +18,7 @@ use crate::{
 };
 use std::sync::Arc;
 use structopt::StructOpt;
-use tokio::{net::TcpListener, spawn};
+use tokio::net::TcpListener;
 
 #[derive(StructOpt)]
 pub struct ReplicaCommand {}
@@ -35,11 +36,7 @@ impl ReplicaCommand {
 
         let manager = Arc::new(manager);
 
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
-
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_persistence(&cloned_manager).await });
+        dispatch_jobs!(manager, spawn_ctrlc_handler, spawn_persistence);
 
         manager
             .node()

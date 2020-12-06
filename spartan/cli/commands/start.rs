@@ -1,5 +1,6 @@
 use crate::{
     cli::Server,
+    dispatch_jobs,
     http::server::{start_http_server, ServerError},
     jobs::{exit::spawn_ctrlc_handler, gc::spawn_gc, persistence::spawn_persistence},
     node::persistence::PersistenceError,
@@ -10,7 +11,7 @@ use actix_web::web::Data;
 use std::{io::Error as IoError, net::SocketAddr};
 use structopt::StructOpt;
 use thiserror::Error;
-use tokio::{spawn, task::LocalSet};
+use tokio::task::LocalSet;
 
 #[cfg(feature = "replication")]
 use crate::jobs::replication::spawn_replication;
@@ -64,20 +65,10 @@ impl StartCommand {
 
         let manager = Data::new(manager);
 
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_gc(&cloned_manager).await });
-
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_persistence(&cloned_manager).await });
+        dispatch_jobs!(manager, spawn_gc, spawn_persistence, spawn_ctrlc_handler);
 
         #[cfg(feature = "replication")]
-        {
-            let cloned_manager = manager.clone();
-            spawn(async move { spawn_replication(&cloned_manager).await });
-        }
-
-        let cloned_manager = manager.clone();
-        spawn(async move { spawn_ctrlc_handler(&cloned_manager).await });
+        dispatch_jobs!(manager, spawn_replication);
 
         start_http_server(self.host(), manager)
             .await
