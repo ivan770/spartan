@@ -1,10 +1,10 @@
-use chrono::{FixedOffset, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Timeout {
     max: u32,
-    obtained_at: Option<i64>,
+    obtained_at: Option<DateTime<Utc>>,
 }
 
 impl Timeout {
@@ -15,13 +15,13 @@ impl Timeout {
         }
     }
 
-    pub(super) fn obtain(&mut self, timestamp: i64) {
-        self.obtained_at = Some(timestamp);
+    pub(super) fn obtain(&mut self, current_time: DateTime<Utc>) {
+        self.obtained_at = Some(current_time);
     }
 
-    pub(super) fn expired(&self, timestamp: i64) -> bool {
+    pub(super) fn expired(&self, current_time: DateTime<Utc>) -> bool {
         self.obtained_at.map_or(false, |obtained_at| {
-            (obtained_at + i64::from(self.max)) < timestamp
+            (obtained_at + Duration::seconds(i64::from(self.max))) < current_time
         })
     }
 }
@@ -29,64 +29,57 @@ impl Timeout {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct Time {
     offset: i32,
-    timestamp: i64,
-    delay: Option<i64>,
+    timestamp: DateTime<Utc>,
+    delay: Option<DateTime<Utc>>,
     timeout: Timeout,
 }
 
 impl Time {
     pub(crate) fn new(offset: i32, delay: Option<u32>, timeout: u32) -> Time {
-        let timestamp = Self::get_offset_timestamp(offset);
+        let timestamp = Self::get_datetime();
 
         Time {
             offset,
             timestamp,
-            delay: Self::convert_delay(delay, timestamp),
+            delay: Self::convert_delay(delay.map(i64::from), timestamp),
             timeout: Timeout::new(timeout),
         }
     }
 
     pub(crate) fn check_delay(&self) -> bool {
         self.delay
-            .map_or(true, |delay| delay <= self.get_timestamp())
+            .map_or(true, |delay| delay <= Self::get_datetime())
     }
 
-    pub(crate) fn get_raw_delay(&self) -> Option<i64> {
-        // Previous version of get_raw_delay was without this map,
-        // resulting in incorrect timezone handling, and possibly even
-        // damaging database indexes (such as TreeDatabase index)
-        self.delay.map(|delay| delay - i64::from(self.offset))
+    pub(crate) fn get_raw_delay(&self) -> Option<DateTime<Utc>> {
+        self.delay
     }
 
     pub(crate) fn obtain(&mut self) {
-        self.timeout.obtain(self.get_timestamp());
+        self.timeout.obtain(Self::get_datetime());
     }
 
     pub(crate) fn expired(&self) -> bool {
-        self.timeout.expired(self.get_timestamp())
+        self.timeout.expired(Self::get_datetime())
     }
 
-    fn convert_delay(seconds: Option<u32>, timestamp: i64) -> Option<i64> {
-        Some(timestamp + i64::from(seconds?))
+    fn convert_delay(seconds: Option<i64>, timestamp: DateTime<Utc>) -> Option<DateTime<Utc>> {
+        Some(timestamp + Duration::seconds(seconds?))
     }
 
-    fn get_timestamp(&self) -> i64 {
-        Self::get_offset_timestamp(self.offset)
-    }
-
-    fn get_offset_timestamp(offset: i32) -> i64 {
-        (Utc::now() + FixedOffset::east(offset)).timestamp()
+    fn get_datetime() -> DateTime<Utc> {
+        Utc::now()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Time, Timeout, Utc};
+    use super::{DateTime, Duration as ChronoDuration, Time, Timeout, Utc};
     use std::thread::sleep;
     use std::time::Duration;
 
-    fn get_timestamp() -> i64 {
-        Utc::now().timestamp()
+    fn get_timestamp() -> DateTime<Utc> {
+        Utc::now()
     }
 
     #[test]
@@ -96,7 +89,7 @@ mod tests {
         timeout.obtain(timestamp);
         assert!(timeout.obtained_at.is_some());
         assert!(!timeout.expired(timestamp));
-        assert!(timeout.expired(timestamp + 4));
+        assert!(timeout.expired(timestamp + ChronoDuration::seconds(4)));
     }
 
     #[test]
