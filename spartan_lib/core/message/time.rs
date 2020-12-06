@@ -1,10 +1,10 @@
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, FixedOffset, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Timeout {
     max: u32,
-    obtained_at: Option<DateTime<Utc>>,
+    obtained_at: Option<DateTime<FixedOffset>>,
 }
 
 impl Timeout {
@@ -15,11 +15,11 @@ impl Timeout {
         }
     }
 
-    pub(super) fn obtain(&mut self, current_time: DateTime<Utc>) {
+    pub(super) fn obtain(&mut self, current_time: DateTime<FixedOffset>) {
         self.obtained_at = Some(current_time);
     }
 
-    pub(super) fn expired(&self, current_time: DateTime<Utc>) -> bool {
+    pub(super) fn expired(&self, current_time: DateTime<FixedOffset>) -> bool {
         self.obtained_at.map_or(false, |obtained_at| {
             (obtained_at + Duration::seconds(i64::from(self.max))) < current_time
         })
@@ -29,57 +29,63 @@ impl Timeout {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub(crate) struct Time {
     offset: i32,
-    timestamp: DateTime<Utc>,
-    delay: Option<DateTime<Utc>>,
+    dispatched_at: DateTime<FixedOffset>,
+    delay: Option<DateTime<FixedOffset>>,
     timeout: Timeout,
 }
 
 impl Time {
+    // TODO: Check for offset bounds
+    // https://docs.rs/chrono/0.4.19/src/chrono/offset/fixed.rs.html#51
     pub(crate) fn new(offset: i32, delay: Option<u32>, timeout: u32) -> Time {
-        let timestamp = Self::get_datetime();
+        let dispatched_at = Self::get_datetime_with_offset(offset);
 
         Time {
             offset,
-            timestamp,
-            delay: Self::convert_delay(delay.map(i64::from), timestamp),
+            dispatched_at,
+            delay: Self::convert_delay(delay.map(i64::from), dispatched_at),
             timeout: Timeout::new(timeout),
         }
     }
 
     pub(crate) fn check_delay(&self) -> bool {
         self.delay
-            .map_or(true, |delay| delay <= Self::get_datetime())
+            .map_or(true, |delay| delay <= self.get_datetime())
     }
 
     pub(crate) fn get_raw_delay(&self) -> Option<DateTime<Utc>> {
-        self.delay
+        self.delay.map(Into::into)
     }
 
     pub(crate) fn obtain(&mut self) {
-        self.timeout.obtain(Self::get_datetime());
+        self.timeout.obtain(self.get_datetime());
     }
 
     pub(crate) fn expired(&self) -> bool {
-        self.timeout.expired(Self::get_datetime())
+        self.timeout.expired(self.get_datetime())
     }
 
-    fn convert_delay(seconds: Option<i64>, timestamp: DateTime<Utc>) -> Option<DateTime<Utc>> {
-        Some(timestamp + Duration::seconds(seconds?))
+    fn convert_delay(seconds: Option<i64>, dispatched_at: DateTime<FixedOffset>) -> Option<DateTime<FixedOffset>> {
+        Some(dispatched_at + Duration::seconds(seconds?))
     }
 
-    fn get_datetime() -> DateTime<Utc> {
-        Utc::now()
+    fn get_datetime(&self) -> DateTime<FixedOffset> {
+        Self::get_datetime_with_offset(self.offset)
+    }
+
+    fn get_datetime_with_offset(offset: i32) -> DateTime<FixedOffset> {
+        Utc::now().with_timezone(&FixedOffset::east(offset))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{DateTime, Duration as ChronoDuration, Time, Timeout, Utc};
+    use super::{DateTime, Duration as ChronoDuration, FixedOffset, Time, Timeout, Utc};
     use std::thread::sleep;
     use std::time::Duration;
 
-    fn get_timestamp() -> DateTime<Utc> {
-        Utc::now()
+    fn get_timestamp() -> DateTime<FixedOffset> {
+        Utc::now().into()
     }
 
     #[test]
