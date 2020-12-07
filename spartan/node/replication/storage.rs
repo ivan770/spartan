@@ -1,5 +1,6 @@
-use super::{primary::storage::PrimaryStorage, replica::storage::ReplicaStorage};
 use serde::{Deserialize, Serialize};
+
+use super::{primary::storage::PrimaryStorage, replica::storage::ReplicaStorage};
 
 #[derive(Serialize, Deserialize)]
 pub enum ReplicationStorage {

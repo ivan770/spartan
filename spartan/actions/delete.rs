@@ -1,15 +1,14 @@
-use super::QueueError;
-use crate::{
-    http::query::delete::{DeleteRequest, DeleteResponse},
-    node::Manager,
-};
 use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
 };
 use spartan_lib::core::dispatcher::PositionBasedDelete;
 
-use crate::node::event::Event;
+use super::QueueError;
+use crate::{
+    http::query::delete::{DeleteRequest, DeleteResponse},
+    node::{event::Event, Manager},
+};
 
 /// Delete message from queue.
 ///
@@ -36,6 +35,12 @@ pub async fn delete(
 
 #[cfg(test)]
 mod tests {
+    use actix_web::{
+        test::{init_service, read_response, read_response_json},
+        web::Bytes,
+    };
+    use spartan_lib::{core::payload::Identifiable, uuid::Uuid};
+
     use crate::{
         http::query::{
             delete::{DeleteRequest, DeleteResponse},
@@ -46,11 +51,6 @@ mod tests {
         init_application, test_request,
         utils::testing::CONFIG,
     };
-    use actix_web::{
-        test::{init_service, read_response, read_response_json},
-        web::Bytes,
-    };
-    use spartan_lib::{core::payload::Identifiable, uuid::Uuid};
 
     #[actix_rt::test]
     async fn test_empty_delete() {

@@ -81,9 +81,9 @@ impl Time {
 
 #[cfg(test)]
 mod tests {
+    use std::{thread::sleep, time::Duration};
+
     use super::{Time, Timeout, Utc};
-    use std::thread::sleep;
-    use std::time::Duration;
 
     fn get_timestamp() -> i64 {
         Utc::now().timestamp()

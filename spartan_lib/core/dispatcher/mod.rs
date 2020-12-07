@@ -9,10 +9,13 @@ mod tests {
     #[macro_export]
     macro_rules! test_dispatcher {
         ($db:tt) => {
-            use crate::core::dispatcher::SimpleDispatcher;
-            use crate::core::message::{builder::MessageBuilder, Message};
-            use crate::core::payload::{Identifiable, Status};
             use uuid::Uuid;
+
+            use crate::core::{
+                dispatcher::SimpleDispatcher,
+                message::{builder::MessageBuilder, Message},
+                payload::{Identifiable, Status},
+            };
 
             fn generate_test_message() -> Message {
                 MessageBuilder::default()

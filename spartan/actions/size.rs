@@ -1,9 +1,10 @@
-use crate::{http::query::size::SizeResponse, node::Manager};
 use actix_web::{
     web::{Data, Path},
     HttpResponse, Result,
 };
 use spartan_lib::core::dispatcher::SimpleDispatcher;
+
+use crate::{http::query::size::SizeResponse, node::Manager};
 
 /// Get queue size.
 ///
@@ -19,12 +20,13 @@ pub async fn size(
 
 #[cfg(test)]
 mod tests {
+    use actix_web::test::{init_service, read_response, read_response_json};
+
     use crate::{
         http::query::{push::PushRequest, size::SizeResponse},
         init_application, test_request,
         utils::testing::CONFIG,
     };
-    use actix_web::test::{init_service, read_response, read_response_json};
 
     #[actix_rt::test]
     async fn test_size() {

@@ -1,9 +1,8 @@
 use tokio::sync::{Mutex, MutexGuard};
 
+use super::{event::Event, persistence::PersistenceError, Manager};
 #[cfg(feature = "replication")]
 use crate::node::replication::storage::ReplicationStorage;
-
-use super::{event::Event, persistence::PersistenceError, Manager};
 
 pub struct Queue<DB> {
     /// Inner database
@@ -89,11 +88,13 @@ impl<DB> Queue<DB> {
 
 #[cfg(test)]
 mod tests {
-    use crate::node::replication::{
-        primary::storage::PrimaryStorage, replica::storage::ReplicaStorage,
-        storage::ReplicationStorage,
+    use crate::node::{
+        replication::{
+            primary::storage::PrimaryStorage, replica::storage::ReplicaStorage,
+            storage::ReplicationStorage,
+        },
+        DB,
     };
-    use crate::node::DB;
 
     #[tokio::test]
     async fn test_prepare_replication_empty() {

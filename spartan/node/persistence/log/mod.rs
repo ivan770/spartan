@@ -1,14 +1,22 @@
-use std::{convert::TryInto, io::SeekFrom, mem::size_of, path::Path, path::PathBuf};
+use std::{
+    convert::TryInto,
+    io::SeekFrom,
+    mem::size_of,
+    path::{Path, PathBuf},
+};
 
 use bincode::{deserialize, serialize_into, serialized_size};
 use cfg_if::cfg_if;
 use once_cell::sync::OnceCell;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::{
-    fs::create_dir, fs::remove_file, fs::OpenOptions, io::AsyncRead, io::AsyncReadExt,
-    io::AsyncSeek, io::AsyncSeekExt, io::AsyncWriteExt,
+    fs::{create_dir, remove_file, OpenOptions},
+    io::{AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt, AsyncWriteExt},
 };
 
+use super::PersistenceError;
+#[cfg(feature = "replication")]
+use crate::node::persistence::snapshot::REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE;
 use crate::{
     config::persistence::PersistenceConfig,
     node::{
@@ -17,11 +25,6 @@ use crate::{
         Queue,
     },
 };
-
-use super::PersistenceError;
-
-#[cfg(feature = "replication")]
-use crate::node::persistence::snapshot::REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE;
 
 /// Queue log file name
 const QUEUE_FILE: &str = "queue_log";
@@ -286,18 +289,19 @@ impl<'c> Log<'c> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{config::persistence::Persistence, node::DB};
-
-    use super::*;
-
     use std::{borrow::Cow, io::Cursor};
 
     use maybe_owned::MaybeOwned;
     use spartan_lib::core::{
-        db::TreeDatabase, dispatcher::StatusAwareDispatcher, message::builder::MessageBuilder,
-        message::Message, payload::Dispatchable,
+        db::TreeDatabase,
+        dispatcher::StatusAwareDispatcher,
+        message::{builder::MessageBuilder, Message},
+        payload::Dispatchable,
     };
     use tempfile::{NamedTempFile, TempDir};
+
+    use super::*;
+    use crate::{config::persistence::Persistence, node::DB};
 
     #[tokio::test]
     async fn test_append_read() {

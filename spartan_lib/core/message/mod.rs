@@ -3,12 +3,13 @@ pub mod builder;
 mod state;
 mod time;
 
-use super::payload::Identifiable;
-use crate::core::payload::{Dispatchable, Sortable, Status};
 use serde::{Deserialize, Serialize};
 use state::State;
 use time::Time;
 use uuid::Uuid;
+
+use super::payload::Identifiable;
+use crate::core::payload::{Dispatchable, Sortable, Status};
 
 /// Default message implementation, with support of all [payload] traits
 ///

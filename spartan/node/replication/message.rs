@@ -1,7 +1,9 @@
-use crate::node::event::Event;
+use std::borrow::Cow;
+
 use maybe_owned::MaybeOwned;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
+
+use crate::node::event::Event;
 
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq, Debug))]

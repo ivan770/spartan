@@ -1,9 +1,10 @@
-use actix_web::web::BytesMut;
 use std::{
     io::{Cursor, Error, Read},
     pin::Pin,
     task::{Context, Poll},
 };
+
+use actix_web::web::BytesMut;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Encoder;
 
@@ -66,10 +67,11 @@ impl AsyncRead for TestStream<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::TestStream;
     use actix_web::web::BytesMut;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio_util::codec::{Decoder, LinesCodec};
+
+    use super::TestStream;
 
     #[tokio::test]
     async fn test_input() {

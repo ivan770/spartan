@@ -1,7 +1,9 @@
-use crate::node::event::Event;
+use std::collections::BTreeMap;
+
 use maybe_owned::MaybeOwned;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+
+use crate::node::event::Event;
 
 #[derive(Serialize, Deserialize)]
 pub struct PrimaryStorage {

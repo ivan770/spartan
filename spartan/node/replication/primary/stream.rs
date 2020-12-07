@@ -1,3 +1,13 @@
+use std::borrow::Cow;
+
+use futures_util::{stream::iter, SinkExt, StreamExt, TryStreamExt};
+use maybe_owned::MaybeOwned;
+use tokio::{
+    io::{AsyncRead, AsyncWrite},
+    net::TcpStream,
+};
+use tokio_util::codec::{Decoder, Framed};
+
 use super::{
     error::{PrimaryError, PrimaryResult},
     index::{BatchAskIndex, RecvIndex},
@@ -10,14 +20,6 @@ use crate::{
     },
     utils::codec::BincodeCodec,
 };
-use futures_util::{stream::iter, SinkExt, StreamExt, TryStreamExt};
-use maybe_owned::MaybeOwned;
-use std::borrow::Cow;
-use tokio::{
-    io::{AsyncRead, AsyncWrite},
-    net::TcpStream,
-};
-use tokio_util::codec::{Decoder, Framed};
 
 pub struct Stream<T>(Framed<T, BincodeCodec>);
 
@@ -143,13 +145,14 @@ where
 mod tests {
     use std::borrow::Cow;
 
+    use actix_web::web::BytesMut;
+    use bincode::deserialize;
+
     use super::StreamPool;
     use crate::{
         node::replication::message::{PrimaryRequest, ReplicaRequest, Request},
         utils::{codec::BincodeCodec, stream::TestStream},
     };
-    use actix_web::web::BytesMut;
-    use bincode::deserialize;
 
     #[tokio::test]
     async fn test_ping() {

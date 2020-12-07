@@ -1,5 +1,6 @@
-use crate::core::message::Message;
 use thiserror::Error;
+
+use crate::core::message::Message;
 
 #[derive(Debug, Error)]
 pub enum BuilderError {

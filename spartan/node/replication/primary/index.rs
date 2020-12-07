@@ -1,15 +1,17 @@
+use std::{
+    borrow::Cow,
+    hash::{Hash, Hasher},
+};
+
+use futures_util::{stream::iter, StreamExt, TryStreamExt};
+use itertools::Itertools;
+use tokio::io::{AsyncRead, AsyncWrite};
+
 use super::{
     error::{PrimaryError, PrimaryResult},
     stream::Stream,
 };
 use crate::node::Manager;
-use futures_util::{stream::iter, StreamExt, TryStreamExt};
-use itertools::Itertools;
-use std::{
-    borrow::Cow,
-    hash::{Hash, Hasher},
-};
-use tokio::io::{AsyncRead, AsyncWrite};
 
 pub struct RecvIndex<'s, T> {
     stream: &'s mut Stream<T>,

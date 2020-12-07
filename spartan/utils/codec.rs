@@ -1,8 +1,9 @@
-use crate::node::replication::message::Request;
 use actix_web::web::BytesMut;
 use bincode::{deserialize, serialize, Error};
 use serde::Serialize;
 use tokio_util::codec::{Decoder, Encoder};
+
+use crate::node::replication::message::Request;
 
 #[derive(Default)]
 pub struct BincodeCodec;
@@ -35,10 +36,11 @@ impl Decoder for BincodeCodec {
 
 #[cfg(test)]
 mod tests {
-    use super::BincodeCodec;
-    use crate::node::replication::message::{PrimaryRequest, Request};
     use actix_web::web::BytesMut;
     use tokio_util::codec::{Decoder, Encoder};
+
+    use super::BincodeCodec;
+    use crate::node::replication::message::{PrimaryRequest, Request};
 
     #[test]
     fn test_encode_decode_valid_data() {

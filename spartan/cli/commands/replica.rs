@@ -1,9 +1,14 @@
+use std::sync::Arc;
+
+use structopt::StructOpt;
+use tokio::net::TcpListener;
+
 use crate::{
     cli::Server,
     dispatch_jobs,
     jobs::{exit::spawn_ctrlc_handler, persistence::spawn_persistence},
-    node::persistence::PersistenceError,
     node::{
+        persistence::PersistenceError,
         replication::{
             replica::{
                 accept_connection,
@@ -16,9 +21,6 @@ use crate::{
         Manager,
     },
 };
-use std::sync::Arc;
-use structopt::StructOpt;
-use tokio::net::TcpListener;
 
 #[derive(StructOpt)]
 pub struct ReplicaCommand {}

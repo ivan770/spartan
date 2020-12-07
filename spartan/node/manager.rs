@@ -1,16 +1,17 @@
+use actix_web::{http::StatusCode, ResponseError};
+use futures_util::{stream::iter, StreamExt, TryStreamExt};
+use thiserror::Error;
+
 use super::{
     event::Event,
-    persistence::log::Log,
     persistence::{
+        log::Log,
         snapshot::{PersistMode, Snapshot},
         PersistenceError,
     },
     Node, DB,
 };
 use crate::config::{persistence::Persistence, Config};
-use actix_web::{http::StatusCode, ResponseError};
-use futures_util::{stream::iter, StreamExt, TryStreamExt};
-use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ManagerError {
@@ -130,6 +131,7 @@ mod tests {
     };
     use tempfile::TempDir;
 
+    use super::Manager;
     use crate::{
         config::{
             persistence::{Persistence, PersistenceConfig},
@@ -137,8 +139,6 @@ mod tests {
         },
         node::event::Event,
     };
-
-    use super::Manager;
 
     #[tokio::test]
     async fn test_load_snapshot() {
