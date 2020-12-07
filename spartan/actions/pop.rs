@@ -1,12 +1,14 @@
-use super::QueueError;
-use crate::{http::query::pop::PopResponse, node::Manager};
 use actix_web::{
     web::{Data, Path},
     HttpResponse, Result,
 };
 use spartan_lib::core::dispatcher::StatusAwareDispatcher;
 
-use crate::node::event::Event;
+use super::QueueError;
+use crate::{
+    http::query::pop::PopResponse,
+    node::{event::Event, Manager},
+};
 
 /// Pop message from queue.
 ///
@@ -31,14 +33,15 @@ pub async fn pop(
 
 #[cfg(test)]
 mod tests {
+    use actix_web::{
+        test::{init_service, read_response, read_response_json},
+        web::Bytes,
+    };
+
     use crate::{
         http::query::{pop::TestPopResponse, push::PushRequest},
         init_application, test_request,
         utils::testing::CONFIG,
-    };
-    use actix_web::{
-        test::{init_service, read_response, read_response_json},
-        web::Bytes,
     };
 
     #[actix_rt::test]

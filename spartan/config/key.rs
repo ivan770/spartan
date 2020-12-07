@@ -1,9 +1,10 @@
-use serde::{Deserialize, Serialize};
 use std::{
     borrow::Borrow,
     collections::HashSet,
     hash::{Hash, Hasher},
 };
+
+use serde::{Deserialize, Serialize};
 
 /// Wildcard queue name. Used in `queues` to represent all available queues in node
 const WILDCARD_QUEUE: &str = "*";

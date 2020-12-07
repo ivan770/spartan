@@ -1,6 +1,8 @@
-use crate::node::Manager;
-use actix_rt::time::delay_for;
 use std::time::Duration;
+
+use actix_rt::time::delay_for;
+
+use crate::node::Manager;
 
 /// Persistence job spawner
 ///
@@ -27,6 +29,13 @@ pub async fn spawn_persistence(manager: &Manager<'_>) {
 mod tests {
     use std::borrow::Cow;
 
+    use spartan_lib::core::{
+        dispatcher::{SimpleDispatcher, StatusAwareDispatcher},
+        message::builder::MessageBuilder,
+        payload::Dispatchable,
+    };
+    use tempfile::TempDir;
+
     use crate::{
         config::{
             persistence::{Persistence, PersistenceConfig},
@@ -34,12 +43,6 @@ mod tests {
         },
         node::Manager,
     };
-    use spartan_lib::core::{
-        dispatcher::{SimpleDispatcher, StatusAwareDispatcher},
-        message::builder::MessageBuilder,
-        payload::Dispatchable,
-    };
-    use tempfile::TempDir;
 
     #[tokio::test]
     async fn test_persistence() {

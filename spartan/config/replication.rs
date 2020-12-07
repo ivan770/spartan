@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+
+use serde::{Deserialize, Serialize};
 
 /// Default amount of seconds between replication jobs
 const fn default_replication_timer() -> u64 {

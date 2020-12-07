@@ -1,12 +1,14 @@
-use super::QueueError;
-use crate::{http::query::requeue::RequeueRequest, node::Manager};
 use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
 };
 use spartan_lib::core::dispatcher::StatusAwareDispatcher;
 
-use crate::node::event::Event;
+use super::QueueError;
+use crate::{
+    http::query::requeue::RequeueRequest,
+    node::{event::Event, Manager},
+};
 
 /// Requeues message back to queue.
 ///
@@ -35,16 +37,17 @@ pub async fn requeue(
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        http::query::{pop::TestPopResponse, push::PushRequest, requeue::RequeueRequest},
-        init_application, test_request,
-        utils::testing::CONFIG,
-    };
     use actix_web::{
         test::{init_service, read_response, read_response_json},
         web::Bytes,
     };
     use spartan_lib::{core::payload::Identifiable, uuid::Uuid};
+
+    use crate::{
+        http::query::{pop::TestPopResponse, push::PushRequest, requeue::RequeueRequest},
+        init_application, test_request,
+        utils::testing::CONFIG,
+    };
 
     #[actix_rt::test]
     async fn test_empty_requeue() {

@@ -9,11 +9,10 @@ pub mod persistence;
 
 use std::collections::HashSet;
 
-use serde::{Deserialize, Serialize, Serializer};
-
 use key::Key;
 use persistence::PersistenceConfig;
 use replication::ReplicationConfig;
+use serde::{Deserialize, Serialize, Serializer};
 
 /// Default amount of seconds between GC jobs
 const fn default_gc_timer() -> u64 {

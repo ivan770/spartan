@@ -14,13 +14,13 @@ pub mod event;
 /// Database replication
 pub mod replication;
 
-pub use manager::Manager;
-pub use queue::Queue;
-
-use crate::config::Config;
-use spartan_lib::core::{db::TreeDatabase, message::Message};
 use std::collections::{hash_map::RandomState, HashMap};
 
+pub use manager::Manager;
+pub use queue::Queue;
+use spartan_lib::core::{db::TreeDatabase, message::Message};
+
+use crate::config::Config;
 #[cfg(feature = "replication")]
 use crate::node::replication::storage::ReplicationStorage;
 

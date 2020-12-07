@@ -1,21 +1,20 @@
 /// CLI commands
 mod commands;
 
-use crate::config::Config;
-use commands::start::StartCommand;
+#[cfg(feature = "init")]
+use std::path::Path;
 use std::{io::Error, path::PathBuf};
+
+#[cfg(feature = "init")]
+use commands::init::InitCommand;
+#[cfg(feature = "replication")]
+use commands::replica::ReplicaCommand;
+use commands::start::StartCommand;
 use structopt::StructOpt;
 use tokio::fs::read;
 use toml::from_slice;
 
-#[cfg(feature = "replication")]
-use commands::replica::ReplicaCommand;
-
-#[cfg(feature = "init")]
-use commands::init::InitCommand;
-
-#[cfg(feature = "init")]
-use std::path::Path;
+use crate::config::Config;
 
 /// MQ server
 #[derive(StructOpt)]

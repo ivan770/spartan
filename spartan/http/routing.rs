@@ -1,5 +1,6 @@
-use crate::{config::Config, http::middleware::access::Access};
 use actix_web::web::{self, ServiceConfig};
+
+use crate::{config::Config, http::middleware::access::Access};
 
 macro_rules! route {
     ($name:ident) => {

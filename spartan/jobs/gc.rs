@@ -1,14 +1,15 @@
-use crate::node::{event::Event, persistence::PersistenceError, Manager};
+use std::time::Duration;
+
 use actix_rt::time::delay_for;
 use futures_util::{
     stream::{iter, StreamExt},
     TryStreamExt,
 };
 use spartan_lib::core::dispatcher::SimpleDispatcher;
-use std::time::Duration;
 
 #[cfg(feature = "replication")]
 use crate::node::replication::primary::storage::PrimaryStorage;
+use crate::node::{event::Event, persistence::PersistenceError, Manager};
 
 /// Concurrently iterates over all databases in node, and executes GC on them.
 async fn execute_gc(manager: &Manager<'_>) -> Result<(), PersistenceError> {
@@ -52,11 +53,12 @@ pub async fn spawn_gc(manager: &Manager<'_>) {
 
 #[cfg(test)]
 mod tests {
-    use super::execute_gc;
-    use crate::{node::Manager, utils::testing::CONFIG};
     use spartan_lib::core::{
         dispatcher::SimpleDispatcher, message::builder::MessageBuilder, payload::Status,
     };
+
+    use super::execute_gc;
+    use crate::{node::Manager, utils::testing::CONFIG};
 
     #[tokio::test]
     async fn test_gc() {

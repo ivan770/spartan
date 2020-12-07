@@ -98,9 +98,9 @@ impl Time {
 
 #[cfg(test)]
 mod tests {
+    use std::{thread::sleep, time::Duration};
+
     use super::{DateTime, Duration as ChronoDuration, FixedOffset, Offset, Time, Timeout, Utc};
-    use std::thread::sleep;
-    use std::time::Duration;
 
     fn get_timestamp() -> DateTime<FixedOffset> {
         Utc::now().into()

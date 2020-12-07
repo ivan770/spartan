@@ -1,5 +1,6 @@
-use crate::core::message::{time::Offset, Message};
 use thiserror::Error;
+
+use crate::core::message::{time::Offset, Message};
 
 #[derive(Debug, Error)]
 pub enum BuilderError {

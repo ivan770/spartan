@@ -1,3 +1,8 @@
+use std::{collections::hash_map::DefaultHasher, time::Duration};
+
+use actix_rt::time::delay_for;
+use tokio::net::TcpStream;
+
 use crate::{
     config::replication::{Primary, Replication},
     node::{
@@ -12,9 +17,6 @@ use crate::{
         Manager,
     },
 };
-use actix_rt::time::delay_for;
-use std::{collections::hash_map::DefaultHasher, time::Duration};
-use tokio::net::TcpStream;
 
 async fn replicate_manager(
     manager: &Manager<'_>,

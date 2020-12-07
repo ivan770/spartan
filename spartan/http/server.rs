@@ -1,11 +1,13 @@
-use super::routing::attach_routes;
-use crate::node::Manager;
+use std::{io::Error as IoError, net::SocketAddr};
+
 use actix_web::{
     web::{Data, JsonConfig},
     App, HttpServer,
 };
-use std::{io::Error as IoError, net::SocketAddr};
 use thiserror::Error;
+
+use super::routing::attach_routes;
+use crate::node::Manager;
 
 #[derive(Error, Debug)]
 pub enum ServerError {

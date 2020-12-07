@@ -1,6 +1,6 @@
-use crate::{cli::Server, config::Config};
-use dialoguer::Editor;
 use std::{ffi::OsString, io::Error as IoError};
+
+use dialoguer::Editor;
 use structopt::StructOpt;
 use thiserror::Error;
 use tokio::fs::{create_dir, write};
@@ -9,6 +9,8 @@ use toml::{
     ser::Error as SerError,
     to_string_pretty,
 };
+
+use crate::{cli::Server, config::Config};
 
 #[derive(Error, Debug)]
 pub enum InitCommandError {

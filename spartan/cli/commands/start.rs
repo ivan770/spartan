@@ -1,20 +1,20 @@
-use crate::{
-    cli::Server,
-    dispatch_jobs,
-    http::server::{start_http_server, ServerError},
-    jobs::{exit::spawn_ctrlc_handler, gc::spawn_gc, persistence::spawn_persistence},
-    node::persistence::PersistenceError,
-    node::Manager,
-};
+use std::{io::Error as IoError, net::SocketAddr};
+
 use actix_rt::System;
 use actix_web::web::Data;
-use std::{io::Error as IoError, net::SocketAddr};
 use structopt::StructOpt;
 use thiserror::Error;
 use tokio::task::LocalSet;
 
 #[cfg(feature = "replication")]
 use crate::jobs::replication::spawn_replication;
+use crate::{
+    cli::Server,
+    dispatch_jobs,
+    http::server::{start_http_server, ServerError},
+    jobs::{exit::spawn_ctrlc_handler, gc::spawn_gc, persistence::spawn_persistence},
+    node::{persistence::PersistenceError, Manager},
+};
 
 #[derive(Error, Debug)]
 pub enum StartCommandError {

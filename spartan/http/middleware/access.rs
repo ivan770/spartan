@@ -1,13 +1,18 @@
-use std::task::{Context, Poll};
-use std::{future::ready, future::Ready, pin::Pin};
+use std::{
+    future::{ready, Future, Ready},
+    pin::Pin,
+    task::{Context, Poll},
+};
 
-use crate::config::Config;
 use actix_service::{Service, Transform};
 use actix_web::{
-    dev::ServiceRequest, dev::ServiceResponse, http::StatusCode, Error, ResponseError,
+    dev::{ServiceRequest, ServiceResponse},
+    http::StatusCode,
+    Error, ResponseError,
 };
-use std::future::Future;
 use thiserror::Error as ThisError;
+
+use crate::config::Config;
 
 #[derive(ThisError, Debug)]
 pub enum AccessError {
@@ -137,12 +142,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        config::{key::Key, Config},
-        http::routing::attach_routes,
-        node::Manager,
-        test_request,
-    };
     use actix_service::Service;
     use actix_web::{
         http::StatusCode,
@@ -151,6 +150,13 @@ mod tests {
         App,
     };
     use once_cell::sync::Lazy;
+
+    use crate::{
+        config::{key::Key, Config},
+        http::routing::attach_routes,
+        node::Manager,
+        test_request,
+    };
 
     static CONFIG: Lazy<Config> = Lazy::new(|| Config {
         access_keys: Some(

@@ -1,4 +1,3 @@
-use crate::{http::query::push::PushRequest, node::Manager};
 use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
@@ -6,7 +5,10 @@ use actix_web::{
 use maybe_owned::MaybeOwned;
 use spartan_lib::core::{dispatcher::SimpleDispatcher, message::Message};
 
-use crate::node::event::Event;
+use crate::{
+    http::query::push::PushRequest,
+    node::{event::Event, Manager},
+};
 
 /// Push message to queue.
 ///
@@ -31,14 +33,15 @@ pub async fn push(
 
 #[cfg(test)]
 mod tests {
+    use actix_web::{
+        test::{init_service, read_response, read_response_json},
+        web::Bytes,
+    };
+
     use crate::{
         http::query::{pop::TestPopResponse, push::PushRequest},
         init_application, test_request,
         utils::testing::CONFIG,
-    };
-    use actix_web::{
-        test::{init_service, read_response, read_response_json},
-        web::Bytes,
     };
 
     #[actix_rt::test]

@@ -1,6 +1,8 @@
-use crate::node::Manager;
-use actix_rt::signal::ctrl_c;
 use std::process::exit;
+
+use actix_rt::signal::ctrl_c;
+
+use crate::node::Manager;
 
 /// Ctrl-C handler
 ///

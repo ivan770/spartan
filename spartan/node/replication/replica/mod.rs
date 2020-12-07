@@ -4,23 +4,25 @@ pub mod error;
 /// Replica node storage
 pub mod storage;
 
+use std::{borrow::Cow, future::Future, time::Duration};
+
+use actix_rt::time::delay_for;
+use error::{ReplicaError, ReplicaResult};
+use futures_util::{SinkExt, StreamExt};
+use maybe_owned::MaybeOwned;
+use tokio::io::{AsyncRead, AsyncWrite};
+use tokio_util::codec::{Decoder, Framed};
+
 use super::message::Request;
 use crate::{
     config::replication::Replica,
-    node::event::EventLog,
     node::{
+        event::EventLog,
         replication::message::{PrimaryRequest, ReplicaRequest},
         Manager,
     },
     utils::codec::BincodeCodec,
 };
-use actix_rt::time::delay_for;
-use error::{ReplicaError, ReplicaResult};
-use futures_util::{SinkExt, StreamExt};
-use maybe_owned::MaybeOwned;
-use std::{borrow::Cow, future::Future, time::Duration};
-use tokio::io::{AsyncRead, AsyncWrite};
-use tokio_util::codec::{Decoder, Framed};
 
 pub struct ReplicaSocket<'m, 'c, T> {
     manager: &'m Manager<'c>,
@@ -150,26 +152,27 @@ pub async fn accept_connection<'m, 'c>(
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        borrow::Cow,
+        net::{IpAddr, Ipv4Addr, SocketAddr},
+    };
+
+    use actix_web::web::BytesMut;
+    use bincode::deserialize;
+    use maybe_owned::MaybeOwned;
+
     use super::{accept_connection, error::ReplicaError, storage::ReplicaStorage, ReplicaSocket};
     use crate::{
         config::replication::Replica,
-        node::replication::message::Request,
         node::{
             event::Event,
             replication::{
-                message::{PrimaryRequest, ReplicaRequest},
+                message::{PrimaryRequest, ReplicaRequest, Request},
                 storage::ReplicationStorage,
             },
             Manager,
         },
         utils::{codec::BincodeCodec, stream::TestStream, testing::CONFIG},
-    };
-    use actix_web::web::BytesMut;
-    use bincode::deserialize;
-    use maybe_owned::MaybeOwned;
-    use std::{
-        borrow::Cow,
-        net::{IpAddr, Ipv4Addr, SocketAddr},
     };
 
     #[tokio::test]

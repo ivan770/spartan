@@ -95,12 +95,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{Event, EventLog};
-    use crate::node::DB;
     use maybe_owned::MaybeOwned;
     use spartan_lib::core::{
         dispatcher::StatusAwareDispatcher, message::builder::MessageBuilder, payload::Identifiable,
     };
+
+    use super::{Event, EventLog};
+    use crate::node::DB;
 
     #[tokio::test]
     async fn test_apply_events() {

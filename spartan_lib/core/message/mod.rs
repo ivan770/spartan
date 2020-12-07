@@ -4,12 +4,13 @@ mod time;
 
 mod state;
 
-use super::payload::Identifiable;
-use crate::core::payload::{Dispatchable, Sortable, Status};
 use serde::{Deserialize, Serialize};
 use state::State;
 use time::{Offset, Time};
 use uuid::Uuid;
+
+use super::payload::Identifiable;
+use crate::core::payload::{Dispatchable, Sortable, Status};
 
 /// Default message implementation, with support of all [payload] traits
 ///

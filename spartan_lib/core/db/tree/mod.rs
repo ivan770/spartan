@@ -1,11 +1,15 @@
+use std::{
+    collections::{hash_map::RandomState, BTreeMap, HashMap},
+    hash::Hash,
+};
+
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+
 use super::StatusAwareDatabase;
 use crate::core::{
     db::Database,
     payload::{Identifiable, Sortable},
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::collections::{hash_map::RandomState, BTreeMap, HashMap};
-use std::hash::Hash;
 
 type MessageStore<M, S = RandomState> = HashMap<<M as Identifiable>::Id, (u64, M), S>;
 type Tree<M> = BTreeMap<(<M as Sortable>::Sort, u64), <M as Identifiable>::Id>;
