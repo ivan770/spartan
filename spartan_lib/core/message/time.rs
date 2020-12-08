@@ -1,8 +1,11 @@
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use serde::{Deserialize, Serialize};
 
+/// Message timeout options
+///
+/// Contains max timeout in seconds, and message obtain time.
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Timeout {
+pub struct Timeout {
     max: u32,
     obtained_at: Option<DateTime<FixedOffset>>,
 }
@@ -24,10 +27,27 @@ impl Timeout {
             (obtained_at + Duration::seconds(i64::from(self.max))) < current_time
         })
     }
+
+    /// Get max timeout in seconds
+    ///
+    /// If `obtained_at + max < current_time`, then message is expired.
+    pub fn max(&self) -> &u32 {
+        &self.max
+    }
+
+    /// Get message obtain time
+    ///
+    /// [`None`] if message was never obtained before
+    pub fn obtained_at(&self) -> &Option<DateTime<FixedOffset>> {
+        &self.obtained_at
+    }
 }
 
+/// Timezone offset type wrapper for [`i32`]
+///
+/// Initialization requires for offset to be in range of `(-86399..86400)`
 #[derive(Serialize, Deserialize, Debug, Copy, Clone)]
-pub(crate) struct Offset(i32);
+pub struct Offset(i32);
 
 impl Offset {
     pub(crate) fn new(offset: i32) -> Option<Self> {
@@ -38,13 +58,19 @@ impl Offset {
         }
     }
 
-    pub(crate) fn get(self) -> i32 {
+    pub fn get(self) -> i32 {
         self.0
     }
 }
 
+/// A time manager for handling message dispatch times, timeouts,
+/// delays and timezones
+///
+/// Be aware, that all time handling itself is accessible to [`Message`] only
+///
+/// [`Message`]: crate::core::message::Message
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub(crate) struct Time {
+pub struct Time {
     offset: Offset,
     dispatched_at: DateTime<FixedOffset>,
     delay: Option<DateTime<FixedOffset>>,
@@ -78,6 +104,33 @@ impl Time {
 
     pub(crate) fn expired(&self) -> bool {
         self.timeout.expired(self.get_datetime())
+    }
+
+    /// Get message timezone offset.
+    pub fn offset(&self) -> &Offset {
+        &self.offset
+    }
+
+    /// Get message dispatch time with offset awareness.
+    pub fn dispatched_at(&self) -> &DateTime<FixedOffset> {
+        &self.dispatched_at
+    }
+
+    /// Get message availability time.
+    ///
+    /// If `current time > delay`, then message is available for obtaining.
+    ///
+    /// For implementation details you may want to check out [`Message`] implementation of [`Dispatchable`] trait.
+    ///
+    /// [`Message`]: crate::core::message::Message
+    /// [`Dispatchable`]: crate::core::payload::Dispatchable
+    pub fn delay(&self) -> &Option<DateTime<FixedOffset>> {
+        &self.delay
+    }
+
+    /// Get message timeout options.
+    pub fn timeout(&self) -> &Timeout {
+        &self.timeout
     }
 
     fn convert_delay(
@@ -131,5 +184,18 @@ mod tests {
         let time2 = Time::new(Offset::new(10).unwrap(), Some(2), 0);
 
         assert!(time1.get_raw_delay() > time2.get_raw_delay());
+    }
+
+    #[test]
+    fn test_initialize_offset_with_correct_value() {
+        Offset::new(0).unwrap();
+        Offset::new(86399).unwrap();
+        Offset::new(-86399).unwrap();
+    }
+
+    #[test]
+    fn test_initialize_offset_with_incorrect_value() {
+        assert!(Offset::new(86400).is_none());
+        assert!(Offset::new(-86400).is_none());
     }
 }

@@ -1,8 +1,12 @@
 use serde::{Deserialize, Serialize};
 
+/// Message status
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-enum Status {
+pub enum Status {
+    /// Message is available for reserving, if it still has any tries
     Available,
+
+    /// Message is currently being processed, and thus is available for requeuing
     Transit,
 }
 
@@ -12,8 +16,9 @@ impl Default for Status {
     }
 }
 
+/// Message state, containing try count and status
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub(crate) struct State {
+pub struct State {
     status: Status,
     tries: u32,
     max_tries: u32,
@@ -51,6 +56,28 @@ impl State {
 
     pub(crate) fn requires_gc(&self) -> bool {
         self.tries == self.max_tries && self.status == Status::Available
+    }
+
+    /// Get current message status
+    ///
+    /// For more information about statuses check [`Status`]
+    pub fn status(&self) -> &Status {
+        &self.status
+    }
+
+    /// Get message current tries
+    ///
+    /// Each message reservation increases try count by 1
+    pub fn tries(&self) -> &u32 {
+        &self.tries
+    }
+
+    /// Get message max tries
+    ///
+    /// If `tries = max_tries`, then message is no longer available for
+    /// reservation
+    pub fn max_tries(&self) -> &u32 {
+        &self.max_tries
     }
 }
 
