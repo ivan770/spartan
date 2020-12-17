@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
@@ -6,6 +8,7 @@ use maybe_owned::MaybeOwned;
 use spartan_lib::core::{dispatcher::SimpleDispatcher, message::Message};
 
 use crate::{
+    actions::QueueError,
     http::query::push::PushRequest,
     node::{event::Event, Manager},
 };
@@ -21,7 +24,10 @@ pub async fn push(
     Path((name,)): Path<(String,)>,
 ) -> Result<HttpResponse> {
     let queue = manager.queue(&name)?;
-    let message: Message = request.into_inner().into();
+    let message: Message = request
+        .into_inner()
+        .try_into()
+        .map_err(QueueError::MessageCompose)?;
 
     queue
         .log_event(&name, &manager, Event::Push(MaybeOwned::Borrowed(&message)))

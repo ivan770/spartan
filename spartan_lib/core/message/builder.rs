@@ -6,7 +6,7 @@ use crate::core::message::{time::Offset, Message};
 pub enum BuilderError {
     #[error("No body provided for builder")]
     BodyNotProvided,
-    #[error("Offset must be in range of -86400 and 86400 seconds")]
+    #[error("Offset must be in range of -86399 and 86399 seconds")]
     OffsetOutOfBounds,
 }
 
