@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Timeout {
     max: u32,
+    #[serde(with = "serialization::tz_local_seconds_option")]
     obtained_at: Option<DateTime<FixedOffset>>,
 }
 
@@ -72,8 +73,13 @@ impl Offset {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Time {
     offset: Offset,
+
+    #[serde(with = "serialization::tz_local_seconds")]
     dispatched_at: DateTime<FixedOffset>,
+
+    #[serde(with = "serialization::tz_local_seconds_option")]
     delay: Option<DateTime<FixedOffset>>,
+
     timeout: Timeout,
 }
 
@@ -146,6 +152,123 @@ impl Time {
 
     fn get_datetime_with_offset(offset: i32) -> DateTime<FixedOffset> {
         Utc::now().with_timezone(&FixedOffset::east(offset))
+    }
+}
+
+mod serialization {
+    use std::fmt::{Formatter, Result as FmtResult};
+
+    use chrono::{DateTime, FixedOffset, TimeZone, Utc};
+    use serde::de::{SeqAccess, Visitor};
+
+    struct LocalSecondsTimestampVisitor;
+
+    impl<'de> Visitor<'de> for LocalSecondsTimestampVisitor {
+        type Value = DateTime<FixedOffset>;
+
+        fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
+            write!(formatter, "a sequence of UTC timestamp and offset")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            let timestamp = seq.next_element()?.expect("Invalid size provided in hint");
+            let offset = seq.next_element()?.expect("Invalid size provided in hint");
+            Ok(Utc
+                .timestamp(timestamp, 0)
+                .with_timezone(&FixedOffset::east(offset)))
+        }
+    }
+
+    pub(crate) mod tz_local_seconds {
+        use chrono::{DateTime, FixedOffset};
+        use serde::{
+            de::Deserializer,
+            ser::{SerializeTuple, Serializer},
+        };
+
+        use super::LocalSecondsTimestampVisitor;
+
+        pub fn serialize<S>(dt: &DateTime<FixedOffset>, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            let mut tuple = serializer.serialize_tuple(2)?;
+
+            tuple.serialize_element(&dt.timestamp())?;
+            tuple.serialize_element(&dt.offset().local_minus_utc())?;
+
+            tuple.end()
+        }
+
+        pub fn deserialize<'de, D>(d: D) -> Result<DateTime<FixedOffset>, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            d.deserialize_tuple(2, LocalSecondsTimestampVisitor)
+        }
+    }
+
+    pub(crate) mod tz_local_seconds_option {
+        use std::fmt::{Formatter, Result as FmtResult};
+
+        use chrono::{DateTime, FixedOffset};
+        use serde::{
+            de::{Deserializer, Error, Visitor},
+            ser::Serializer,
+        };
+
+        use super::LocalSecondsTimestampVisitor;
+
+        struct OptionLocalSecondsTimestampVisitor;
+
+        impl<'de> Visitor<'de> for OptionLocalSecondsTimestampVisitor {
+            type Value = Option<DateTime<FixedOffset>>;
+
+            fn expecting(&self, formatter: &mut Formatter) -> FmtResult {
+                write!(formatter, "a sequence of UTC timestamp and offset or None")
+            }
+
+            fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                deserializer
+                    .deserialize_tuple(2, LocalSecondsTimestampVisitor)
+                    .map(Some)
+            }
+
+            fn visit_none<E>(self) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(None)
+            }
+        }
+
+        pub fn serialize<S>(
+            dt: &Option<DateTime<FixedOffset>>,
+            serializer: S,
+        ) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            match dt.as_ref() {
+                Some(dt) => {
+                    serializer.serialize_some(&(dt.timestamp(), dt.offset().local_minus_utc()))
+                }
+                None => serializer.serialize_none(),
+            }
+        }
+
+        pub fn deserialize<'de, D>(d: D) -> Result<Option<DateTime<FixedOffset>>, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            d.deserialize_option(OptionLocalSecondsTimestampVisitor)
+        }
     }
 }
 
