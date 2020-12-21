@@ -6,8 +6,8 @@ pub struct SizeResponse {
     pub size: usize,
 }
 
-impl SizeResponse {
-    pub fn new(size: usize) -> Self {
+impl From<usize> for SizeResponse {
+    fn from(size: usize) -> Self {
         SizeResponse { size }
     }
 }

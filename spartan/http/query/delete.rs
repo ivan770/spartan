@@ -13,8 +13,8 @@ pub struct DeleteResponse {
     pub message: Message,
 }
 
-impl DeleteResponse {
-    pub fn new(message: Message) -> Self {
+impl From<Message> for DeleteResponse {
+    fn from(message: Message) -> Self {
         DeleteResponse { message }
     }
 }

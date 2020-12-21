@@ -30,7 +30,7 @@ pub async fn delete(
         .delete(request.id)
         .ok_or(QueueError::MessageNotFound)?;
 
-    Ok(HttpResponse::Ok().json(DeleteResponse::new(message)))
+    Ok(HttpResponse::Ok().json(DeleteResponse::from(message)))
 }
 
 #[cfg(test)]
