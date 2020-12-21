@@ -45,15 +45,13 @@ mod tests {
     };
 
     use crate::{
-        http::query::{pop::TestPopResponse, push::PushRequest},
+        http::query::{pop::test_response::TestPopResponse, push::PushRequest},
         init_application, test_request,
         utils::testing::CONFIG,
     };
 
     #[actix_rt::test]
     async fn test_push() {
-        use spartan_lib::core::payload::Dispatchable;
-
         let mut app = init_service(init_application!(&CONFIG)).await;
 
         read_response(
@@ -70,7 +68,7 @@ mod tests {
         .await;
 
         let pop: TestPopResponse = read_response_json(&mut app, test_request!(get, "/test")).await;
-        assert_eq!(pop.message.body(), "Hello, world");
+        assert_eq!(&*pop.body, "Hello, world");
     }
 
     #[actix_rt::test]
