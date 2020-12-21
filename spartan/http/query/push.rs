@@ -1,5 +1,10 @@
+use std::convert::TryFrom;
+
 use serde::Deserialize;
-use spartan_lib::core::message::{builder::MessageBuilder, Message};
+use spartan_lib::core::message::{
+    builder::{BuilderError, MessageBuilder},
+    Message,
+};
 
 #[derive(Deserialize)]
 #[cfg_attr(test, derive(Default, serde::Serialize))]
@@ -11,8 +16,10 @@ pub struct PushRequest {
     pub delay: Option<u32>,
 }
 
-impl From<PushRequest> for Message {
-    fn from(request: PushRequest) -> Message {
+impl TryFrom<PushRequest> for Message {
+    type Error = BuilderError;
+
+    fn try_from(request: PushRequest) -> Result<Message, Self::Error> {
         let mut builder = MessageBuilder::default().body(request.body);
 
         if let Some(offset) = request.offset {
@@ -31,6 +38,6 @@ impl From<PushRequest> for Message {
             builder = builder.delay(delay);
         };
 
-        builder.compose().expect("No message body provided")
+        builder.compose()
     }
 }

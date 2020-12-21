@@ -15,7 +15,7 @@ pub async fn size(
 ) -> Result<HttpResponse> {
     let queue = manager.queue(&name)?.database().await;
 
-    Ok(HttpResponse::Ok().json(SizeResponse::new(queue.size())))
+    Ok(HttpResponse::Ok().json(SizeResponse::from(queue.size())))
 }
 
 #[cfg(test)]

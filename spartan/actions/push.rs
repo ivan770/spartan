@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use actix_web::{
     web::{Data, Json, Path},
     HttpResponse, Result,
@@ -6,6 +8,7 @@ use maybe_owned::MaybeOwned;
 use spartan_lib::core::{dispatcher::SimpleDispatcher, message::Message};
 
 use crate::{
+    actions::QueueError,
     http::query::push::PushRequest,
     node::{event::Event, Manager},
 };
@@ -21,7 +24,10 @@ pub async fn push(
     Path((name,)): Path<(String,)>,
 ) -> Result<HttpResponse> {
     let queue = manager.queue(&name)?;
-    let message: Message = request.into_inner().into();
+    let message: Message = request
+        .into_inner()
+        .try_into()
+        .map_err(QueueError::MessageCompose)?;
 
     queue
         .log_event(&name, &manager, Event::Push(MaybeOwned::Borrowed(&message)))
@@ -39,15 +45,13 @@ mod tests {
     };
 
     use crate::{
-        http::query::{pop::TestPopResponse, push::PushRequest},
+        http::query::{pop::test_response::TestPopResponse, push::PushRequest},
         init_application, test_request,
         utils::testing::CONFIG,
     };
 
     #[actix_rt::test]
     async fn test_push() {
-        use spartan_lib::core::payload::Dispatchable;
-
         let mut app = init_service(init_application!(&CONFIG)).await;
 
         read_response(
@@ -64,7 +68,7 @@ mod tests {
         .await;
 
         let pop: TestPopResponse = read_response_json(&mut app, test_request!(get, "/test")).await;
-        assert_eq!(pop.message.body(), "Hello, world");
+        assert_eq!(&*pop.body, "Hello, world");
     }
 
     #[actix_rt::test]

@@ -30,7 +30,7 @@ pub async fn delete(
         .delete(request.id)
         .ok_or(QueueError::MessageNotFound)?;
 
-    Ok(HttpResponse::Ok().json(DeleteResponse::new(message)))
+    Ok(HttpResponse::Ok().json(DeleteResponse::from(message)))
 }
 
 #[cfg(test)]
@@ -44,7 +44,7 @@ mod tests {
     use crate::{
         http::query::{
             delete::{DeleteRequest, DeleteResponse},
-            pop::TestPopResponse,
+            pop::test_response::TestPopResponse,
             push::PushRequest,
             size::SizeResponse,
         },
@@ -88,17 +88,11 @@ mod tests {
 
         let delete: DeleteResponse = read_response_json(
             &mut app,
-            test_request!(
-                delete,
-                "/test",
-                &DeleteRequest {
-                    id: pop.message.id()
-                }
-            ),
+            test_request!(delete, "/test", &DeleteRequest { id: pop.id }),
         )
         .await;
 
-        assert_eq!(delete.message.id(), pop.message.id());
+        assert_eq!(delete.message.id(), pop.id);
 
         let size: SizeResponse =
             read_response_json(&mut app, test_request!(get, "/test/size")).await;

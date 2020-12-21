@@ -1,22 +1,25 @@
 /// Message builder
 pub mod builder;
-mod state;
+
+/// Message time manager
 mod time;
 
+/// Message internal state
+mod state;
+
 use serde::{Deserialize, Serialize};
-use state::State;
-use time::Time;
+pub use state::{State, Status};
+pub use time::{Offset, Time, Timeout};
 use uuid::Uuid;
 
-use super::payload::Identifiable;
-use crate::core::payload::{Dispatchable, Sortable, Status};
+use crate::core::payload::{Dispatchable, Identifiable, Sortable, Status as StatusPayload};
 
-/// Default message implementation, with support of all [payload] traits
+/// Default message implementation, with support of all [`payload`] traits
 ///
-/// [`Sortable`] implementation is compatible with [TreeDatabase]
+/// [`Sortable`] implementation is compatible with [`TreeDatabase`]
 ///
-/// [payload]: crate::core::payload
-/// [TreeDatabase]: crate::core::db::TreeDatabase
+/// [`payload`]: crate::core::payload
+/// [`TreeDatabase`]: crate::core::db::TreeDatabase
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message {
     id: Uuid,
@@ -26,7 +29,13 @@ pub struct Message {
 }
 
 impl Message {
-    fn new(body: Box<str>, delay: Option<u32>, offset: i32, max_tries: u32, timeout: u32) -> Self {
+    fn new(
+        body: Box<str>,
+        delay: Option<u32>,
+        offset: Offset,
+        max_tries: u32,
+        timeout: u32,
+    ) -> Self {
         Message {
             id: Message::generate_id(),
             body,
@@ -37,6 +46,20 @@ impl Message {
 
     fn generate_id() -> Uuid {
         Uuid::new_v4()
+    }
+
+    /// Get current message [`State`]
+    ///
+    /// [`State`]: state::State
+    pub fn state(&self) -> &State {
+        &self.state
+    }
+
+    /// Get message [`Time`]
+    ///
+    /// [`Time`]: time::Time
+    pub fn time(&self) -> &Time {
+        &self.time
     }
 }
 
@@ -64,7 +87,7 @@ impl Dispatchable for Message {
     }
 }
 
-impl Status for Message {
+impl StatusPayload for Message {
     fn requeue(&mut self) {
         self.state.requeue();
     }

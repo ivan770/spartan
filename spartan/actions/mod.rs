@@ -1,4 +1,5 @@
 use actix_web::{http::StatusCode, ResponseError};
+use spartan_lib::core::message::builder::BuilderError;
 use thiserror::Error;
 
 /// Clear queue
@@ -20,11 +21,13 @@ pub mod requeue;
 pub mod size;
 
 #[derive(Error, Debug)]
-enum QueueError {
+pub enum QueueError {
     #[error("No message available")]
     NoMessageAvailable,
     #[error("Message not found")]
     MessageNotFound,
+    #[error("Unable to compose message")]
+    MessageCompose(#[from] BuilderError),
 }
 
 impl ResponseError for QueueError {
