@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use bincode::ErrorKind;
 use thiserror::Error;
 use tokio::io::Error as IoError;
@@ -12,6 +14,11 @@ pub enum PrimaryError {
     EmptySocket,
     #[error("Protocol mismatch")]
     ProtocolMismatch,
+    #[error(
+        "Replica version mismatch. Primary version: {}, replica version: {0}",
+        crate::VERSION
+    )]
+    VersionMismatch(Cow<'static, str>),
     #[error("Queue configuration mismatch")]
     QueueConfigMismatch,
 }

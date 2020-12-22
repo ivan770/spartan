@@ -19,7 +19,7 @@ pub enum PrimaryRequest<'c, 'r> {
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq, Debug))]
 pub enum ReplicaRequest<'c> {
-    Pong,
+    Pong(Cow<'static, str>),
     RecvIndex(Box<[(Cow<'c, str>, u64)]>),
     RecvRange,
     QueueNotFound(Cow<'c, str>),

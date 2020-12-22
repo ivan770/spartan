@@ -22,7 +22,7 @@
 //!
 //! ## Ping and Pong
 //!
-//! These messages are used to check, if all replicas are still online.
+//! These messages are used to check, if all replicas are still online, and if their and primary node versions are same.
 //!
 //! While just the TCP ping can be used, it's better to check if replica has the same replication protocol as primary.
 //!

@@ -97,7 +97,7 @@ pub async fn accept_connection<'m, 'c>(
     manager: &'m Manager<'c>,
 ) -> ReplicaRequest<'m> {
     match request {
-        PrimaryRequest::Ping => ReplicaRequest::Pong,
+        PrimaryRequest::Ping => ReplicaRequest::Pong(Cow::Borrowed(crate::VERSION)),
         PrimaryRequest::AskIndex => {
             debug!("Preparing indexes for primary node.");
             let mut indexes = Vec::with_capacity(manager.config().queues.len());
@@ -179,7 +179,10 @@ mod tests {
     async fn test_accept_ping() {
         let manager = Manager::new(&CONFIG);
         let response = accept_connection(PrimaryRequest::Ping, &manager).await;
-        assert_eq!(response, ReplicaRequest::Pong);
+        assert_eq!(
+            response,
+            ReplicaRequest::Pong(Cow::Borrowed(crate::VERSION))
+        );
     }
 
     #[tokio::test]
@@ -271,7 +274,7 @@ mod tests {
 
         assert_eq!(
             deserialize::<Request>(&*buf).unwrap(),
-            Request::Replica(ReplicaRequest::Pong)
+            Request::Replica(ReplicaRequest::Pong(Cow::Borrowed(crate::VERSION)))
         );
     }
 
@@ -284,10 +287,12 @@ mod tests {
         };
 
         let mut buf = BytesMut::default();
-        let stream =
-            TestStream::from_output(Request::Replica(ReplicaRequest::Pong), &mut BincodeCodec)
-                .unwrap()
-                .input(&mut buf);
+        let stream = TestStream::from_output(
+            Request::Replica(ReplicaRequest::Pong(Cow::Borrowed(crate::VERSION))),
+            &mut BincodeCodec,
+        )
+        .unwrap()
+        .input(&mut buf);
 
         let mut socket = ReplicaSocket::new(&manager, &config, stream);
         assert_eq!(
@@ -301,7 +306,7 @@ mod tests {
         _: &Manager<'a>,
     ) -> ReplicaRequest<'a> {
         assert_eq!(req, PrimaryRequest::Ping);
-        ReplicaRequest::Pong
+        ReplicaRequest::Pong(Cow::Borrowed(crate::VERSION))
     }
 
     async fn prepare_manager(manager: &mut Manager<'_>) {

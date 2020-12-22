@@ -32,6 +32,8 @@ use cli::{Command::*, Server};
 use once_cell::sync::OnceCell;
 use structopt::StructOpt;
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 static SERVER: OnceCell<Server> = OnceCell::new();
 
 #[tokio::main]

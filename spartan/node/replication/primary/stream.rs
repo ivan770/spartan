@@ -52,7 +52,13 @@ where
 
     async fn ping(&mut self) -> PrimaryResult<()> {
         match self.exchange(PrimaryRequest::Ping).await? {
-            ReplicaRequest::Pong => Ok(()),
+            ReplicaRequest::Pong(version) => {
+                if version == crate::VERSION {
+                    Ok(())
+                } else {
+                    Err(PrimaryError::VersionMismatch(version))
+                }
+            }
             _ => Err(PrimaryError::ProtocolMismatch),
         }
     }
@@ -150,7 +156,10 @@ mod tests {
 
     use super::StreamPool;
     use crate::{
-        node::replication::message::{PrimaryRequest, ReplicaRequest, Request},
+        node::replication::{
+            message::{PrimaryRequest, ReplicaRequest, Request},
+            primary::error::PrimaryError,
+        },
         utils::{codec::BincodeCodec, stream::TestStream},
     };
 
@@ -158,7 +167,7 @@ mod tests {
     async fn test_ping() {
         let mut buf = BytesMut::default();
         let stream = vec![TestStream::from_output(
-            Request::Replica(ReplicaRequest::Pong),
+            Request::Replica(ReplicaRequest::Pong(Cow::Borrowed(crate::VERSION))),
             &mut BincodeCodec,
         )
         .unwrap()
@@ -169,6 +178,22 @@ mod tests {
             deserialize::<Request>(&*buf).unwrap(),
             Request::Primary(PrimaryRequest::Ping)
         );
+    }
+
+    #[tokio::test]
+    async fn test_ping_invalid_version() {
+        let mut buf = BytesMut::default();
+        let stream = vec![TestStream::from_output(
+            Request::Replica(ReplicaRequest::Pong(Cow::Borrowed("0.0.0"))),
+            &mut BincodeCodec,
+        )
+        .unwrap()
+        .input(&mut buf)];
+
+        assert!(matches!(
+            StreamPool::new(stream).await.ping().await.unwrap_err(),
+            PrimaryError::VersionMismatch(_)
+        ));
     }
 
     #[tokio::test]
