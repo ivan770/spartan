@@ -27,7 +27,7 @@ pub struct ReplicaCommand {}
 
 impl ReplicaCommand {
     pub async fn dispatch(&self, server: &'static Server) -> ReplicaResult<()> {
-        let config = server.config().expect("Config not loaded");
+        let config = server.config().ok_or(ReplicaError::ReplicaConfigNotFound)?;
         let mut manager = Manager::new(config);
 
         match manager.load_from_fs().await {
