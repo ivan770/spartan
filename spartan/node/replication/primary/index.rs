@@ -39,7 +39,8 @@ where
                         .as_mut()
                         .expect("Replication storage is uninitialized")
                         .get_primary()
-                        .slice(*start),
+                        .slice(*start)
+                        .ok_or(PrimaryError::IndexMismatch)?,
                 )
                 .await?;
         }

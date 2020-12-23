@@ -19,6 +19,8 @@ pub enum PrimaryError {
         crate::VERSION
     )]
     VersionMismatch(Cow<'static, str>),
+    #[error("Replica node requested index below GC threshold")]
+    IndexMismatch,
     #[error("Queue configuration mismatch")]
     QueueConfigMismatch,
 }

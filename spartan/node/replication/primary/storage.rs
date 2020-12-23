@@ -36,17 +36,31 @@ impl PrimaryStorage {
             .for_each(drop);
     }
 
-    pub fn slice(&self, start: u64) -> Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event<'_>>)]> {
+    /// Get event log slice
+    ///
+    /// [`None`], if `start <= gc_threshold`
+    pub fn slice(
+        &self,
+        start: u64,
+    ) -> Option<Box<[(MaybeOwned<'_, u64>, MaybeOwned<'_, Event<'_>>)]>> {
         debug!("Obtaining event log slice starting from ID {}", start);
 
-        self.log
-            .range(start..)
-            .map(|(k, v)| (MaybeOwned::Borrowed(k), MaybeOwned::Borrowed(v)))
-            .collect()
+        if start > self.gc_threshold {
+            Some(
+                self.log
+                    .range(start..)
+                    .map(|(k, v)| (MaybeOwned::Borrowed(k), MaybeOwned::Borrowed(v)))
+                    .collect(),
+            )
+        } else {
+            None
+        }
     }
 
     pub fn set_gc_threshold(&mut self, threshold: u64) {
-        self.gc_threshold = threshold;
+        if self.log.get(&threshold).is_some() {
+            self.gc_threshold = threshold;
+        }
     }
 }
 
@@ -62,23 +76,35 @@ mod tests {
             storage.push(Event::Pop);
         }
 
-        let slice = storage.slice(1);
+        let slice = storage.slice(1).unwrap();
         let (index, _) = slice.first().unwrap();
         assert_eq!(**index, 1);
 
         storage.gc_threshold = 4;
         storage.gc();
 
-        let slice = storage.slice(1);
+        let slice = storage.slice(5).unwrap();
         let (index, _) = slice.first().unwrap();
         assert_eq!(**index, 5);
+    }
+
+    #[test]
+    fn test_index_mismatch() {
+        let mut storage = PrimaryStorage::default();
+
+        storage.slice(1).unwrap();
+
+        storage.gc_threshold = 1;
+        storage.gc();
+
+        assert!(storage.slice(1).is_none());
     }
 
     #[test]
     fn test_empty_slice() {
         let storage = PrimaryStorage::default();
 
-        let slice = storage.slice(1);
+        let slice = storage.slice(1).unwrap();
         assert!(slice.first().is_none());
     }
 
@@ -90,7 +116,7 @@ mod tests {
             storage.push(Event::Pop);
         }
 
-        let slice = storage.slice(1);
+        let slice = storage.slice(1).unwrap();
         assert_eq!(slice.len(), 6);
 
         let (index, event) = slice.first().unwrap();

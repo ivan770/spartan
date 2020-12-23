@@ -56,6 +56,10 @@ async fn start_replication(
                 error!("TCP socket error: {}", e);
                 return;
             }
+            Err(PrimaryError::CodecError(e)) => {
+                error!("Codec error: {}", e);
+                return;
+            }
             Err(e) => error!("Error happened during replication attempt: {}", e),
         }
     }
