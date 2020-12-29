@@ -39,7 +39,7 @@ anyhow = { version = "1.0" }
 futures-util = { version = "0.3" }
 once_cell = { version = "1.5" } 
 tokio-util = { version = "0.3", optional = true }
-itertools = { version = "0.9", optional = true }
+itertools = { version = "0.10", optional = true }
 cfg-if = { version = "1.0" }
 dialoguer = { version = "0.7", optional = true }
 
