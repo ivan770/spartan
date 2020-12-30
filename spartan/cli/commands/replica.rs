@@ -6,7 +6,7 @@ use tokio::net::TcpListener;
 use crate::{
     cli::Server,
     dispatch_jobs,
-    jobs::{exit::spawn_ctrlc_handler, persistence::spawn_persistence},
+    jobs::persistence::spawn_persistence,
     node::{
         persistence::PersistenceError,
         replication::{
@@ -38,7 +38,7 @@ impl ReplicaCommand {
 
         let manager = Arc::new(manager);
 
-        dispatch_jobs!(manager, spawn_ctrlc_handler, spawn_persistence);
+        dispatch_jobs!(manager, spawn_persistence);
 
         manager
             .node()

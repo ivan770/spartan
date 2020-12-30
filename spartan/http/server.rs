@@ -1,47 +1,34 @@
-use std::{io::Error as IoError, net::SocketAddr};
+use std::{net::SocketAddr, sync::Arc};
 
-use actix_web::{
-    web::{Data, JsonConfig},
-    App, HttpServer,
-};
 use thiserror::Error;
+use tokio::signal::ctrl_c;
+use warp::{serve, Error};
 
 use super::routing::attach_routes;
 use crate::node::Manager;
 
 #[derive(Error, Debug)]
 pub enum ServerError {
-    #[error("Unable to bind server to address: {0}")]
-    AddressBinding(IoError),
     #[error("Internal server error: {0}")]
-    ServerError(IoError),
+    Internal(#[from] Error),
 }
 
 /// Start HTTP server with shared manager
+///
+/// Server starts graceful shutdown process on CTRL-C signal
 pub async fn start_http_server(
     host: SocketAddr,
-    manager: Data<Manager<'static>>,
+    manager: Arc<Manager<'static>>,
 ) -> Result<(), ServerError> {
-    HttpServer::new(move || {
-        let config = manager.config();
+    serve(attach_routes(manager.clone()))
+        .try_bind_with_graceful_shutdown(host, async {
+            ctrl_c().await.ok();
+        })
+        .map_err(ServerError::Internal)?
+        .1
+        .await;
 
-        let mut app = App::new()
-            .app_data(manager.clone())
-            .configure(move |service_config| {
-                attach_routes(config, service_config);
-            });
-
-        if let Some(bytes) = config.body_size {
-            app = app.app_data(JsonConfig::default().limit(bytes));
-        }
-
-        app
-    })
-    .bind(host)
-    .map_err(ServerError::AddressBinding)?
-    .run()
-    .await
-    .map_err(ServerError::ServerError)?;
+    manager.shutdown().await;
 
     Ok(())
 }

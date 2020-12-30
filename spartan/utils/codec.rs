@@ -1,5 +1,5 @@
-use actix_web::web::BytesMut;
 use bincode::{deserialize, serialize, Error};
+use bytes::BytesMut;
 use serde::Serialize;
 use tokio_util::codec::{Decoder, Encoder};
 
@@ -36,7 +36,7 @@ impl Decoder for BincodeCodec {
 
 #[cfg(test)]
 mod tests {
-    use actix_web::web::BytesMut;
+    use bytes::BytesMut;
     use tokio_util::codec::{Decoder, Encoder};
 
     use super::BincodeCodec;

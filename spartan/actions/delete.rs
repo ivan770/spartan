@@ -1,11 +1,10 @@
-use actix_web::{
-    web::{Data, Json, Path},
-    HttpResponse, Result,
-};
-use spartan_lib::core::dispatcher::PositionBasedDelete;
+use std::sync::Arc;
 
-use super::QueueError;
+use spartan_lib::core::dispatcher::PositionBasedDelete;
+use warp::reply::{json, Json};
+
 use crate::{
+    actions::{QueueError, Result},
     http::query::delete::{DeleteRequest, DeleteResponse},
     node::{event::Event, Manager},
 };
@@ -14,10 +13,10 @@ use crate::{
 ///
 /// Requires ID of message being deleted, returns deleted message.
 pub async fn delete(
-    request: Json<DeleteRequest>,
-    manager: Data<Manager<'_>>,
-    Path((name,)): Path<(String,)>,
-) -> Result<HttpResponse> {
+    manager: Arc<Manager<'_>>,
+    name: String,
+    request: DeleteRequest,
+) -> Result<Json> {
     let queue = manager.queue(&name)?;
 
     queue
@@ -30,15 +29,12 @@ pub async fn delete(
         .delete(request.id)
         .ok_or(QueueError::MessageNotFound)?;
 
-    Ok(HttpResponse::Ok().json(DeleteResponse::from(message)))
+    Ok(json(&DeleteResponse::from(message)))
 }
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{
-        test::{init_service, read_response, read_response_json},
-        web::Bytes,
-    };
+    use bytes::Bytes;
     use spartan_lib::{core::payload::Identifiable, uuid::Uuid};
 
     use crate::{
@@ -48,54 +44,51 @@ mod tests {
             push::PushRequest,
             size::SizeResponse,
         },
-        init_application, test_request,
+        init_application, test_json_request, test_request,
         utils::testing::CONFIG,
     };
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_empty_delete() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
-        let resp = read_response(
-            &mut app,
-            test_request!(delete, "/test", &DeleteRequest { id: Uuid::new_v4() }),
+        let app = init_application!(&CONFIG);
+        let resp = test_request!(
+            app,
+            "DELETE",
+            "/test",
+            &DeleteRequest { id: Uuid::new_v4() }
         )
         .await;
-        assert_eq!(resp, Bytes::from_static(b"Message not found"));
+        assert_eq!(*resp.body(), Bytes::from_static(b"Message not found"));
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_message_delete() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
+        let app = init_application!(&CONFIG);
 
-        read_response(
-            &mut app,
-            test_request!(
-                post,
-                "/test",
-                &PushRequest {
-                    body: String::from("Hello, world").into_boxed_str(),
-                    ..Default::default()
-                }
-            ),
+        test_request!(
+            app,
+            "POST",
+            "/test",
+            &PushRequest {
+                body: String::from("Hello, world").into_boxed_str(),
+                ..Default::default()
+            }
         )
         .await;
 
-        let pop: TestPopResponse = read_response_json(&mut app, test_request!(get, "/test")).await;
+        let pop: TestPopResponse = test_json_request!(app, "GET", "/test");
 
-        let size: SizeResponse =
-            read_response_json(&mut app, test_request!(get, "/test/size")).await;
+        let size: SizeResponse = test_json_request!(app, "GET", "/test/size");
+
         assert_eq!(size.size, 1);
 
-        let delete: DeleteResponse = read_response_json(
-            &mut app,
-            test_request!(delete, "/test", &DeleteRequest { id: pop.id }),
-        )
-        .await;
+        let delete: DeleteResponse =
+            test_json_request!(app, "DELETE", "/test", &DeleteRequest { id: pop.id });
 
         assert_eq!(delete.message.id(), pop.id);
 
-        let size: SizeResponse =
-            read_response_json(&mut app, test_request!(get, "/test/size")).await;
+        let size: SizeResponse = test_json_request!(app, "GET", "/test/size");
+
         assert_eq!(size.size, 0);
     }
 }

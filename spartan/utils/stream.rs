@@ -4,7 +4,7 @@ use std::{
     task::{Context, Poll},
 };
 
-use actix_web::web::BytesMut;
+use bytes::BytesMut;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Encoder;
 
@@ -67,7 +67,7 @@ impl AsyncRead for TestStream<'_> {
 
 #[cfg(test)]
 mod tests {
-    use actix_web::web::BytesMut;
+    use bytes::BytesMut;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio_util::codec::{Decoder, LinesCodec};
 

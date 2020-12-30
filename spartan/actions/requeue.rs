@@ -1,11 +1,10 @@
-use actix_web::{
-    web::{Data, Json, Path},
-    HttpResponse, Result,
-};
-use spartan_lib::core::dispatcher::StatusAwareDispatcher;
+use std::sync::Arc;
 
-use super::QueueError;
+use spartan_lib::core::dispatcher::StatusAwareDispatcher;
+use warp::reply::{json, Json};
+
 use crate::{
+    actions::{QueueError, Result},
     http::query::requeue::RequeueRequest,
     node::{event::Event, Manager},
 };
@@ -16,10 +15,10 @@ use crate::{
 ///
 /// Message try counter is incremented.
 pub async fn requeue(
-    request: Json<RequeueRequest>,
-    manager: Data<Manager<'_>>,
-    Path((name,)): Path<(String,)>,
-) -> Result<HttpResponse> {
+    manager: Arc<Manager<'_>>,
+    name: String,
+    request: RequeueRequest,
+) -> Result<Json> {
     let queue = manager.queue(&name)?;
 
     queue
@@ -32,80 +31,79 @@ pub async fn requeue(
         .requeue(request.id)
         .ok_or(QueueError::MessageNotFound)?;
 
-    Ok(HttpResponse::Ok().json(()))
+    Ok(json(&()))
 }
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{
-        test::{init_service, read_response, read_response_json},
-        web::Bytes,
-    };
+    use bytes::Bytes;
     use uuid::Uuid;
 
     use crate::{
         http::query::{
             pop::test_response::TestPopResponse, push::PushRequest, requeue::RequeueRequest,
         },
-        init_application, test_request,
+        init_application, test_json_request, test_request,
         utils::testing::CONFIG,
     };
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_empty_requeue() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
-        let resp = read_response(
-            &mut app,
-            test_request!(
-                post,
-                "/test/requeue",
-                &RequeueRequest { id: Uuid::new_v4() }
-            ),
+        let app = init_application!(&CONFIG);
+        let resp = test_request!(
+            app,
+            "POST",
+            "/test/requeue",
+            &RequeueRequest { id: Uuid::new_v4() }
         )
         .await;
-        assert_eq!(resp, Bytes::from_static(b"Message not found"));
+
+        assert_eq!(*resp.body(), Bytes::from_static(b"Message not found"));
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_message_requeue() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
+        let app = init_application!(&CONFIG);
 
-        read_response(
-            &mut app,
-            test_request!(
-                post,
-                "/test",
-                &PushRequest {
-                    body: String::from("Hello, world").into_boxed_str(),
-                    max_tries: Some(2),
-                    ..Default::default()
-                }
-            ),
+        test_request!(
+            app,
+            "POST",
+            "/test",
+            &PushRequest {
+                body: String::from("Hello, world").into_boxed_str(),
+                max_tries: Some(2),
+                ..Default::default()
+            }
         )
         .await;
 
-        let first_pop: TestPopResponse =
-            read_response_json(&mut app, test_request!(get, "/test")).await;
+        let first_pop: TestPopResponse = test_json_request!(app, "GET", "/test");
 
-        read_response(
-            &mut app,
-            test_request!(post, "/test/requeue", &RequeueRequest { id: first_pop.id }),
+        test_request!(
+            app,
+            "POST",
+            "/test/requeue",
+            &RequeueRequest { id: first_pop.id }
         )
         .await;
 
-        let second_pop: TestPopResponse =
-            read_response_json(&mut app, test_request!(get, "/test")).await;
+        let second_pop: TestPopResponse = test_json_request!(app, "GET", "/test");
 
         assert_eq!(first_pop.id, second_pop.id);
 
-        read_response(
-            &mut app,
-            test_request!(post, "/test/requeue", &RequeueRequest { id: second_pop.id }),
+        test_request!(
+            app,
+            "POST",
+            "/test/requeue",
+            &RequeueRequest { id: second_pop.id }
         )
         .await;
 
-        let third_pop = read_response(&mut app, test_request!(get, "/test")).await;
+        let third_pop = test_request!(app, "GET", "/test").await;
 
-        assert_eq!(third_pop, Bytes::from_static(b"No message available"));
+        assert_eq!(
+            *third_pop.body(),
+            Bytes::from_static(b"No message available")
+        );
     }
 }

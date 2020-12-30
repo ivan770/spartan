@@ -151,8 +151,8 @@ where
 mod tests {
     use std::borrow::Cow;
 
-    use actix_web::web::BytesMut;
     use bincode::deserialize;
+    use bytes::BytesMut;
 
     use super::StreamPool;
     use crate::{

@@ -1,6 +1,6 @@
-use actix_web::{http::StatusCode, ResponseError};
 use futures_util::{stream::iter, StreamExt, TryStreamExt};
 use thiserror::Error;
+use warp::hyper::StatusCode;
 
 use super::{
     event::Event,
@@ -11,7 +11,10 @@ use super::{
     },
     Node, DB,
 };
-use crate::config::{persistence::Persistence, Config};
+use crate::{
+    actions::RespondableError,
+    config::{persistence::Persistence, Config},
+};
 
 #[derive(Error, Debug)]
 pub enum ManagerError {
@@ -19,7 +22,7 @@ pub enum ManagerError {
     QueueNotFound,
 }
 
-impl ResponseError for ManagerError {
+impl RespondableError for ManagerError {
     fn status_code(&self) -> StatusCode {
         StatusCode::NOT_FOUND
     }
@@ -110,6 +113,18 @@ impl<'c> Manager<'c> {
             Log::new(config).persist_event(event, queue).await
         } else {
             Ok(())
+        }
+    }
+
+    /// Prepare [`Manager`] for shutdown process
+    ///
+    /// Internally persists snapshot instance and outputs error message
+    /// in case anything goes wrong
+    ///
+    /// Though not recommended to be done, this method can be called multiple times
+    pub async fn shutdown(&self) {
+        if let Err(e) = self.snapshot().await {
+            error!("Error happened during shutdown: {}", e)
         }
     }
 }
