@@ -104,6 +104,10 @@ impl StatusPayload for Message {
     fn reservable(&self) -> bool {
         self.state.reservable()
     }
+
+    fn has_tries(&self) -> bool {
+        self.state.has_tries()
+    }
 }
 
 impl Sortable for Message {

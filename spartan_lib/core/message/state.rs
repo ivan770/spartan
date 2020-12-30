@@ -33,7 +33,7 @@ impl State {
         }
     }
 
-    fn has_tries(&self) -> bool {
+    pub(crate) fn has_tries(&self) -> bool {
         self.tries < self.max_tries
     }
 

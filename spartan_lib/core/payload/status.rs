@@ -51,4 +51,22 @@ pub trait Status: Dispatchable {
     /// assert!(message.reservable());
     /// ```
     fn reservable(&self) -> bool;
+
+    /// Check if message has available tries
+    ///
+    /// This method was added to help [`TreeDatabase`] correctly identify if message can be reserved later.
+    ///
+    /// ```
+    /// use spartan_lib::core::message::builder::MessageBuilder;
+    /// use spartan_lib::core::payload::Status;
+    ///
+    /// let mut message = MessageBuilder::default().body("Hello, world").compose().unwrap();
+    ///
+    /// assert!(message.has_tries());
+    ///
+    /// message.reserve();
+    ///
+    /// assert!(!message.has_tries());
+    /// ```
+    fn has_tries(&self) -> bool;
 }

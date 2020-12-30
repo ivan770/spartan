@@ -149,6 +149,25 @@ mod tests {
                 assert_eq!(db.pop().unwrap().id(), message.id());
                 assert_eq!(db.pop().unwrap().id(), delayed_message.id());
             }
+
+            #[test]
+            fn push_pop_requeue_push() {
+                let mut db = create_database();
+
+                let message = MessageBuilder::default()
+                    .body("Hello, world")
+                    .compose()
+                    .unwrap();
+                db.push(message);
+
+                let recv_message = db.pop().unwrap().id();
+                db.requeue(recv_message);
+
+                let message = generate_test_message();
+                db.push(message.clone());
+
+                assert_eq!(db.pop().unwrap().id(), message.id());
+            }
         };
     }
 }

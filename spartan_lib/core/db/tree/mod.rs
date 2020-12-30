@@ -8,7 +8,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use super::StatusAwareDatabase;
 use crate::core::{
     db::Database,
-    payload::{Identifiable, Sortable},
+    payload::{Identifiable, Sortable, Status},
 };
 
 type MessageStore<M, S = RandomState> = HashMap<<M as Identifiable>::Id, (u64, M), S>;
@@ -130,7 +130,7 @@ where
 
 impl<M> StatusAwareDatabase<M> for TreeDatabase<M>
 where
-    M: Identifiable + Sortable,
+    M: Identifiable + Sortable + Status,
     <M as Identifiable>::Id: Hash,
 {
     type RequeueKey = <M as Identifiable>::Id;
@@ -159,7 +159,13 @@ where
             .get_mut(&position)
             .filter(|message| predicate(&message.1))
             .map(|message| {
-                queue_tree.insert((message.1.sort(), message.0), position);
+                // Check if message can be reserved later
+                // Without this check, requeue of message where tries == max_tries can lead to
+                // broken index, as it will be stuck until GC collects it
+                if message.1.has_tries() {
+                    queue_tree.insert((message.1.sort(), message.0), position);
+                }
+
                 message
             })
             .map(|message| &mut message.1)
