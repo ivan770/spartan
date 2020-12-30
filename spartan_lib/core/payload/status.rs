@@ -68,5 +68,7 @@ pub trait Status: Dispatchable {
     ///
     /// assert!(!message.has_tries());
     /// ```
+    ///
+    /// [`TreeDatabase`]: crate::core::db::TreeDatabase
     fn has_tries(&self) -> bool;
 }
