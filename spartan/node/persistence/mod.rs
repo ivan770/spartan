@@ -16,9 +16,10 @@ use std::{
     num::TryFromIntError,
 };
 
-use actix_web::ResponseError;
 use bincode::Error as BincodeError;
 use thiserror::Error;
+
+use crate::actions::RespondableError;
 
 /// Errors, that may occur during persistence process
 #[derive(Error, Debug)]
@@ -44,4 +45,4 @@ impl From<IoError> for PersistenceError {
     }
 }
 
-impl ResponseError for PersistenceError {}
+impl RespondableError for PersistenceError {}

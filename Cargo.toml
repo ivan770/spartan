@@ -25,9 +25,8 @@ replication = ["tokio-util", "itertools"]
 init = ["dialoguer"]
 
 [dependencies]
-actix-web = { version = "3.2" }
-actix-rt = { version = "1.1" }
-actix-service = { version = "1.0" }
+bytes = { version = "0.5" }
+warp = { git = "https://github.com/ivan770/warp" }
 structopt = { version = "0.3" }
 log = { version = "0.4" }
 pretty_env_logger = { version = "0.4" }
@@ -45,10 +44,11 @@ dialoguer = { version = "0.7", optional = true }
 
 [dev-dependencies]
 tempfile = { version = "3.1" }
+serde_json = { version = "1.0" }
 
 [dependencies.tokio]
 version = "0.2"
-features = ["macros", "rt-threaded", "fs", "tcp", "sync"]
+features = ["macros", "rt-threaded", "fs", "tcp", "sync", "signal"]
 
 [dependencies.maybe-owned]
 version = "0.3"

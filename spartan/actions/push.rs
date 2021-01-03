@@ -1,14 +1,11 @@
-use std::convert::TryInto;
+use std::{convert::TryInto, sync::Arc};
 
-use actix_web::{
-    web::{Data, Json, Path},
-    HttpResponse, Result,
-};
 use maybe_owned::MaybeOwned;
 use spartan_lib::core::{dispatcher::SimpleDispatcher, message::Message};
+use warp::reply::{json, Json};
 
 use crate::{
-    actions::QueueError,
+    actions::{QueueError, Result},
     http::query::push::PushRequest,
     node::{event::Event, Manager},
 };
@@ -18,78 +15,66 @@ use crate::{
 /// Requires message body. Offset, max tries, timeout, delay are optional.
 ///
 /// Returns empty response.
-pub async fn push(
-    request: Json<PushRequest>,
-    manager: Data<Manager<'_>>,
-    Path((name,)): Path<(String,)>,
-) -> Result<HttpResponse> {
+pub async fn push(manager: Arc<Manager<'_>>, name: String, request: PushRequest) -> Result<Json> {
     let queue = manager.queue(&name)?;
-    let message: Message = request
-        .into_inner()
-        .try_into()
-        .map_err(QueueError::MessageCompose)?;
+    let message: Message = request.try_into().map_err(QueueError::MessageCompose)?;
 
     queue
         .log_event(&name, &manager, Event::Push(MaybeOwned::Borrowed(&message)))
         .await?;
 
     queue.database().await.push(message);
-    Ok(HttpResponse::Ok().json(()))
+
+    Ok(json(&()))
 }
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{
-        test::{init_service, read_response, read_response_json},
-        web::Bytes,
-    };
+    use bytes::Bytes;
 
     use crate::{
         http::query::{pop::test_response::TestPopResponse, push::PushRequest},
-        init_application, test_request,
+        init_application, test_json_request, test_request,
         utils::testing::CONFIG,
     };
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_push() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
+        let app = init_application!(&CONFIG);
 
-        read_response(
-            &mut app,
-            test_request!(
-                post,
-                "/test",
-                &PushRequest {
-                    body: String::from("Hello, world").into_boxed_str(),
-                    ..Default::default()
-                }
-            ),
+        test_request!(
+            app,
+            "POST",
+            "/test",
+            &PushRequest {
+                body: String::from("Hello, world").into_boxed_str(),
+                ..Default::default()
+            }
         )
         .await;
 
-        let pop: TestPopResponse = read_response_json(&mut app, test_request!(get, "/test")).await;
+        let pop: TestPopResponse = test_json_request!(app, "GET", "/test");
+
         assert_eq!(&*pop.body, "Hello, world");
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_delayed_push() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
+        let app = init_application!(&CONFIG);
 
-        read_response(
-            &mut app,
-            test_request!(
-                post,
-                "/test",
-                &PushRequest {
-                    body: String::from("Hello, world").into_boxed_str(),
-                    delay: Some(900),
-                    ..Default::default()
-                }
-            ),
+        test_request!(
+            app,
+            "POST",
+            "/test",
+            &PushRequest {
+                body: String::from("Hello, world").into_boxed_str(),
+                delay: Some(900),
+                ..Default::default()
+            }
         )
         .await;
 
-        let pop = read_response(&mut app, test_request!(get, "/test")).await;
-        assert_eq!(pop, Bytes::from_static(b"No message available"));
+        let pop = test_request!(app, "GET", "/test").await;
+        assert_eq!(*pop.body(), Bytes::from_static(b"No message available"));
     }
 }

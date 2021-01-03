@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use actix_rt::time::delay_for;
 use futures_util::{
     stream::{iter, StreamExt},
     TryStreamExt,
 };
 use spartan_lib::core::dispatcher::SimpleDispatcher;
+use tokio::time::delay_for;
 
 #[cfg(feature = "replication")]
 use crate::node::replication::primary::storage::PrimaryStorage;

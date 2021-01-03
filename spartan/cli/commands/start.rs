@@ -1,10 +1,7 @@
-use std::{io::Error as IoError, net::SocketAddr};
+use std::{net::SocketAddr, sync::Arc};
 
-use actix_rt::System;
-use actix_web::web::Data;
 use structopt::StructOpt;
 use thiserror::Error;
-use tokio::task::LocalSet;
 
 #[cfg(feature = "replication")]
 use crate::jobs::replication::spawn_replication;
@@ -12,7 +9,7 @@ use crate::{
     cli::Server,
     dispatch_jobs,
     http::server::{start_http_server, ServerError},
-    jobs::{exit::spawn_ctrlc_handler, gc::spawn_gc, persistence::spawn_persistence},
+    jobs::{gc::spawn_gc, persistence::spawn_persistence},
     node::{persistence::PersistenceError, Manager},
 };
 
@@ -20,8 +17,6 @@ use crate::{
 pub enum StartCommandError {
     #[error("Unable to load configuration file")]
     ConfigFileError,
-    #[error("Internal runtime error")]
-    RuntimeError(IoError),
     #[error("HTTP server error: {0}")]
     HttpServerError(ServerError),
     #[error("Persistence error: {0}")]
@@ -41,13 +36,6 @@ impl StartCommand {
     }
 
     pub async fn dispatch(&self, server: &'static Server) -> Result<(), StartCommandError> {
-        debug!("Initializing runtime.");
-
-        let local_set = LocalSet::new();
-        let sys = System::run_in_tokio("server", &local_set);
-
-        debug!("Runtime initialized.");
-
         info!("Initializing node.");
 
         let config = server.config().ok_or(StartCommandError::ConfigFileError)?;
@@ -63,9 +51,9 @@ impl StartCommand {
             Ok(_) => (),
         };
 
-        let manager = Data::new(manager);
+        let manager = Arc::new(manager);
 
-        dispatch_jobs!(manager, spawn_gc, spawn_persistence, spawn_ctrlc_handler);
+        dispatch_jobs!(manager, spawn_gc, spawn_persistence);
 
         #[cfg(feature = "replication")]
         dispatch_jobs!(manager, spawn_replication);
@@ -73,8 +61,6 @@ impl StartCommand {
         start_http_server(self.host(), manager)
             .await
             .map_err(StartCommandError::HttpServerError)?;
-
-        sys.await.map_err(StartCommandError::RuntimeError)?;
 
         Ok(())
     }

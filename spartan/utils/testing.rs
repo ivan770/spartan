@@ -7,16 +7,14 @@ pub static CONFIG: Lazy<Config> = Lazy::new(Config::default);
 #[macro_export]
 macro_rules! init_application_from_data {
     ($data:expr) => {
-        actix_web::App::new()
-            .app_data($data)
-            .configure(crate::http::routing::attach_test_routes)
+        crate::http::routing::attach_test_routes($data)
     };
 }
 
 #[macro_export]
 macro_rules! init_application {
     ($config:expr) => {
-        crate::init_application_from_data!(actix_web::web::Data::new(
+        crate::init_application_from_data!(::std::sync::Arc::new(
             crate::node::manager::Manager::new($config)
         ))
     };
@@ -24,16 +22,29 @@ macro_rules! init_application {
 
 #[macro_export]
 macro_rules! test_request {
-    ($method:ident, $uri:expr) => {
-        actix_web::test::TestRequest::$method()
-            .uri($uri)
-            .to_request()
+    ($filter:ident, $method:expr, $uri:expr) => {
+        ::warp::test::request()
+            .method($method)
+            .path($uri)
+            .reply(&$filter)
     };
 
-    ($method:ident, $uri:expr, $body:expr) => {
-        actix_web::test::TestRequest::$method()
-            .set_json($body)
-            .uri($uri)
-            .to_request()
+    ($filter:ident, $method:expr, $uri:expr, $body:expr) => {
+        ::warp::test::request()
+            .method($method)
+            .json($body)
+            .path($uri)
+            .reply(&$filter)
+    };
+}
+
+#[macro_export]
+macro_rules! test_json_request {
+    ($filter:ident, $method:expr, $uri:expr) => {
+        ::serde_json::from_slice(test_request!($filter, $method, $uri).await.body()).unwrap()
+    };
+
+    ($filter:ident, $method:expr, $uri:expr, $body:expr) => {
+        ::serde_json::from_slice(test_request!($filter, $method, $uri, $body).await.body()).unwrap()
     };
 }

@@ -6,11 +6,13 @@ pub mod storage;
 
 use std::{borrow::Cow, future::Future, time::Duration};
 
-use actix_rt::time::delay_for;
 use error::{ReplicaError, ReplicaResult};
 use futures_util::{SinkExt, StreamExt};
 use maybe_owned::MaybeOwned;
-use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::{
+    io::{AsyncRead, AsyncWrite},
+    time::delay_for,
+};
 use tokio_util::codec::{Decoder, Framed};
 
 use super::message::Request;
@@ -157,8 +159,8 @@ mod tests {
         net::{IpAddr, Ipv4Addr, SocketAddr},
     };
 
-    use actix_web::web::BytesMut;
     use bincode::deserialize;
+    use bytes::BytesMut;
     use maybe_owned::MaybeOwned;
 
     use super::{accept_connection, error::ReplicaError, storage::ReplicaStorage, ReplicaSocket};

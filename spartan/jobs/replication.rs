@@ -1,7 +1,6 @@
 use std::{collections::hash_map::DefaultHasher, time::Duration};
 
-use actix_rt::time::delay_for;
-use tokio::net::TcpStream;
+use tokio::{net::TcpStream, time::delay_for};
 
 use crate::{
     config::replication::{Primary, Replication},

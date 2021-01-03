@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use actix_rt::time::delay_for;
+use tokio::time::delay_for;
 
 use crate::node::Manager;
 

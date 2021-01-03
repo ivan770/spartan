@@ -1,6 +1,3 @@
-/// Ctrl-C handler
-pub mod exit;
-
 /// GC handler
 pub mod gc;
 

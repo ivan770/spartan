@@ -1,73 +1,64 @@
-use actix_web::{
-    web::{Data, Path},
-    HttpResponse, Result,
-};
-use spartan_lib::core::dispatcher::SimpleDispatcher;
+use std::sync::Arc;
 
-use crate::node::{event::Event, Manager};
+use spartan_lib::core::dispatcher::SimpleDispatcher;
+use warp::reply::{json, Json};
+
+use crate::{
+    actions::Result,
+    node::{event::Event, Manager},
+};
 
 /// Clear queue.
 ///
 /// Doesn't require any input, returns empty response.
-pub async fn clear(
-    manager: Data<Manager<'_>>,
-    Path((name,)): Path<(String,)>,
-) -> Result<HttpResponse> {
+pub async fn clear(manager: Arc<Manager<'_>>, name: String) -> Result<Json> {
     let queue = manager.queue(&name)?;
 
     queue.log_event(&name, &manager, Event::Clear).await?;
 
     queue.database().await.clear();
-    Ok(HttpResponse::Ok().json(()))
+    Ok(json(&()))
 }
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{
-        test::{init_service, read_response, read_response_json},
-        web::Bytes,
-    };
-
     use crate::{
         http::query::{push::PushRequest, size::SizeResponse},
-        init_application, test_request,
+        init_application, test_json_request, test_request,
         utils::testing::CONFIG,
     };
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_clear() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
-        let resp = read_response(&mut app, test_request!(post, "/test/clear")).await;
-        assert_eq!(resp, Bytes::from_static(b"null"));
+        let app = init_application!(&CONFIG);
+        let resp = test_request!(app, "POST", "/test/clear").await;
+        assert_eq!(resp.body(), "null");
     }
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_clear_fullchain() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
+        let app = init_application!(&CONFIG);
 
         {
-            read_response(
-                &mut app,
-                test_request!(
-                    post,
-                    "/test",
-                    &PushRequest {
-                        body: String::from("Hello, world").into_boxed_str(),
-                        ..Default::default()
-                    }
-                ),
+            test_request!(
+                app,
+                "POST",
+                "/test",
+                &PushRequest {
+                    body: String::from("Hello, world").into_boxed_str(),
+                    ..Default::default()
+                }
             )
             .await;
 
-            let size_res: SizeResponse =
-                read_response_json(&mut app, test_request!(get, "/test/size")).await;
+            let size_res: SizeResponse = test_json_request!(app, "GET", "/test/size");
             assert_eq!(size_res.size, 1);
         }
 
-        read_response(&mut app, test_request!(post, "/test/clear")).await;
+        test_request!(app, "POST", "/test/clear").await;
 
-        let size_res: SizeResponse =
-            read_response_json(&mut app, test_request!(get, "/test/size")).await;
+        let size_res: SizeResponse = test_json_request!(app, "GET", "/test/size");
+
         assert_eq!(size_res.size, 0);
     }
 }

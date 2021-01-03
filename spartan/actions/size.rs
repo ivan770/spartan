@@ -1,56 +1,48 @@
-use actix_web::{
-    web::{Data, Path},
-    HttpResponse, Result,
-};
-use spartan_lib::core::dispatcher::SimpleDispatcher;
+use std::sync::Arc;
 
-use crate::{http::query::size::SizeResponse, node::Manager};
+use spartan_lib::core::dispatcher::SimpleDispatcher;
+use warp::reply::{json, Json};
+
+use crate::{actions::Result, http::query::size::SizeResponse, node::Manager};
 
 /// Get queue size.
 ///
 /// Doesn't require any input, returns queue size.
-pub async fn size(
-    manager: Data<Manager<'_>>,
-    Path((name,)): Path<(String,)>,
-) -> Result<HttpResponse> {
+pub async fn size(manager: Arc<Manager<'_>>, name: String) -> Result<Json> {
     let queue = manager.queue(&name)?.database().await;
 
-    Ok(HttpResponse::Ok().json(SizeResponse::from(queue.size())))
+    Ok(json(&SizeResponse::from(queue.size())))
 }
 
 #[cfg(test)]
 mod tests {
-    use actix_web::test::{init_service, read_response, read_response_json};
-
     use crate::{
         http::query::{push::PushRequest, size::SizeResponse},
-        init_application, test_request,
+        init_application, test_json_request, test_request,
         utils::testing::CONFIG,
     };
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_size() {
-        let mut app = init_service(init_application!(&CONFIG)).await;
+        let app = init_application!(&CONFIG);
 
-        let size: SizeResponse =
-            read_response_json(&mut app, test_request!(get, "/test/size")).await;
+        let size: SizeResponse = test_json_request!(app, "GET", "/test/size");
+
         assert_eq!(size.size, 0);
 
-        read_response(
-            &mut app,
-            test_request!(
-                post,
-                "/test",
-                &PushRequest {
-                    body: String::from("Hello, world").into_boxed_str(),
-                    ..Default::default()
-                }
-            ),
+        test_request!(
+            app,
+            "POST",
+            "/test",
+            &PushRequest {
+                body: String::from("Hello, world").into_boxed_str(),
+                ..Default::default()
+            }
         )
         .await;
 
-        let size: SizeResponse =
-            read_response_json(&mut app, test_request!(get, "/test/size")).await;
+        let size: SizeResponse = test_json_request!(app, "GET", "/test/size");
+
         assert_eq!(size.size, 1);
     }
 }
