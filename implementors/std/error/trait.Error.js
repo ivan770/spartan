@@ -1,0 +1,4 @@
+(function() {var implementors = {};
+implementors["spartan"] = [{"text":"impl Error for QueueError","synthetic":false,"types":[]},{"text":"impl Error for StartCommandError","synthetic":false,"types":[]},{"text":"impl Error for InitCommandError","synthetic":false,"types":[]},{"text":"impl Error for ManagerError","synthetic":false,"types":[]},{"text":"impl Error for PersistenceError","synthetic":false,"types":[]},{"text":"impl Error for PrimaryError","synthetic":false,"types":[]},{"text":"impl Error for ReplicaError","synthetic":false,"types":[]},{"text":"impl Error for ServerError","synthetic":false,"types":[]},{"text":"impl Error for AccessError","synthetic":false,"types":[]}];
+implementors["spartan_lib"] = [{"text":"impl Error for BuilderError","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

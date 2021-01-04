@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["spartan"] = [{"text":"impl StructOpt for StartCommand","synthetic":false,"types":[]},{"text":"impl StructOpt for InitCommand","synthetic":false,"types":[]},{"text":"impl StructOpt for ReplicaCommand","synthetic":false,"types":[]},{"text":"impl StructOpt for Command","synthetic":false,"types":[]},{"text":"impl StructOpt for Server","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

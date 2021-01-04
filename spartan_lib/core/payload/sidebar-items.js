@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Dispatchable","Interface for working with dispatchable messages"],["Identifiable","Interface for working with identifiable messages"],["Sortable","Interface for working with sortable messages"],["Status","Interface for interacting with message status"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["delete","Delete message from queue."]]});

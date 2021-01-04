@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Persistence",""]],"fn":[["default_compaction",""],["default_path","Default database path"],["default_persistence",""],["default_snapshot_timer","Default amount of seconds between persistence jobs"]],"struct":[["PersistenceConfig",""]]});

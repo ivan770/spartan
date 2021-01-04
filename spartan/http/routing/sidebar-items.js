@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["attach_routes","Attach routes to Actix service config"],["handle_rejections",""],["with_manager",""]]});

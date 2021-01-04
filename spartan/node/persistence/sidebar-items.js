@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["PersistenceError","Errors, that may occur during persistence process"]],"mod":[["log","Log-based persistence"],["snapshot","Snapshot-based persistence"]]});

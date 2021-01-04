@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["event","Database event"],["manager","Node manager"],["persistence","Log-based and snapshot persistence"],["queue","Queue"],["replication","Database replication"]],"struct":[["Node","Key-value node implementation"]],"type":[["DB",""]]});

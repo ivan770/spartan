@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ManagerError",""]],"struct":[["Manager","Node manager"]]});

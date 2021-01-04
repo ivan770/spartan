@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["WILDCARD_QUEUE","Wildcard queue name. Used in `queues` to represent all available queues in node"]],"struct":[["Key","Single access key"]]});
