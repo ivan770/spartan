@@ -14,14 +14,13 @@ use tokio::{
     io::{AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt, AsyncWriteExt},
 };
 
-use super::PersistenceError;
 #[cfg(feature = "replication")]
 use crate::node::persistence::snapshot::REPLICATION_FILE as SNAPSHOT_REPLICATION_FILE;
 use crate::{
     config::persistence::PersistenceConfig,
     node::{
         event::{Event, EventLog},
-        persistence::snapshot::Snapshot,
+        persistence::{snapshot::Snapshot, PersistenceError},
         Queue,
     },
 };

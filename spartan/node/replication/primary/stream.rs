@@ -8,15 +8,17 @@ use tokio::{
 };
 use tokio_util::codec::{Decoder, Framed};
 
-use super::{
-    error::{PrimaryError, PrimaryResult},
-    index::{BatchAskIndex, RecvIndex},
-};
 use crate::{
     config::replication::Primary,
     node::{
         event::Event,
-        replication::message::{PrimaryRequest, ReplicaRequest, Request},
+        replication::{
+            message::{PrimaryRequest, ReplicaRequest, Request},
+            primary::{
+                error::{PrimaryError, PrimaryResult},
+                index::{BatchAskIndex, RecvIndex},
+            },
+        },
     },
     utils::codec::BincodeCodec,
 };

@@ -4,8 +4,7 @@ use thiserror::Error;
 use tokio::signal::ctrl_c;
 use warp::{serve, Error};
 
-use super::routing::attach_routes;
-use crate::node::Manager;
+use crate::{http::routing::attach_routes, node::Manager};
 
 #[derive(Error, Debug)]
 pub enum ServerError {

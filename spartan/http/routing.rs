@@ -1,10 +1,12 @@
-// use crate::{config::Config, http::middleware::access::Access};
 use std::{convert::Infallible, sync::Arc};
 
 use warp::{any, body::json, delete, get, path, post, wrap_fn, Filter, Rejection, Reply};
 
-use super::middleware::access::{access, AccessError};
-use crate::{actions::ResponseError, node::Manager};
+use crate::{
+    actions::ResponseError,
+    http::middleware::access::{access, AccessError},
+    node::Manager,
+};
 
 macro_rules! route {
     ($name:ident) => {

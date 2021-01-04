@@ -2,18 +2,18 @@ use futures_util::{stream::iter, StreamExt, TryStreamExt};
 use thiserror::Error;
 use warp::hyper::StatusCode;
 
-use super::{
-    event::Event,
-    persistence::{
-        log::Log,
-        snapshot::{PersistMode, Snapshot},
-        PersistenceError,
-    },
-    Node, DB,
-};
 use crate::{
     actions::RespondableError,
     config::{persistence::Persistence, Config},
+    node::{
+        event::Event,
+        persistence::{
+            log::Log,
+            snapshot::{PersistMode, Snapshot},
+            PersistenceError,
+        },
+        Node, DB,
+    },
 };
 
 #[derive(Error, Debug)]

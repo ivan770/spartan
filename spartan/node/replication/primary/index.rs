@@ -7,11 +7,13 @@ use futures_util::{stream::iter, StreamExt, TryStreamExt};
 use itertools::Itertools;
 use tokio::io::{AsyncRead, AsyncWrite};
 
-use super::{
-    error::{PrimaryError, PrimaryResult},
-    stream::Stream,
+use crate::node::{
+    replication::primary::{
+        error::{PrimaryError, PrimaryResult},
+        stream::Stream,
+    },
+    Manager,
 };
-use crate::node::Manager;
 
 pub struct RecvIndex<'s, T> {
     stream: &'s mut Stream<T>,

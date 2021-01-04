@@ -1,8 +1,8 @@
 use tokio::sync::{Mutex, MutexGuard};
 
-use super::{event::Event, persistence::PersistenceError, Manager};
 #[cfg(feature = "replication")]
 use crate::node::replication::storage::ReplicationStorage;
+use crate::node::{event::Event, persistence::PersistenceError, Manager};
 
 pub struct Queue<DB> {
     /// Inner database

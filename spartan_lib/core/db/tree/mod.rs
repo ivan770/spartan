@@ -5,9 +5,8 @@ use std::{
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use super::StatusAwareDatabase;
 use crate::core::{
-    db::Database,
+    db::{Database, StatusAwareDatabase},
     payload::{Identifiable, Sortable, Status},
 };
 

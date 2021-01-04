@@ -1,4 +1,4 @@
-use super::Identifiable;
+use crate::core::payload::Identifiable;
 
 /// Interface for working with dispatchable messages
 pub trait Dispatchable: Identifiable {

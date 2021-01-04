@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use super::StatusAwareDatabase;
-use crate::core::{db::Database, payload::Identifiable};
+use crate::core::{
+    db::{Database, StatusAwareDatabase},
+    payload::Identifiable,
+};
 
 /// [`Vec`]-based database
 ///

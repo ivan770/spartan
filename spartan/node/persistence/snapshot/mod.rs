@@ -5,8 +5,10 @@ use cfg_if::cfg_if;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::fs::{create_dir, read, write};
 
-use super::PersistenceError;
-use crate::{config::persistence::PersistenceConfig, node::Queue};
+use crate::{
+    config::persistence::PersistenceConfig,
+    node::{persistence::PersistenceError, Queue},
+};
 
 const QUEUE_FILE: &str = "queue";
 

@@ -15,12 +15,11 @@ use tokio::{
 };
 use tokio_util::codec::{Decoder, Framed};
 
-use super::message::Request;
 use crate::{
     config::replication::Replica,
     node::{
         event::EventLog,
-        replication::message::{PrimaryRequest, ReplicaRequest},
+        replication::message::{PrimaryRequest, ReplicaRequest, Request},
         Manager,
     },
     utils::codec::BincodeCodec,
